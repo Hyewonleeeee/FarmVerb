@@ -7,7 +7,10 @@
 
 body {
   background:
-    linear-gradient(135deg, rgba(52, 211, 153, 0.08) 0%, rgba(16, 185, 129, 0.04) 35%, rgba(6, 95, 70, 0.02) 100%),
+    /* Left: yellow gradient fading toward center */
+    linear-gradient(90deg, rgba(250, 204, 21, 0.10) 0%, rgba(245, 158, 11, 0.06) 35%, rgba(217, 119, 6, 0.03) 60%, rgba(217, 119, 6, 0) 70%),
+    /* Right: yellow gradient fading toward center */
+    linear-gradient(270deg, rgba(250, 204, 21, 0.10) 0%, rgba(245, 158, 11, 0.06) 35%, rgba(217, 119, 6, 0.03) 60%, rgba(217, 119, 6, 0) 70%),
     #ffffff;
   color: #0f1115;
   font-family: 'Inter', sans-serif;
@@ -160,11 +163,11 @@ body {
 
 .btn-download {
   display: inline-block;
-  background: linear-gradient(135deg, #34d399 0%, #10b981 50%, #059669 100%);
+  background: linear-gradient(135deg, #fde047 0%, #facc15 50%, #f59e0b 100%);
   color: #ffffff;
-  border: 1px solid rgba(5, 150, 105, 0.5);
+  border: 1px solid rgba(245, 158, 11, 0.4);
   backdrop-filter: blur(10px);
-  box-shadow: 0 16px 44px rgba(16, 185, 129, 0.35), 0 2px 8px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 16px 44px rgba(245, 158, 11, 0.28), 0 2px 8px rgba(0, 0, 0, 0.10);
   border-radius: 14px;
   padding: 18px 45px;
   font-size: 1.1rem;
@@ -177,10 +180,10 @@ body {
 }
 
 .btn-download:hover {
-  background: linear-gradient(135deg, #6ee7b7 0%, #34d399 40%, #10b981 100%);
+  background: linear-gradient(135deg, #fef08a 0%, #fde047 40%, #facc15 100%);
   transform: translateY(-2px);
-  box-shadow: 0 22px 56px rgba(16, 185, 129, 0.4), 0 10px 24px rgba(0, 0, 0, 0.12);
-  border-color: rgba(16, 185, 129, 0.7);
+  box-shadow: 0 22px 56px rgba(245, 158, 11, 0.32), 0 10px 24px rgba(0, 0, 0, 0.10);
+  border-color: rgba(245, 158, 11, 0.6);
 }
 
 .hero-right {
