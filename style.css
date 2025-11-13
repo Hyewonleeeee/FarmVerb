@@ -633,12 +633,14 @@ body {
    ============================================ */
 
 .contact {
-  padding: var(--spacing-xl) 0;
+  padding: var(--spacing-lg) 0;
   background: var(--cream-beige);
 }
 
 .contact .section-title {
   text-align: center;
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  margin-bottom: var(--spacing-md);
 }
 
 .contact-content {
@@ -647,30 +649,37 @@ body {
 
 .contact-email {
   display: inline-block;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  color: var(--deep-green);
+  color: #ffffff;
+  background: var(--deep-green);
+  padding: 16px 36px;
+  border-radius: var(--radius-md);
   text-decoration: none;
+  margin-top: calc(var(--spacing-md) * -0.5);
   margin-bottom: var(--spacing-md);
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .contact-email:hover {
-  color: var(--soft-brown);
+  color: #ffffff;
+  background: #3a5c4a;
+  transform: translateY(-2px);
 }
 
 .social-links {
   display: flex;
-  gap: var(--spacing-md);
+  gap: var(--spacing-lg);
   justify-content: center;
   flex-wrap: wrap;
 }
 
 .social-link {
-  font-size: 0.95rem;
+  font-size: 1.2rem;
   color: var(--soft-brown);
   text-decoration: none;
   transition: color 0.3s ease;
+  font-weight: 500;
 }
 
 .social-link:hover {
