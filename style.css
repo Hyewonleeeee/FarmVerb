@@ -713,59 +713,270 @@ body {
    ============================================ */
 
 @media (max-width: 768px) {
-  .nav-right {
+  .nav {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  .nav-left {
     gap: var(--spacing-sm);
+    flex-wrap: wrap;
   }
   
   .nav-link {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    padding: 4px 0;
   }
   
-  .hero-buttons {
-    flex-direction: column;
-    align-items: stretch;
+  .logo {
+    font-size: 1.2rem;
   }
   
-  .btn {
-    width: 100%;
-    text-align: center;
+  .banner-slider {
+    height: 250px;
+    margin-top: 70px;
+  }
+  
+  .banner-prev,
+  .banner-next {
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+  }
+  
+  .banner-prev {
+    left: 10px;
+  }
+  
+  .banner-next {
+    right: 10px;
+  }
+  
+  .banner-dots {
+    bottom: 10px;
+  }
+  
+  .dot {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .dot.active {
+    width: 24px;
+  }
+  
+  .sample-pack {
+    padding: var(--spacing-lg) 0;
   }
   
   .sample-pack-content {
     grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .product-box {
+    aspect-ratio: 1/1;
+  }
+  
+  .section-title {
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
+  }
+  
+  .product-tagline {
+    font-size: 1rem;
+  }
+  
+  .plugins {
+    padding: var(--spacing-lg) 0;
   }
   
   .plugins-grid {
     grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .plugin-card {
+    padding: var(--spacing-sm);
+  }
+  
+  .plugin-name {
+    font-size: 1.3rem;
+  }
+  
+  .about {
+    padding: var(--spacing-lg) 0;
+  }
+  
+  .about-text {
+    font-size: 1rem;
+    line-height: 1.7;
   }
   
   .about-values {
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-xs);
+  }
+  
+  .value-tag {
+    font-size: 0.8rem;
+    padding: 6px 16px;
+  }
+  
+  .about-vision {
+    font-size: 1.4rem;
+  }
+  
+  .contact {
+    padding: var(--spacing-lg) 0;
+  }
+  
+  .contact-email {
+    font-size: 1rem;
   }
   
   .social-links {
-    flex-direction: column;
-    align-items: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .nav {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: var(--spacing-sm);
   }
   
-  .nav-right {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  
-  .hero {
-    padding-top: 120px;
+  .btn {
+    padding: 12px 24px;
+    font-size: 0.9rem;
   }
   
   .container {
     padding: 0 var(--spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0;
+  }
+  
+  .nav {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    flex-wrap: wrap;
+  }
+  
+  .nav-left {
+    gap: var(--spacing-xs);
+    width: 100%;
+    justify-content: center;
+    order: 2;
+    margin-top: var(--spacing-xs);
+  }
+  
+  .nav-center {
+    position: static;
+    transform: none;
+    order: 1;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .nav-right {
+    display: none;
+  }
+  
+  .logo {
+    font-size: 1.1rem;
+  }
+  
+  .nav-link {
+    font-size: 0.75rem;
+    padding: 2px 0;
+  }
+  
+  .banner-slider {
+    height: 200px;
+    margin-top: 60px;
+  }
+  
+  .banner-prev,
+  .banner-next {
+    width: 35px;
+    height: 35px;
+    font-size: 1.2rem;
+  }
+  
+  .banner-prev {
+    left: 8px;
+  }
+  
+  .banner-next {
+    right: 8px;
+  }
+  
+  .section-title {
+    font-size: 1.8rem;
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .section-subtitle {
+    font-size: 0.9rem;
+  }
+  
+  .product-tagline {
+    font-size: 0.95rem;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .feature-item h4 {
+    font-size: 1rem;
+  }
+  
+  .feature-item p {
+    font-size: 0.85rem;
+  }
+  
+  .plugin-name {
+    font-size: 1.2rem;
+  }
+  
+  .plugin-description {
+    font-size: 0.85rem;
+  }
+  
+  .about-text {
+    font-size: 0.95rem;
+  }
+  
+  .about-values {
+    gap: 6px;
+  }
+  
+  .value-tag {
+    font-size: 0.75rem;
+    padding: 5px 12px;
+  }
+  
+  .about-audience {
+    font-size: 0.9rem;
+  }
+  
+  .about-vision {
+    font-size: 1.2rem;
+  }
+  
+  .contact-email {
+    font-size: 0.95rem;
+  }
+  
+  .social-link {
+    font-size: 0.85rem;
+  }
+  
+  .btn {
+    padding: 14px 20px;
+    font-size: 0.85rem;
+    width: 100%;
+  }
+  
+  .container {
+    padding: 0 var(--spacing-xs);
   }
 }
