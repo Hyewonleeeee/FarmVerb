@@ -3,72 +3,172 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- 브라우저 탭/구글 검색 타이틀 -->
-  <title>FarmVerb - Germinate Delay Plugin</title>
-
-  <!-- 구글 검색 설명 (검색결과 밑에 나오는 부분) -->
-  <meta name="description" content="Germinate Delay Plugin by FarmVerb. Hear it grow – an organic ecosystem of echoes with Soft and Hard modes, forward and reverse delay. Try the demo or download today.">
-
-  <!-- Open Graph (SNS 공유용) -->
-  <meta property="og:title" content="FarmVerb - Germinate Delay Plugin" />
-  <meta property="og:description" content="Hear it grow. Organic echoes, forward & reverse delays, Soft & Hard modes." />
+  <title>FARMVERB - Organic Sound Tools for Creative Producers</title>
+  <meta name="description" content="FARMVERB - Warm, organic sound design tools. Plugins and sample packs for producers, sound designers & musicians.">
+  
+  <meta property="og:title" content="FARMVERB - Organic Sound Tools" />
+  <meta property="og:description" content="Organic Sound Tools for Creative Producers. Warm · Minimal · Organic · Modern" />
   <meta property="og:image" content="https://farmverb.com/Germinate.png" />
   <meta property="og:url" content="https://farmverb.com" />
-
+  
   <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="container">
-    <!-- Header Navigation -->
-    <header class="header">
-      <nav class="nav">
-        <div class="nav-left"></div>
-        <div class="nav-center">
-          <h1 class="logo">FARMVERB</h1>
+  <!-- Navigation -->
+  <header class="header">
+    <nav class="nav">
+      <div class="nav-left">
+        <a href="#plugins" class="nav-link">Plugins</a>
+        <a href="#plugins" class="nav-link">Instrument</a>
+        <a href="#sample-pack" class="nav-link">Sample Pack</a>
+        <a href="#about" class="nav-link">About</a>
+        <a href="#contact" class="nav-link">Contact</a>
+      </div>
+      <div class="nav-center">
+        <a href="#" class="logo">FARMVERB</a>
+      </div>
+      <div class="nav-right">
+      </div>
+    </nav>
+  </header>
+
+  <!-- Banner Slider -->
+  <section class="banner-slider">
+    <div class="banner-container">
+      <div class="banner-slide active">
+        <img src="Logo_1.png" alt="Banner 1" class="banner-image">
+      </div>
+      <div class="banner-slide">
+        <img src="Logo_2.png" alt="Banner 2" class="banner-image">
+      </div>
+      <button class="banner-prev" aria-label="Previous">‹</button>
+      <button class="banner-next" aria-label="Next">›</button>
+      <div class="banner-dots">
+        <span class="dot active" data-slide="0"></span>
+        <span class="dot" data-slide="1"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sample Pack Section -->
+  <section id="sample-pack" class="sample-pack">
+    <div class="container">
+      <div class="sample-pack-content">
+        <div class="sample-pack-image">
+          <div class="product-box">
+            <img src="GlitchDrum.png" alt="Glitch Drum Pack Vol. I" class="product-image">
+          </div>
         </div>
-        <div class="nav-right"></div>
-      </nav>
-    </header>
-
-    <!-- Hero Section -->
-    <section class="hero">
-      <div class="hero-container">
-        <div class="hero-content">
-          <div class="hero-left">
-            <h1 class="hero-title">Germinate</h1>
-            <p class="hero-tagline">Hear it grow.</p>
-            <a href="./Germinate_1.0.0.pkg" class="btn-download">DOWNLOAD</a>
-          </div>
-          <div class="hero-right">
-            <img src="Germinate.png" alt="Germinate Plugin" class="hero-image" />
-          </div>
-          <div class="hero-description">
-            <h3>Germinate Delay – Sound that grows like nature</h3>
-            <p>Germinate is not just another delay plugin – it's an organic ecosystem of echoes. Inspired by the growth of seeds into sprouts, it combines warmth, unpredictability, and movement into a living texture.</p>
-
-            <div class="mode-section">
-              <h4><strong>Soft Mode</strong> – Smooth and pure, with chorus-like modulation and subtle stereo widening. Perfect for clean ambience and natural shimmer.</h4>
-              <h4><strong>Hard Mode</strong> – Complex and evolving, featuring multi-rate LFOs, resonant filtering, stereo spread, and breathing modulation. Built for rich, dynamic echoes that bloom and pulse with life.</h4>
+        <div class="sample-pack-info">
+          <h2 class="section-title">Glitch Drum Pack Vol. I</h2>
+          <p class="product-tagline">Distort the Norm. Define Your Beat.</p>
+          <div class="product-features">
+            <div class="feature-item">
+              <h4>Premium Quality</h4>
+              <p>Professionally crafted glitch and experimental drum samples</p>
             </div>
-
-            <div class="direction-section">
-              <h3>Direction Control</h3>
-              <h4><strong>FWD (Forward)</strong> – Traditional echoes that move naturally through time, like ripples expanding outward.</h4>
-              <h4><strong>REV (Reverse)</strong> – Reversed delays that fold back into themselves, creating dreamy swells, reversed tape textures, and otherworldly soundscapes.</h4>
+            <div class="feature-item">
+              <h4>Creative Freedom</h4>
+              <p>Unique textures and rhythms for modern production</p>
             </div>
-
-            <p>Every parameter feels alive: Sprout Time for delay, Loopback for feedback, Water for mix, Breeze for modulation, and Sunlight for tone. Whether in forward clarity or reversed mystery, Germinate Delay grows sound into something entirely new.</p>
+            <div class="feature-item">
+              <h4>Ready to Use</h4>
+              <p>Immediately usable samples across genres</p>
+            </div>
           </div>
+          <a href="https://smartstore.naver.com/farmverb/products/12550530888" class="btn btn-primary" id="buy-now-btn">Buy Now → SmartStore</a>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <p>&copy; 2025 FarmVerb. All rights reserved.</p>
-    </footer>
-  </div>
+  <!-- Plugins Section -->
+  <section id="plugins" class="plugins">
+    <div class="container">
+      <h2 class="section-title">Plugins & Instrument</h2>
+      <p class="section-subtitle">Currently in active development. Expected release: 2026.</p>
+      <div class="plugins-grid">
+        <div class="plugin-card">
+          <div class="plugin-image">
+            <img src="Germinate.png" alt="Germinate Delay Plugin" class="plugin-img">
+          </div>
+          <h3 class="plugin-name">Germinate</h3>
+          <p class="plugin-type">Delay</p>
+          <p class="plugin-status">Coming Soon</p>
+          <p class="plugin-description">Organic delay plugin with forward and reverse modes, soft and hard textures.</p>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-image">
+            <div class="plugin-placeholder">
+              <div class="plugin-placeholder-title">Astral Bloom</div>
+              <div class="plugin-placeholder-status">Coming Soon</div>
+            </div>
+          </div>
+          <h3 class="plugin-name">Astral Bloom</h3>
+          <p class="plugin-type">Pad Instrument</p>
+          <p class="plugin-status">Coming Soon</p>
+          <p class="plugin-description">Atmospheric pad synthesizer with organic, evolving textures.</p>
+        </div>
+        <div class="plugin-card">
+          <div class="plugin-image">
+            <div class="plugin-placeholder">
+              <div class="plugin-placeholder-title">Breeze</div>
+              <div class="plugin-placeholder-status">Coming Soon</div>
+            </div>
+          </div>
+          <h3 class="plugin-name">Breeze</h3>
+          <p class="plugin-type">Effect Module</p>
+          <p class="plugin-status">Coming Soon</p>
+          <p class="plugin-description">Versatile effect processor with warm, organic character.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section id="about" class="about">
+    <div class="container">
+      <div class="about-content">
+        <h2 class="section-title">About FARMVERB</h2>
+        <p class="about-text">
+          FARMVERB는 따뜻하고 유기적인 사운드 디자인을 기반으로 한<br>
+          현대적 오디오 플러그인 브랜드입니다.<br>
+          우리는 사용자의 창의성을 자극하고, 음악적 재배를 돕는 도구를 만듭니다.
+        </p>
+        <div class="about-values">
+          <div class="value-tag">Warm</div>
+          <div class="value-tag">Organic</div>
+          <div class="value-tag">Modern</div>
+          <div class="value-tag">Minimal</div>
+        </div>
+        <p class="about-audience">For Producers, Sound Designers & Musicians</p>
+        <p class="about-vision">"Grow Your Sound."</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact" class="contact">
+    <div class="container">
+      <h2 class="section-title">Contact</h2>
+      <div class="contact-content">
+        <a href="mailto:support@farmverb.com" class="contact-email">support@farmverb.com</a>
+        <div class="social-links">
+          <a href="https://www.instagram.com/farmverb/" class="social-link">Instagram</a>
+          <a href="https://smartstore.naver.com/farmverb" class="social-link">SmartStore</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2025 FARMVERB. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
