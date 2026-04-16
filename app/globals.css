@@ -30,6 +30,11 @@ body {
   background: #f7f8e8;
 }
 
+body.font-vars {
+  --font-sora: "Avenir Next", "Avenir", "Segoe UI", "Apple SD Gothic Neo", "Pretendard", sans-serif;
+  --font-cormorant: "Iowan Old Style", "Times New Roman", "Noto Serif KR", serif;
+}
+
 .farmverb-root {
   position: relative;
   width: 100%;

@@ -1,18 +1,5 @@
 import type { Metadata } from 'next';
-import { Cormorant_Garamond, Sora } from 'next/font/google';
 import './globals.css';
-
-const sora = Sora({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800'],
-  variable: '--font-sora'
-});
-
-const cormorant = Cormorant_Garamond({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-cormorant'
-});
 
 export const metadata: Metadata = {
   title: 'FarmVerb | Premium Organic Audio Tools',
@@ -21,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'FarmVerb | Grow Your Sound',
     description: 'Organic tools for producers and sound designers.',
-    images: ['/Germinate.png']
+    images: ['/Germinate/Germinate.png']
   },
   themeColor: '#edf7d4'
 };
@@ -33,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${sora.variable} ${cormorant.variable}`}>{children}</body>
+      <body className="font-vars">{children}</body>
     </html>
   );
 }

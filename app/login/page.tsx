@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, Suspense, useEffect, useState } from 'react';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
@@ -18,7 +18,7 @@ function getSafeRedirectPath(rawPath: string | null): string {
   return rawPath;
 }
 
-export default function LoginPage() {
+function LoginPageContent() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -163,5 +163,13 @@ export default function LoginPage() {
         </section>
       </main>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="auth-page-shell" />}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

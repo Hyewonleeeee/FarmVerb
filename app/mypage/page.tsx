@@ -44,6 +44,18 @@ type License = {
   product: ProductSummary | null;
 };
 
+const normalizeProduct = (product: ProductSummary | ProductSummary[] | null): ProductSummary | null => {
+  if (!product) {
+    return null;
+  }
+
+  if (Array.isArray(product)) {
+    return product[0] ?? null;
+  }
+
+  return product;
+};
+
 export default function MyPage() {
   const router = useRouter();
   const isLoggingOutRef = useRef(false);
@@ -119,7 +131,13 @@ export default function MyPage() {
         return;
       }
 
-      setOrders(data ?? []);
+      const normalizedOrders: Order[] = (data ?? []).map((row) => ({
+        id: row.id,
+        created_at: row.created_at,
+        product: normalizeProduct(row.product as ProductSummary | ProductSummary[] | null)
+      }));
+
+      setOrders(normalizedOrders);
       setOrdersMessage('');
     };
 
@@ -140,7 +158,14 @@ export default function MyPage() {
         return;
       }
 
-      setLicenses(data ?? []);
+      const normalizedLicenses: License[] = (data ?? []).map((row) => ({
+        id: row.id,
+        license_key: row.license_key,
+        created_at: row.created_at,
+        product: normalizeProduct(row.product as ProductSummary | ProductSummary[] | null)
+      }));
+
+      setLicenses(normalizedLicenses);
       setLicensesMessage('');
     };
 

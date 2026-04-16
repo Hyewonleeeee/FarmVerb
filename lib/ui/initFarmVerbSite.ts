@@ -539,11 +539,26 @@ class HomeAmbient {
 }
 
 export function initFarmVerbSite() {
-  const pageEntries = Array.from(document.querySelectorAll<HTMLElement>('.page'))
-    .map((page) => [page.dataset.page, page] as const)
-    .filter(([pageKey]) => Boolean(pageKey) && pageKey in ROUTES);
+  const isRouteKey = (value: string | undefined): value is RouteKey => {
+    if (!value) {
+      return false;
+    }
 
-  const pages = new Map<RouteKey, HTMLElement>(pageEntries as Array<readonly [RouteKey, HTMLElement]>);
+    return Object.prototype.hasOwnProperty.call(ROUTES, value);
+  };
+
+  const pageEntries: Array<readonly [RouteKey, HTMLElement]> = Array.from(document.querySelectorAll<HTMLElement>('.page')).flatMap(
+    (page) => {
+      const pageKey = page.dataset.page;
+      if (!isRouteKey(pageKey)) {
+        return [];
+      }
+
+      return [[pageKey, page] as const];
+    }
+  );
+
+  const pages = new Map<RouteKey, HTMLElement>(pageEntries);
   if (pages.size === 0) {
     return () => undefined;
   }
