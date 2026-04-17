@@ -9,7 +9,7 @@ import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 export default function SignupPage() {
   const router = useRouter();
   const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [country, setCountry] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -49,7 +49,7 @@ export default function SignupPage() {
     setVerificationEmail('');
 
     const trimmedName = name.trim();
-    const trimmedPhone = phone.trim();
+    const trimmedCountry = country.trim();
     const normalizedEmail = email.trim().toLowerCase();
 
     const supabase = createBrowserSupabaseClient();
@@ -59,7 +59,7 @@ export default function SignupPage() {
       options: {
         data: {
           name: trimmedName,
-          phone: trimmedPhone
+          country: trimmedCountry
         }
       }
     });
@@ -75,8 +75,8 @@ export default function SignupPage() {
         {
           id: data.user.id,
           email: normalizedEmail,
-          name: trimmedName,
-          phone: trimmedPhone
+          name: trimmedName || null,
+          country: trimmedCountry || null
         },
         { onConflict: 'id' }
       );
@@ -89,7 +89,6 @@ export default function SignupPage() {
     }
 
     if (data.session) {
-      setMessage('Sign up successful. Redirecting to My Page...');
       router.push('/mypage');
       router.refresh();
       return;
@@ -122,7 +121,7 @@ export default function SignupPage() {
               <h1 id="signup-title" className="auth-title">
                 Sign Up
               </h1>
-              <p className="auth-copy">Create your FarmVerb account with name, phone, email, and password.</p>
+              <p className="auth-copy">Create your FarmVerb account with name, country, email, and password.</p>
 
               <form className="auth-form" onSubmit={handleSubmit}>
                 <label className="auth-label" htmlFor="signup-name">
@@ -138,17 +137,17 @@ export default function SignupPage() {
                   required
                 />
 
-                <label className="auth-label" htmlFor="signup-phone">
-                  Phone
+                <label className="auth-label" htmlFor="signup-country">
+                  Country
                 </label>
                 <input
-                  id="signup-phone"
+                  id="signup-country"
                   className="auth-input"
-                  type="tel"
-                  autoComplete="tel"
-                  value={phone}
-                  onChange={(event) => setPhone(event.target.value)}
-                  required
+                  type="text"
+                  autoComplete="country-name"
+                  value={country}
+                  onChange={(event) => setCountry(event.target.value)}
+                  placeholder="South Korea"
                 />
 
                 <label className="auth-label" htmlFor="signup-email">

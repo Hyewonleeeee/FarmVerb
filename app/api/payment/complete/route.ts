@@ -28,6 +28,29 @@ function normalizeSlug(rawValue: unknown): string {
   return rawValue.trim().toLowerCase();
 }
 
+function normalizeCurrency(rawValue: unknown): string {
+  if (typeof rawValue !== 'string') {
+    return 'USD';
+  }
+
+  const normalized = rawValue.trim().toUpperCase();
+  return normalized.length === 3 ? normalized : 'USD';
+}
+
+function normalizeUnitPrice(rawValue: unknown): number {
+  if (typeof rawValue !== 'number' || Number.isNaN(rawValue) || rawValue < 0) {
+    return 0;
+  }
+
+  return Math.round(rawValue * 100) / 100;
+}
+
+function generateOrderNumber() {
+  const stamp = Date.now().toString().slice(-8);
+  const rand = crypto.randomUUID().replace(/-/g, '').slice(0, 6).toUpperCase();
+  return `FV-${stamp}-${rand}`;
+}
+
 function generateLicenseKey(productSlug: SupportedProductSlug): string {
   const prefix = productSlug.toUpperCase().slice(0, 4);
   const random = crypto.randomUUID().replace(/-/g, '').toUpperCase().slice(0, 12);
@@ -64,15 +87,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { slug?: string; paymentId?: string } = {};
+  let body: { slug?: string; paymentId?: string; currency?: string; unitPrice?: number } = {};
   try {
-    body = (await request.json()) as { slug?: string; paymentId?: string };
+    body = (await request.json()) as { slug?: string; paymentId?: string; currency?: string; unitPrice?: number };
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
   const requestedSlug = normalizeSlug(body.slug || 'germinate');
   const paymentId = typeof body.paymentId === 'string' ? body.paymentId.trim() : '';
+  const currency = normalizeCurrency(body.currency);
+  const unitPrice = normalizeUnitPrice(body.unitPrice);
 
   if (!(requestedSlug in SUPPORTED_PRODUCTS)) {
     return NextResponse.json(
@@ -111,14 +136,51 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: existingOrderError.message }, { status: 500 });
   }
 
-  if (!existingOrder) {
-    const { error: orderInsertError } = await supabase.from('orders').insert({
-      user_id: user.id,
-      product_id: productRecord.id
-    });
+  let orderId = existingOrder?.id ?? null;
+
+  if (!orderId) {
+    const { data: insertedOrder, error: orderInsertError } = await supabase
+      .from('orders')
+      .insert({
+        user_id: user.id,
+        product_id: productRecord.id,
+        order_number: generateOrderNumber(),
+        payment_status: 'paid',
+        currency,
+        transaction_id: paymentId
+      })
+      .select('id')
+      .single();
 
     if (orderInsertError) {
       return NextResponse.json({ error: orderInsertError.message }, { status: 500 });
+    }
+
+    orderId = insertedOrder.id;
+  }
+
+  const { data: existingOrderItem, error: orderItemCheckError } = await supabase
+    .from('order_items')
+    .select('id')
+    .eq('order_id', orderId)
+    .eq('product_id', productRecord.id)
+    .maybeSingle();
+
+  if (orderItemCheckError) {
+    return NextResponse.json({ error: orderItemCheckError.message }, { status: 500 });
+  }
+
+  if (!existingOrderItem) {
+    const { error: orderItemInsertError } = await supabase.from('order_items').insert({
+      order_id: orderId,
+      product_id: productRecord.id,
+      quantity: 1,
+      unit_price: unitPrice,
+      currency
+    });
+
+    if (orderItemInsertError) {
+      return NextResponse.json({ error: orderItemInsertError.message }, { status: 500 });
     }
   }
 
@@ -158,7 +220,9 @@ export async function POST(request: Request) {
     ok: true,
     product: productRecord.name,
     paymentId,
+    orderId,
+    currency,
+    unitPrice,
     licenseKey
   });
 }
-
