@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
+import CountrySelect, { DEFAULT_COUNTRY_NAME, normalizeCountryName } from '@/components/ui/CountrySelect';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 export default function SignupPage() {
   const router = useRouter();
   const [name, setName] = useState('');
-  const [country, setCountry] = useState('');
+  const [country, setCountry] = useState(DEFAULT_COUNTRY_NAME);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -49,7 +50,7 @@ export default function SignupPage() {
     setVerificationEmail('');
 
     const trimmedName = name.trim();
-    const trimmedCountry = country.trim();
+    const trimmedCountry = normalizeCountryName(country).trim();
     const normalizedEmail = email.trim().toLowerCase();
 
     const supabase = createBrowserSupabaseClient();
@@ -140,15 +141,7 @@ export default function SignupPage() {
                 <label className="auth-label" htmlFor="signup-country">
                   Country
                 </label>
-                <input
-                  id="signup-country"
-                  className="auth-input"
-                  type="text"
-                  autoComplete="country-name"
-                  value={country}
-                  onChange={(event) => setCountry(event.target.value)}
-                  placeholder="South Korea"
-                />
+                <CountrySelect id="signup-country" value={country} onChange={setCountry} />
 
                 <label className="auth-label" htmlFor="signup-email">
                   Email
