@@ -82,6 +82,14 @@ const dashboardTabs: { key: DashboardTabKey; label: string }[] = [
   { key: 'security', label: 'Security' }
 ];
 
+const dashboardSectionCopy: Record<DashboardTabKey, string> = {
+  account: 'Personal details and account profile settings.',
+  orders: 'Purchase records with payment and order metadata.',
+  licenses: 'License keys, copy tools, and secure download actions.',
+  cart: 'Review selected products before checkout.',
+  security: 'Verification and password management for account safety.'
+};
+
 const normalizeProduct = (product: ProductSummary | ProductSummary[] | null): ProductSummary | null => {
   if (!product) {
     return null;
@@ -191,7 +199,9 @@ export default function MyPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [copiedLicenseId, setCopiedLicenseId] = useState<string | null>(null);
 
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [securityMessage, setSecurityMessage] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
@@ -642,10 +652,32 @@ export default function MyPage() {
   };
 
   const handleChangePassword = async () => {
-    const trimmedPassword = newPassword.trim();
+    if (!user?.email) {
+      setSecurityMessage('Email address not found for this account.');
+      return;
+    }
 
-    if (trimmedPassword.length < 6) {
-      setSecurityMessage('Password must be at least 6 characters.');
+    const currentPasswordValue = currentPassword.trim();
+    const newPasswordValue = newPassword.trim();
+    const confirmPasswordValue = confirmNewPassword.trim();
+
+    if (!currentPasswordValue) {
+      setSecurityMessage('Please enter your current password.');
+      return;
+    }
+
+    if (newPasswordValue.length < 6) {
+      setSecurityMessage('New password must be at least 6 characters.');
+      return;
+    }
+
+    if (newPasswordValue !== confirmPasswordValue) {
+      setSecurityMessage('New password and confirmation do not match.');
+      return;
+    }
+
+    if (currentPasswordValue === newPasswordValue) {
+      setSecurityMessage('New password must be different from your current password.');
       return;
     }
 
@@ -653,7 +685,18 @@ export default function MyPage() {
     setSecurityMessage('');
 
     const supabase = createBrowserSupabaseClient();
-    const { error } = await supabase.auth.updateUser({ password: trimmedPassword });
+    const { data: verifyData, error: verifyError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPasswordValue
+    });
+
+    if (verifyError || !verifyData.user || verifyData.user.id !== user.id) {
+      setSecurityMessage('Current password is incorrect.');
+      setIsChangingPassword(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: newPasswordValue });
 
     if (error) {
       setSecurityMessage(error.message);
@@ -661,7 +704,9 @@ export default function MyPage() {
       return;
     }
 
+    setCurrentPassword('');
     setNewPassword('');
+    setConfirmNewPassword('');
     setSecurityMessage('Password updated successfully.');
     setIsChangingPassword(false);
   };
@@ -772,6 +817,10 @@ export default function MyPage() {
     };
   }, [cartItems]);
 
+  const activeDashboardTabMeta = useMemo(() => {
+    return dashboardTabs.find((tab) => tab.key === activeTab) ?? dashboardTabs[0];
+  }, [activeTab]);
+
   if (isLoading) {
     return (
       <div className="auth-page-shell">
@@ -835,92 +884,77 @@ export default function MyPage() {
             </aside>
 
             <section className="mypage-panel mypage-panel-dashboard" role="tabpanel">
+              <header className="mypage-content-head">
+                <p className="mypage-content-overline">Dashboard</p>
+                <h2 className="mypage-content-title">{activeDashboardTabMeta.label}</h2>
+                <p className="mypage-content-copy">{dashboardSectionCopy[activeDashboardTabMeta.key]}</p>
+              </header>
+
               {activeTab === 'account' ? (
                 <>
-                  <h2>Account Info</h2>
-
-                  <form
-                    className="auth-form"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      if (!isAccountEditMode) {
-                        return;
-                      }
-                      void handleSaveProfile();
-                    }}
-                  >
-                    <div className="mypage-field-grid">
-                      <div>
-                        <label className="auth-label" htmlFor="account-user-id">
-                          User ID
-                        </label>
-                        <input
-                          id="account-user-id"
-                          className="auth-input mypage-readonly"
-                          type="text"
-                          value={user.id}
-                          disabled
-                          readOnly
-                        />
+                  {!isAccountEditMode ? (
+                    <section className="mypage-account-view" aria-label="Account details">
+                      <div className="mypage-account-row">
+                        <span className="mypage-account-label">Name</span>
+                        <strong className="mypage-account-value">{profile?.name || '-'}</strong>
+                      </div>
+                      <div className="mypage-account-row">
+                        <span className="mypage-account-label">Email</span>
+                        <strong className="mypage-account-value">{profile?.email || user.email || '-'}</strong>
+                      </div>
+                      <div className="mypage-account-row">
+                        <span className="mypage-account-label">Country</span>
+                        <strong className="mypage-account-value">{countryInput || '-'}</strong>
+                      </div>
+                      <div className="mypage-account-row">
+                        <span className="mypage-account-label">Join Date</span>
+                        <strong className="mypage-account-value">{formatDate(accountJoinDate)}</strong>
                       </div>
 
-                      <div>
-                        <label className="auth-label" htmlFor="account-join-date">
-                          Join Date
-                        </label>
-                        <input
-                          id="account-join-date"
-                          className="auth-input mypage-readonly"
-                          type="text"
-                          value={formatDate(accountJoinDate)}
-                          disabled
-                          readOnly
-                        />
-                      </div>
-                    </div>
-
-                    <label className="auth-label" htmlFor="account-name">
-                      Name
-                    </label>
-                    <input
-                      id="account-name"
-                      className={`auth-input ${!isAccountEditMode ? 'mypage-readonly' : ''}`}
-                      type="text"
-                      autoComplete="name"
-                      value={nameInput}
-                      onChange={(event) => setNameInput(event.target.value)}
-                      disabled={!isAccountEditMode || isSavingAccount}
-                    />
-
-                    <label className="auth-label" htmlFor="account-email">
-                      Email
-                    </label>
-                    <input
-                      id="account-email"
-                      className="auth-input mypage-readonly"
-                      type="email"
-                      autoComplete="email"
-                      value={profile?.email || user.email || '-'}
-                      disabled
-                      readOnly
-                    />
-
-                    <label className="auth-label" htmlFor="account-country">
-                      Country
-                    </label>
-                    <CountrySelect
-                      id="account-country"
-                      value={countryInput}
-                      onChange={setCountryInput}
-                      disabled={!isAccountEditMode || isSavingAccount}
-                      readonlyStyle={!isAccountEditMode}
-                    />
-
-                    {!isAccountEditMode ? (
                       <button type="button" className="auth-submit" onClick={handleStartEdit}>
                         Edit
                       </button>
-                    ) : (
+                    </section>
+                  ) : (
+                    <form
+                      className="auth-form"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void handleSaveProfile();
+                      }}
+                    >
+                      <div className="mypage-account-row">
+                        <span className="mypage-account-label">Email</span>
+                        <strong className="mypage-account-value">{profile?.email || user.email || '-'}</strong>
+                      </div>
+                      <div className="mypage-account-row">
+                        <span className="mypage-account-label">Join Date</span>
+                        <strong className="mypage-account-value">{formatDate(accountJoinDate)}</strong>
+                      </div>
+
+                      <label className="auth-label" htmlFor="account-name">
+                        Name
+                      </label>
+                      <input
+                        id="account-name"
+                        className="auth-input"
+                        type="text"
+                        autoComplete="name"
+                        value={nameInput}
+                        onChange={(event) => setNameInput(event.target.value)}
+                        disabled={isSavingAccount}
+                      />
+
+                      <label className="auth-label" htmlFor="account-country">
+                        Country
+                      </label>
+                      <CountrySelect
+                        id="account-country"
+                        value={countryInput}
+                        onChange={setCountryInput}
+                        disabled={isSavingAccount}
+                      />
+
                       <div className="mypage-form-actions">
                         <button
                           type="button"
@@ -934,8 +968,8 @@ export default function MyPage() {
                           {isSavingAccount ? 'Saving...' : 'Save'}
                         </button>
                       </div>
-                    )}
-                  </form>
+                    </form>
+                  )}
 
                   {accountMessage ? <p className="auth-message">{accountMessage}</p> : null}
                 </>
@@ -943,8 +977,6 @@ export default function MyPage() {
 
               {activeTab === 'orders' ? (
                 <>
-                  <h2>Orders / Purchase History</h2>
-
                   {ordersMessage ? <p>{ordersMessage}</p> : null}
 
                   {!ordersMessage && orders.length === 0 ? (
@@ -973,8 +1005,6 @@ export default function MyPage() {
 
               {activeTab === 'licenses' ? (
                 <>
-                  <h2>Licenses</h2>
-
                   {licensesMessage ? <p>{licensesMessage}</p> : null}
 
                   {!licensesMessage && licenseCards.length === 0 ? <p>No licenses yet.</p> : null}
@@ -1019,8 +1049,6 @@ export default function MyPage() {
 
               {activeTab === 'cart' ? (
                 <>
-                  <h2>Cart</h2>
-
                   {cartItems.length === 0 ? (
                     <div className="mypage-cart-empty">
                       <p>Your cart is empty. Added items will appear here.</p>
@@ -1112,8 +1140,6 @@ export default function MyPage() {
 
               {activeTab === 'security' ? (
                 <>
-                  <h2>Security</h2>
-
                   <div className="mypage-security-block">
                     <div className="mypage-item-head">Email Verification</div>
                     <div className="mypage-meta-row">
@@ -1135,22 +1161,49 @@ export default function MyPage() {
                     ) : null}
                   </div>
 
-                  <div className="mypage-security-block">
-                    <div className="mypage-item-head">Change Password</div>
+                <div className="mypage-security-block">
+                  <div className="mypage-item-head">Change Password</div>
 
-                    <label className="auth-label" htmlFor="new-password-input">
-                      New Password
-                    </label>
-                    <input
-                      id="new-password-input"
-                      className="auth-input"
+                  <label className="auth-label" htmlFor="current-password-input">
+                    Current Password
+                  </label>
+                  <input
+                    id="current-password-input"
+                    className="auth-input"
+                    type="password"
+                    autoComplete="current-password"
+                    value={currentPassword}
+                    onChange={(event) => setCurrentPassword(event.target.value)}
+                    placeholder="Enter current password"
+                  />
+
+                  <label className="auth-label" htmlFor="new-password-input">
+                    New Password
+                  </label>
+                  <input
+                    id="new-password-input"
+                    className="auth-input"
                       type="password"
                       autoComplete="new-password"
-                      value={newPassword}
-                      onChange={(event) => setNewPassword(event.target.value)}
-                      minLength={6}
-                      placeholder="At least 6 characters"
-                    />
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    minLength={6}
+                    placeholder="At least 6 characters"
+                  />
+
+                  <label className="auth-label" htmlFor="confirm-new-password-input">
+                    Confirm New Password
+                  </label>
+                  <input
+                    id="confirm-new-password-input"
+                    className="auth-input"
+                    type="password"
+                    autoComplete="new-password"
+                    value={confirmNewPassword}
+                    onChange={(event) => setConfirmNewPassword(event.target.value)}
+                    minLength={6}
+                    placeholder="Re-enter new password"
+                  />
 
                     <div className="mypage-form-actions">
                       <button
