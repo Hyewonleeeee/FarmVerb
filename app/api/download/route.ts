@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getPaymentApiErrorMessage, type PaymentApiErrorCode } from '@/lib/i18n/payment';
 
 const SUPPORTED_PRODUCTS = {
   germinate: true
@@ -21,17 +22,29 @@ function getBearerToken(request: Request): string | null {
   return token;
 }
 
+function downloadError(code: PaymentApiErrorCode, status: number, detail?: string) {
+  return NextResponse.json(
+    {
+      ok: false,
+      errorCode: code,
+      error: getPaymentApiErrorMessage(code),
+      detail: detail ?? null
+    },
+    { status }
+  );
+}
+
 export async function POST(request: Request) {
   const token = getBearerToken(request);
   if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return downloadError('UNAUTHORIZED', 401);
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    return downloadError('SERVER_CONFIG_ERROR', 500);
   }
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -48,7 +61,7 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser(token);
 
   if (userError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return downloadError('UNAUTHORIZED', 401, userError?.message);
   }
 
   let requestedSlug = 'germinate';
@@ -62,10 +75,7 @@ export async function POST(request: Request) {
   }
 
   if (!(requestedSlug in SUPPORTED_PRODUCTS)) {
-    return NextResponse.json(
-      { error: 'Unsupported product. Currently only Germinate is available for download.' },
-      { status: 400 }
-    );
+    return downloadError('UNSUPPORTED_PRODUCT', 400);
   }
 
   const { data: productRecord, error: productError } = await supabase
@@ -76,11 +86,11 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (productError) {
-    return NextResponse.json({ error: productError.message }, { status: 500 });
+    return downloadError('DATABASE_ERROR', 500, productError.message);
   }
 
   if (!productRecord || !productRecord.file_path) {
-    return NextResponse.json({ error: 'Product not available' }, { status: 404 });
+    return downloadError('PRODUCT_NOT_AVAILABLE', 404);
   }
 
   const { data: orders, error: ordersError } = await supabase
@@ -91,11 +101,11 @@ export async function POST(request: Request) {
     .limit(1);
 
   if (ordersError) {
-    return NextResponse.json({ error: ordersError.message }, { status: 500 });
+    return downloadError('DATABASE_ERROR', 500, ordersError.message);
   }
 
   if (!orders || orders.length === 0) {
-    return NextResponse.json({ error: 'Purchase required for this product.' }, { status: 403 });
+    return downloadError('PURCHASE_REQUIRED', 403);
   }
 
   const { data: licenses, error: licensesError } = await supabase
@@ -106,11 +116,11 @@ export async function POST(request: Request) {
     .limit(1);
 
   if (licensesError) {
-    return NextResponse.json({ error: licensesError.message }, { status: 500 });
+    return downloadError('DATABASE_ERROR', 500, licensesError.message);
   }
 
   if (!licenses || licenses.length === 0) {
-    return NextResponse.json({ error: 'License required for this product.' }, { status: 403 });
+    return downloadError('LICENSE_REQUIRED', 403);
   }
 
   return NextResponse.json({

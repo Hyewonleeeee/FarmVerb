@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import AuthNav from '@/components/auth/AuthNav';
 import GlobalFooter from '@/components/farmverb/GlobalFooter';
+import { addItemToCart, getCartItemCount, getCartItems, subscribeToCart, type CartItem } from '@/lib/cart/store';
 import { initFarmVerbSite } from '@/lib/ui/initFarmVerbSite';
 
 type PluginSeriesKey = 'nebula' | 'organic';
 type NebulaProductTabKey = 'all' | 'Nebula Crush' | 'Nebula Space' | 'Nebula Warp' | 'Nebula Rift';
-type OrganicProductTabKey = 'all' | 'Germinate' | 'Jeju Citrus' | 'Boseong Green Tea';
+type OrganicProductTabKey = 'all' | 'Germinate' | 'Jeju Citrus' | 'Boseong Green Tea' | 'Icheon Grain';
 
 type PluginProduct = {
   name: string;
@@ -16,13 +18,8 @@ type PluginProduct = {
   unavailable?: boolean;
 };
 
-type CartItem = {
-  name: string;
-  quantity: number;
-};
-
 const NEBULA_PRODUCT_TABS: NebulaProductTabKey[] = ['all', 'Nebula Crush', 'Nebula Space', 'Nebula Warp', 'Nebula Rift'];
-const ORGANIC_PRODUCT_TABS: OrganicProductTabKey[] = ['all', 'Germinate', 'Jeju Citrus', 'Boseong Green Tea'];
+const ORGANIC_PRODUCT_TABS: OrganicProductTabKey[] = ['all', 'Germinate', 'Jeju Citrus', 'Boseong Green Tea', 'Icheon Grain'];
 
 const PLUGIN_SERIES: Record<
   PluginSeriesKey,
@@ -76,6 +73,11 @@ const PLUGIN_SERIES: Record<
         name: 'Boseong Green Tea',
         description: 'A breathable texture processor slot, reserved for future release.',
         unavailable: true
+      },
+      {
+        name: 'Icheon Grain',
+        description: 'A grain-inspired organic processor slot, reserved for future release.',
+        unavailable: true
       }
     ]
   }
@@ -86,28 +88,17 @@ export default function FarmVerbSite() {
   const [activeNebulaProductTab, setActiveNebulaProductTab] = useState<NebulaProductTabKey>('all');
   const [activeOrganicProductTab, setActiveOrganicProductTab] = useState<OrganicProductTabKey>('all');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [buyNowNotice, setBuyNowNotice] = useState<string | null>(null);
-  const cartRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     return initFarmVerbSite();
   }, []);
 
   useEffect(() => {
-    const onPointerDown = (event: PointerEvent) => {
-      if (!cartRef.current) {
-        return;
-      }
-
-      const target = event.target;
-      if (target instanceof Node && !cartRef.current.contains(target)) {
-        setIsCartOpen(false);
-      }
-    };
-
-    document.addEventListener('pointerdown', onPointerDown);
-    return () => document.removeEventListener('pointerdown', onPointerDown);
+    setCartItems(getCartItems());
+    return subscribeToCart(() => {
+      setCartItems(getCartItems());
+    });
   }, []);
 
   useEffect(() => {
@@ -168,6 +159,15 @@ export default function FarmVerbSite() {
 
   const onSeriesTabClick = (series: PluginSeriesKey) => {
     setActivePluginSeries(series);
+  };
+
+  const onProductNameClick = (productName: string) => {
+    if (activePluginSeries === 'nebula') {
+      setActiveNebulaProductTab(productName as NebulaProductTabKey);
+      return;
+    }
+
+    setActiveOrganicProductTab(productName as OrganicProductTabKey);
   };
 
   const subtabAriaLabel = activePluginSeries === 'nebula' ? 'Nebula products' : 'Organic products';
@@ -263,7 +263,16 @@ export default function FarmVerbSite() {
           )}
 
           <div className="plugin-card-copy">
-            <h3>{product.name}</h3>
+            <h3>
+              <button
+                type="button"
+                className="plugin-card-name-link"
+                onClick={() => onProductNameClick(product.name)}
+                aria-label={`Open ${product.name} tab`}
+              >
+                {product.name}
+              </button>
+            </h3>
             <p>{product.description}</p>
             {product.unavailable ? <p className="plugin-card-status">Coming Soon</p> : null}
           </div>
@@ -299,31 +308,11 @@ export default function FarmVerbSite() {
     return renderSeriesGrid();
   };
 
-  const cartItemCount = useMemo(
-    () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
-    [cartItems]
-  );
+  const cartItemCount = useMemo(() => getCartItemCount(cartItems), [cartItems]);
 
   const addToCart = (productName: string) => {
-    setCartItems((prev) => {
-      const exists = prev.find((item) => item.name === productName);
-      if (!exists) {
-        return [...prev, { name: productName, quantity: 1 }];
-      }
-
-      return prev.map((item) =>
-        item.name === productName ? { ...item, quantity: item.quantity + 1 } : item
-      );
-    });
-    setIsCartOpen(true);
-  };
-
-  const removeFromCart = (productName: string) => {
-    setCartItems((prev) => prev.filter((item) => item.name !== productName));
-  };
-
-  const clearCart = () => {
-    setCartItems([]);
+    const nextCart = addItemToCart(productName);
+    setCartItems(nextCart);
   };
 
   const onBuyNow = (productName: string) => {
@@ -356,60 +345,21 @@ export default function FarmVerbSite() {
             <a href="#/support" className="nav-link nav-link-support" data-route="support">
               Support
             </a>
-            <div className={`cart-shell ${isCartOpen ? 'is-open' : ''}`} ref={cartRef}>
-              <button
-                type="button"
-                className="cart-trigger"
-                aria-label={`Shopping cart, ${cartItemCount} item${cartItemCount === 1 ? '' : 's'}`}
-                onClick={() => setIsCartOpen((prev) => !prev)}
-              >
-                <span className="cart-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                    <path d="M3 4h2l1.4 8.2a2 2 0 0 0 2 1.8h7.9a2 2 0 0 0 2-1.6L20 7H7.2" />
-                    <circle cx="10" cy="19" r="1.7" />
-                    <circle cx="17" cy="19" r="1.7" />
-                  </svg>
-                </span>
-                <span className="cart-label">Cart</span>
-                <span className="cart-badge">{cartItemCount}</span>
-              </button>
-
-              {isCartOpen ? (
-                <div className="cart-dropdown" role="dialog" aria-label="Shopping cart">
-                  <div className="cart-head">
-                    <h2>Cart</h2>
-                    {cartItems.length > 0 ? (
-                      <button type="button" className="cart-clear" onClick={clearCart}>
-                        Clear
-                      </button>
-                    ) : null}
-                  </div>
-
-                  {cartItems.length === 0 ? (
-                    <p className="cart-empty">Your cart is empty.</p>
-                  ) : (
-                    <ul className="cart-list">
-                      {cartItems.map((item) => (
-                        <li key={item.name} className="cart-item">
-                          <div className="cart-item-copy">
-                            <strong>{item.name}</strong>
-                            <span>Qty {item.quantity}</span>
-                          </div>
-                          <button
-                            type="button"
-                            className="cart-remove"
-                            onClick={() => removeFromCart(item.name)}
-                            aria-label={`Remove ${item.name} from cart`}
-                          >
-                            Remove
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ) : null}
-            </div>
+            <Link
+              href="/cart"
+              className="cart-trigger"
+              aria-label={`Shopping cart, ${cartItemCount} item${cartItemCount === 1 ? '' : 's'}`}
+            >
+              <span className="cart-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                  <path d="M3 4h2l1.4 8.2a2 2 0 0 0 2 1.8h7.9a2 2 0 0 0 2-1.6L20 7H7.2" />
+                  <circle cx="10" cy="19" r="1.7" />
+                  <circle cx="17" cy="19" r="1.7" />
+                </svg>
+              </span>
+              <span className="cart-label">Cart</span>
+              <span className="cart-badge">{cartItemCount}</span>
+            </Link>
             <AuthNav />
           </div>
         </nav>

@@ -5,11 +5,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import CountrySelect, { DEFAULT_COUNTRY_NAME, normalizeCountryName } from '@/components/ui/CountrySelect';
+import { getPaymentCopy, type PaymentApiErrorCode, type PaymentLocale } from '@/lib/i18n/payment';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 const MY_PAGE_LOGIN_REDIRECT = '/login?redirect=%2Fmypage';
 
-type DashboardTabKey = 'account' | 'orders' | 'licenses' | 'cart' | 'security';
+type DashboardTabKey = 'account' | 'orders' | 'licenses' | 'security';
 
 type Profile = {
   id: string;
@@ -67,18 +68,10 @@ type License = {
   product: ProductSummary | null;
 };
 
-type CartItem = {
-  id: string;
-  quantity: number;
-  created_at: string;
-  product: ProductSummary | null;
-};
-
 const dashboardTabs: { key: DashboardTabKey; label: string }[] = [
   { key: 'account', label: 'Account Info' },
   { key: 'orders', label: 'Orders / Purchase History' },
   { key: 'licenses', label: 'Licenses' },
-  { key: 'cart', label: 'Cart' },
   { key: 'security', label: 'Security' }
 ];
 
@@ -86,7 +79,6 @@ const dashboardSectionCopy: Record<DashboardTabKey, string> = {
   account: 'Personal details and account profile settings.',
   orders: 'Purchase records with payment and order metadata.',
   licenses: 'License keys, copy tools, and secure download actions.',
-  cart: 'Review selected products before checkout.',
   security: 'Verification and password management for account safety.'
 };
 
@@ -118,14 +110,15 @@ const formatDate = (dateText: string | null | undefined) => {
   return `${yyyy}.${mm}.${dd}`;
 };
 
-const formatCurrency = (value: number | null, currencyText?: string | null) => {
+const formatCurrency = (value: number | null, currencyText: string | null | undefined, locale: PaymentLocale) => {
   if (value === null || Number.isNaN(value)) {
     return '-';
   }
 
   const normalizedCurrency = (currencyText ?? 'USD').trim().toUpperCase();
+  const numberLocale = locale === 'ko' ? 'ko-KR' : 'en-US';
   try {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(numberLocale, {
       style: 'currency',
       currency: normalizedCurrency,
       maximumFractionDigits: 2
@@ -146,32 +139,10 @@ function normalizePaymentStatus(status: string | null) {
     .join(' ');
 }
 
-const CART_PRICE_FALLBACK_BY_SLUG: Record<string, number> = {
-  germinate: 89,
-  'nebula-crush': 79,
-  'nebula-space': 79,
-  'nebula-warp': 79,
-  'nebula-rift': 79,
-  'nebula-drums': 69,
-  'glitch-drum-pack-vol-1': 29
-};
-
-function getCartItemUnitPrice(item: CartItem) {
-  const rawPrice = item.product?.price;
-  if (typeof rawPrice === 'number' && !Number.isNaN(rawPrice) && rawPrice >= 0) {
-    return rawPrice;
-  }
-
-  const slugKey = (item.product?.slug ?? '').toLowerCase();
-  if (slugKey && CART_PRICE_FALLBACK_BY_SLUG[slugKey] !== undefined) {
-    return CART_PRICE_FALLBACK_BY_SLUG[slugKey];
-  }
-
-  return 0;
-}
-
 export default function MyPage() {
   const router = useRouter();
+  const paymentLocale: PaymentLocale = 'en';
+  const paymentCopy = getPaymentCopy(paymentLocale);
   const isLoggingOutRef = useRef(false);
 
   const [activeTab, setActiveTab] = useState<DashboardTabKey>('account');
@@ -185,9 +156,6 @@ export default function MyPage() {
 
   const [licenses, setLicenses] = useState<License[]>([]);
   const [licensesMessage, setLicensesMessage] = useState('');
-
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [cartMessage, setCartMessage] = useState('');
 
   const [isAccountEditMode, setIsAccountEditMode] = useState(false);
   const [nameInput, setNameInput] = useState('');
@@ -211,6 +179,7 @@ export default function MyPage() {
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
+    const uiText = getPaymentCopy(paymentLocale);
     let mounted = true;
 
     const loadProfile = async (currentUser: User) => {
@@ -266,7 +235,7 @@ export default function MyPage() {
 
       if (ordersError) {
         setOrders([]);
-        setOrdersMessage('Could not load purchase history right now.');
+        setOrdersMessage(uiText.orders.loadFailed);
         return;
       }
 
@@ -323,7 +292,7 @@ export default function MyPage() {
             payment_status: order.payment_status,
             currency: order.currency,
             transaction_id: order.transaction_id,
-            product_name: order.product?.name ?? 'Unknown product',
+            product_name: order.product?.name ?? uiText.orders.unknownProduct,
             product_slug: order.product?.slug ?? null,
             quantity: 1,
             unit_price: null
@@ -340,7 +309,7 @@ export default function MyPage() {
             payment_status: order.payment_status,
             currency: item.currency ?? order.currency,
             transaction_id: order.transaction_id,
-            product_name: item.product?.name ?? order.product?.name ?? 'Unknown product',
+            product_name: item.product?.name ?? order.product?.name ?? uiText.orders.unknownProduct,
             product_slug: item.product?.slug ?? order.product?.slug ?? null,
             quantity: item.quantity ?? 1,
             unit_price: item.unit_price
@@ -357,7 +326,7 @@ export default function MyPage() {
       );
 
       if (itemsError) {
-        setOrdersMessage('Detailed item rows are unavailable right now. Showing fallback order data.');
+        setOrdersMessage(uiText.orders.detailsPartial);
         return;
       }
 
@@ -377,7 +346,7 @@ export default function MyPage() {
 
       if (error) {
         setLicenses([]);
-        setLicensesMessage('Could not load licenses right now.');
+        setLicensesMessage(uiText.licenses.loadFailed);
         return;
       }
 
@@ -392,41 +361,8 @@ export default function MyPage() {
       setLicensesMessage('');
     };
 
-    const loadCart = async (currentUser: User) => {
-      const { data, error } = await supabase
-        .from('cart_items')
-        .select('id, quantity, created_at, product:products(*)')
-        .eq('user_id', currentUser.id)
-        .order('created_at', { ascending: false });
-
-      if (!mounted) {
-        return;
-      }
-
-      if (error) {
-        setCartItems([]);
-        setCartMessage('Cart is not available yet. Run the cart migration SQL and refresh.');
-        return;
-      }
-
-      const normalizedCartItems: CartItem[] = (data ?? []).map((row) => ({
-        id: row.id,
-        quantity: row.quantity ?? 1,
-        created_at: row.created_at,
-        product: normalizeProduct(row.product as ProductSummary | ProductSummary[] | null)
-      }));
-
-      setCartItems(normalizedCartItems);
-      setCartMessage('');
-    };
-
     const loadDashboardData = async (currentUser: User) => {
-      await Promise.all([
-        loadProfile(currentUser),
-        loadOrders(currentUser),
-        loadLicenses(currentUser),
-        loadCart(currentUser)
-      ]);
+      await Promise.all([loadProfile(currentUser), loadOrders(currentUser), loadLicenses(currentUser)]);
 
       if (mounted) {
         setIsLoading(false);
@@ -462,7 +398,6 @@ export default function MyPage() {
         setProfile(null);
         setOrders([]);
         setLicenses([]);
-        setCartItems([]);
         setIsAccountEditMode(false);
         router.replace(isLoggingOutRef.current ? '/' : MY_PAGE_LOGIN_REDIRECT);
         return;
@@ -477,7 +412,7 @@ export default function MyPage() {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [router]);
+  }, [router, paymentLocale]);
 
   const handleLogout = async () => {
     const supabase = createBrowserSupabaseClient();
@@ -541,92 +476,6 @@ export default function MyPage() {
     setAccountMessage('Account information updated.');
     setIsAccountEditMode(false);
     setIsSavingAccount(false);
-  };
-
-  const refreshCart = async () => {
-    if (!user) {
-      return;
-    }
-
-    const supabase = createBrowserSupabaseClient();
-    const { data, error } = await supabase
-      .from('cart_items')
-      .select('id, quantity, created_at, product:products(*)')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      setCartMessage(`Failed to refresh cart: ${error.message}`);
-      return;
-    }
-
-    const normalized: CartItem[] = (data ?? []).map((row) => ({
-      id: row.id,
-      quantity: row.quantity ?? 1,
-      created_at: row.created_at,
-      product: normalizeProduct(row.product as ProductSummary | ProductSummary[] | null)
-    }));
-
-    setCartItems(normalized);
-    setCartMessage('');
-  };
-
-  const handleUpdateCartQuantity = async (cartItemId: string, nextQuantity: number) => {
-    if (!user) {
-      return;
-    }
-
-    const supabase = createBrowserSupabaseClient();
-
-    if (nextQuantity <= 0) {
-      const { error } = await supabase.from('cart_items').delete().eq('id', cartItemId).eq('user_id', user.id);
-      if (error) {
-        setCartMessage(`Failed to update cart: ${error.message}`);
-        return;
-      }
-
-      await refreshCart();
-      return;
-    }
-
-    const { error } = await supabase
-      .from('cart_items')
-      .update({ quantity: nextQuantity })
-      .eq('id', cartItemId)
-      .eq('user_id', user.id);
-
-    if (error) {
-      setCartMessage(`Failed to update cart: ${error.message}`);
-      return;
-    }
-
-    setCartItems((prev) => prev.map((item) => (item.id === cartItemId ? { ...item, quantity: nextQuantity } : item)));
-    setCartMessage('');
-  };
-
-  const handleRemoveCartItem = async (cartItemId: string) => {
-    if (!user) {
-      return;
-    }
-
-    const supabase = createBrowserSupabaseClient();
-    const { error } = await supabase.from('cart_items').delete().eq('id', cartItemId).eq('user_id', user.id);
-
-    if (error) {
-      setCartMessage(`Failed to remove item: ${error.message}`);
-      return;
-    }
-
-    setCartItems((prev) => prev.filter((item) => item.id !== cartItemId));
-  };
-
-  const handleCheckout = () => {
-    if (cartItems.length === 0) {
-      setCartMessage('Your cart is empty.');
-      return;
-    }
-
-    setCartMessage('Checkout is ready for payment integration. We can connect domestic PG next.');
   };
 
   const handleSendResetEmail = async () => {
@@ -747,7 +596,7 @@ export default function MyPage() {
 
     const accessToken = session?.access_token;
     if (!accessToken) {
-      setDownloadMessage('Please log in again.');
+      setDownloadMessage(paymentCopy.download.loginAgain);
       setIsDownloading(false);
       return;
     }
@@ -761,21 +610,24 @@ export default function MyPage() {
       body: JSON.stringify({ slug: productSlug })
     });
 
-    const payload = (await response.json().catch(() => null)) as { downloadUrl?: string; error?: string } | null;
+    const payload = (await response.json().catch(() => null)) as
+      | { downloadUrl?: string; error?: string; errorCode?: PaymentApiErrorCode }
+      | null;
 
     if (!response.ok) {
-      setDownloadMessage(payload?.error ?? 'Download failed.');
+      const messageFromCode = payload?.errorCode ? paymentCopy.apiErrors[payload.errorCode] : '';
+      setDownloadMessage(messageFromCode || payload?.error || paymentCopy.download.failed);
       setIsDownloading(false);
       return;
     }
 
     if (!payload?.downloadUrl) {
-      setDownloadMessage('Download URL not found.');
+      setDownloadMessage(paymentCopy.download.urlMissing);
       setIsDownloading(false);
       return;
     }
 
-    setDownloadMessage('Download starting...');
+    setDownloadMessage(paymentCopy.download.starting);
     window.location.assign(payload.downloadUrl);
     setIsDownloading(false);
   };
@@ -788,7 +640,7 @@ export default function MyPage() {
         setCopiedLicenseId((currentId) => (currentId === licenseId ? null : currentId));
       }, 1400);
     } catch {
-      setDownloadMessage('Could not copy the license key.');
+      setDownloadMessage(paymentCopy.licenses.copyFailed);
     }
   };
 
@@ -797,25 +649,10 @@ export default function MyPage() {
   const licenseCards = useMemo(() => {
     return licenses.map((license) => ({
       ...license,
-      productName: license.product?.name ?? 'Unknown product',
+      productName: license.product?.name ?? paymentCopy.orders.unknownProduct,
       productSlug: license.product?.slug ?? null
     }));
-  }, [licenses]);
-
-  const cartSummary = useMemo(() => {
-    const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-    const subtotal = cartItems.reduce((sum, item) => {
-      return sum + getCartItemUnitPrice(item) * item.quantity;
-    }, 0);
-
-    const currency = (cartItems[0]?.product?.currency ?? 'USD').toUpperCase();
-
-    return {
-      itemCount,
-      subtotal,
-      currency
-    };
-  }, [cartItems]);
+  }, [licenses, paymentCopy.orders.unknownProduct]);
 
   const activeDashboardTabMeta = useMemo(() => {
     return dashboardTabs.find((tab) => tab.key === activeTab) ?? dashboardTabs[0];
@@ -857,7 +694,7 @@ export default function MyPage() {
             <div>
               <p className="auth-overline">My Account</p>
               <h1 className="auth-title">Dashboard</h1>
-              <p className="auth-copy">Manage account, purchases, licenses, cart, and security in one place.</p>
+              <p className="auth-copy">Manage account, purchases, licenses, and security in one place.</p>
             </div>
 
             <button type="button" className="auth-submit auth-submit-secondary mypage-logout" onClick={handleLogout}>
@@ -980,7 +817,7 @@ export default function MyPage() {
                   {ordersMessage ? <p>{ordersMessage}</p> : null}
 
                   {!ordersMessage && orders.length === 0 ? (
-                    <p>No purchases yet. Your purchased products will appear here after checkout.</p>
+                    <p>{paymentCopy.orders.empty}</p>
                   ) : null}
 
                   {orders.length > 0 ? (
@@ -988,14 +825,25 @@ export default function MyPage() {
                       {orders.map((order) => (
                         <li key={order.id} className="mypage-list-item">
                           <div className="mypage-item-head">{order.product_name}</div>
-                          <div className="mypage-meta-row">✔ Purchased • {formatDate(order.purchased_at)}</div>
                           <div className="mypage-meta-row">
-                            Qty {order.quantity} • {formatCurrency(order.unit_price, order.currency)}
+                            ✔ {paymentCopy.orders.purchased} • {formatDate(order.purchased_at)}
                           </div>
-                          <div className="mypage-meta-row">Status: {normalizePaymentStatus(order.payment_status)}</div>
-                          <div className="mypage-meta-row">Currency: {(order.currency ?? 'USD').toUpperCase()}</div>
-                          <div className="mypage-meta-row">Order: {order.order_number ?? order.order_id}</div>
-                          <div className="mypage-meta-row">TX: {order.transaction_id ?? '-'}</div>
+                          <div className="mypage-meta-row">
+                            {paymentCopy.orders.qty} {order.quantity} •{' '}
+                            {formatCurrency(order.unit_price, order.currency, paymentLocale)}
+                          </div>
+                          <div className="mypage-meta-row">
+                            {paymentCopy.orders.status}: {normalizePaymentStatus(order.payment_status)}
+                          </div>
+                          <div className="mypage-meta-row">
+                            {paymentCopy.orders.currency}: {(order.currency ?? 'USD').toUpperCase()}
+                          </div>
+                          <div className="mypage-meta-row">
+                            {paymentCopy.orders.orderNumber}: {order.order_number ?? order.order_id}
+                          </div>
+                          <div className="mypage-meta-row">
+                            {paymentCopy.orders.transactionId}: {order.transaction_id ?? '-'}
+                          </div>
                         </li>
                       ))}
                     </ul>
@@ -1007,24 +855,26 @@ export default function MyPage() {
                 <>
                   {licensesMessage ? <p>{licensesMessage}</p> : null}
 
-                  {!licensesMessage && licenseCards.length === 0 ? <p>No licenses yet.</p> : null}
+                  {!licensesMessage && licenseCards.length === 0 ? <p>{paymentCopy.licenses.empty}</p> : null}
 
                   {licenseCards.length > 0 ? (
                     <ul className="mypage-list">
                       {licenseCards.map((license) => (
                         <li key={license.id} className="mypage-list-item">
                           <div className="mypage-item-head">{license.productName}</div>
-                          <div className="mypage-meta-row">✔ Purchased • {formatDate(license.created_at)}</div>
+                          <div className="mypage-meta-row">
+                            ✔ {paymentCopy.orders.purchased} • {formatDate(license.created_at)}
+                          </div>
 
                           <div className="mypage-license-row">
-                            <span className="mypage-meta-label">License</span>
+                            <span className="mypage-meta-label">{paymentCopy.licenses.label}</span>
                             <code className="mypage-license-key">{license.license_key}</code>
                             <button
                               type="button"
                               className="auth-submit auth-submit-secondary mypage-small-button"
                               onClick={() => void handleCopyLicense(license.id, license.license_key)}
                             >
-                              {copiedLicenseId === license.id ? 'Copied' : 'Copy'}
+                              {copiedLicenseId === license.id ? paymentCopy.licenses.copied : paymentCopy.licenses.copy}
                             </button>
                           </div>
 
@@ -1035,7 +885,7 @@ export default function MyPage() {
                               onClick={() => void handleDownload(license.productSlug as string)}
                               disabled={isDownloading}
                             >
-                              {isDownloading ? 'Preparing...' : 'Download'}
+                              {isDownloading ? paymentCopy.licenses.preparing : paymentCopy.licenses.download}
                             </button>
                           ) : null}
                         </li>
@@ -1047,182 +897,101 @@ export default function MyPage() {
                 </>
               ) : null}
 
-              {activeTab === 'cart' ? (
+              {activeTab === 'security' ? (
                 <>
-                  {cartItems.length === 0 ? (
-                    <div className="mypage-cart-empty">
-                      <p>Your cart is empty. Added items will appear here.</p>
+                  <div className="mypage-security-stack">
+                    <div className="mypage-security-block">
+                      <div className="mypage-item-head">Email Verification</div>
+                      <div className="mypage-meta-row">
+                        Status:{' '}
+                        <strong className={`mypage-status ${emailVerified ? 'is-ok' : 'is-pending'}`}>
+                          {emailVerified ? 'Verified' : 'Not verified'}
+                        </strong>
+                      </div>
+
+                      {!emailVerified ? (
+                        <button
+                          type="button"
+                          className="auth-submit auth-submit-secondary mypage-small-button"
+                          onClick={() => void handleResendVerification()}
+                          disabled={isResendingVerification}
+                        >
+                          {isResendingVerification ? 'Sending...' : 'Send Verification Email Again'}
+                        </button>
+                      ) : null}
                     </div>
-                  ) : (
-                    <div className="mypage-cart-page">
-                      <section className="mypage-cart-lines" aria-label="Cart items">
-                        <ul className="mypage-cart-line-list">
-                          {cartItems.map((item) => {
-                            const unitPrice = getCartItemUnitPrice(item);
-                            const lineTotal = unitPrice * item.quantity;
-                            const lineCurrency = (item.product?.currency ?? cartSummary.currency ?? 'USD').toUpperCase();
 
-                            return (
-                              <li key={item.id} className="mypage-cart-line-item">
-                                <div className="mypage-cart-line-main">
-                                  <div className="mypage-item-head">{item.product?.name ?? 'Unknown product'}</div>
-                                  <div className="mypage-meta-row">Added • {formatDate(item.created_at)}</div>
-                                  <div className="mypage-cart-price-row">
-                                    <span>Unit Price</span>
-                                    <strong>{formatCurrency(unitPrice, lineCurrency)}</strong>
-                                  </div>
-                                  <div className="mypage-cart-price-row">
-                                    <span>Line Total</span>
-                                    <strong>{formatCurrency(lineTotal, lineCurrency)}</strong>
-                                  </div>
-                                </div>
+                    <div className="mypage-security-block">
+                      <div className="mypage-item-head">Change Password</div>
 
-                                <div className="mypage-cart-actions">
-                                  <button
-                                    type="button"
-                                    className="auth-submit auth-submit-secondary mypage-qty-button"
-                                    onClick={() => void handleUpdateCartQuantity(item.id, item.quantity - 1)}
-                                  >
-                                    -
-                                  </button>
-                                  <span className="mypage-qty-label">Qty {item.quantity}</span>
-                                  <button
-                                    type="button"
-                                    className="auth-submit auth-submit-secondary mypage-qty-button"
-                                    onClick={() => void handleUpdateCartQuantity(item.id, item.quantity + 1)}
-                                  >
-                                    +
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="auth-submit auth-submit-secondary mypage-small-button"
-                                    onClick={() => void handleRemoveCartItem(item.id)}
-                                  >
-                                    Remove
-                                  </button>
-                                </div>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </section>
+                      <div className="mypage-security-fields">
+                        <div className="mypage-security-field">
+                          <label className="auth-label" htmlFor="current-password-input">
+                            Current Password
+                          </label>
+                          <input
+                            id="current-password-input"
+                            className="auth-input"
+                            type="password"
+                            autoComplete="current-password"
+                            value={currentPassword}
+                            onChange={(event) => setCurrentPassword(event.target.value)}
+                            placeholder="Enter current password"
+                          />
+                        </div>
 
-                      <aside className="mypage-cart-summary" aria-label="Cart summary">
-                        <h3>Order Summary</h3>
-                        <div className="mypage-cart-summary-row">
-                          <span>Items</span>
-                          <strong>{cartSummary.itemCount}</strong>
+                        <div className="mypage-security-field">
+                          <label className="auth-label" htmlFor="new-password-input">
+                            New Password
+                          </label>
+                          <input
+                            id="new-password-input"
+                            className="auth-input"
+                            type="password"
+                            autoComplete="new-password"
+                            value={newPassword}
+                            onChange={(event) => setNewPassword(event.target.value)}
+                            minLength={6}
+                            placeholder="At least 6 characters"
+                          />
                         </div>
-                        <div className="mypage-cart-summary-row">
-                          <span>Subtotal</span>
-                          <strong>{formatCurrency(cartSummary.subtotal, cartSummary.currency)}</strong>
+
+                        <div className="mypage-security-field">
+                          <label className="auth-label" htmlFor="confirm-new-password-input">
+                            Confirm New Password
+                          </label>
+                          <input
+                            id="confirm-new-password-input"
+                            className="auth-input"
+                            type="password"
+                            autoComplete="new-password"
+                            value={confirmNewPassword}
+                            onChange={(event) => setConfirmNewPassword(event.target.value)}
+                            minLength={6}
+                            placeholder="Re-enter new password"
+                          />
                         </div>
-                        <div className="mypage-cart-summary-row mypage-cart-total-row">
-                          <span>Total</span>
-                          <strong>{formatCurrency(cartSummary.subtotal, cartSummary.currency)}</strong>
-                        </div>
+                      </div>
+
+                      <div className="mypage-form-actions mypage-security-actions">
+                        <button
+                          type="button"
+                          className="auth-submit"
+                          onClick={() => void handleChangePassword()}
+                          disabled={isChangingPassword}
+                        >
+                          {isChangingPassword ? 'Updating...' : 'Change Password'}
+                        </button>
 
                         <button
                           type="button"
-                          className="auth-submit mypage-cart-checkout"
-                          onClick={handleCheckout}
-                          disabled={cartItems.length === 0}
+                          className="auth-submit auth-submit-secondary"
+                          onClick={() => void handleSendResetEmail()}
+                          disabled={isSendingResetEmail}
                         >
-                          Checkout
+                          {isSendingResetEmail ? 'Sending...' : 'Send Reset Password Email'}
                         </button>
-                      </aside>
-                    </div>
-                  )}
-
-                  {cartMessage ? <p className="mypage-inline-message">{cartMessage}</p> : null}
-                </>
-              ) : null}
-
-              {activeTab === 'security' ? (
-                <>
-                  <div className="mypage-security-block">
-                    <div className="mypage-item-head">Email Verification</div>
-                    <div className="mypage-meta-row">
-                      Status:{' '}
-                      <strong className={`mypage-status ${emailVerified ? 'is-ok' : 'is-pending'}`}>
-                        {emailVerified ? 'Verified' : 'Not verified'}
-                      </strong>
-                    </div>
-
-                    {!emailVerified ? (
-                      <button
-                        type="button"
-                        className="auth-submit auth-submit-secondary mypage-small-button"
-                        onClick={() => void handleResendVerification()}
-                        disabled={isResendingVerification}
-                      >
-                        {isResendingVerification ? 'Sending...' : 'Send Verification Email Again'}
-                      </button>
-                    ) : null}
-                  </div>
-
-                <div className="mypage-security-block">
-                  <div className="mypage-item-head">Change Password</div>
-
-                  <label className="auth-label" htmlFor="current-password-input">
-                    Current Password
-                  </label>
-                  <input
-                    id="current-password-input"
-                    className="auth-input"
-                    type="password"
-                    autoComplete="current-password"
-                    value={currentPassword}
-                    onChange={(event) => setCurrentPassword(event.target.value)}
-                    placeholder="Enter current password"
-                  />
-
-                  <label className="auth-label" htmlFor="new-password-input">
-                    New Password
-                  </label>
-                  <input
-                    id="new-password-input"
-                    className="auth-input"
-                      type="password"
-                      autoComplete="new-password"
-                    value={newPassword}
-                    onChange={(event) => setNewPassword(event.target.value)}
-                    minLength={6}
-                    placeholder="At least 6 characters"
-                  />
-
-                  <label className="auth-label" htmlFor="confirm-new-password-input">
-                    Confirm New Password
-                  </label>
-                  <input
-                    id="confirm-new-password-input"
-                    className="auth-input"
-                    type="password"
-                    autoComplete="new-password"
-                    value={confirmNewPassword}
-                    onChange={(event) => setConfirmNewPassword(event.target.value)}
-                    minLength={6}
-                    placeholder="Re-enter new password"
-                  />
-
-                    <div className="mypage-form-actions">
-                      <button
-                        type="button"
-                        className="auth-submit"
-                        onClick={() => void handleChangePassword()}
-                        disabled={isChangingPassword}
-                      >
-                        {isChangingPassword ? 'Updating...' : 'Change Password'}
-                      </button>
-
-                      <button
-                        type="button"
-                        className="auth-submit auth-submit-secondary"
-                        onClick={() => void handleSendResetEmail()}
-                        disabled={isSendingResetEmail}
-                      >
-                        {isSendingResetEmail ? 'Sending...' : 'Send Reset Password Email'}
-                      </button>
+                      </div>
                     </div>
                   </div>
 
