@@ -753,6 +753,9 @@ export default function MyPage() {
                             <div className="mypage-meta-row">
                               Purchased: {formatDate(order.created_at)}
                             </div>
+                            <div className="mypage-meta-row">
+                              Order ID: {order.order_id ?? '-'}
+                            </div>
 
                             {license ? (
                               <div className="mypage-license-row">
