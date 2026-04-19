@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import { getPaymentCopy, type PaymentLocale } from '@/lib/i18n/payment';
@@ -29,6 +30,7 @@ const formatCurrency = (amount: number, currency: string, locale: PaymentLocale)
 };
 
 export default function CartPage() {
+  const router = useRouter();
   const paymentLocale: PaymentLocale = 'en';
   const paymentCopy = getPaymentCopy(paymentLocale);
 
@@ -80,7 +82,7 @@ export default function CartPage() {
       return;
     }
 
-    setCartMessage(paymentCopy.cart.checkoutSoon);
+    router.push('/checkout');
   };
 
   const handleClearCart = () => {

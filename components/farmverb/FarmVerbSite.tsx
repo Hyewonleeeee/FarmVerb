@@ -62,7 +62,7 @@ const PLUGIN_SERIES: Record<
       {
         name: 'Germinate',
         description: 'Granular delay that blooms over time with gentle unpredictability and tactile rhythm.',
-        images: ['/Germinate/Germinate.png', '/Germinate/Germinate02.png']
+        images: ['/Germinate/Germinate02.png', '/Germinate/Germinate.png']
       },
       {
         name: 'Jeju Citrus',
@@ -253,7 +253,9 @@ export default function FarmVerbSite() {
           tabIndex={0}
         >
           {product.images && product.images.length > 0 ? (
-            <figure className="plugin-card-media">
+            <figure
+              className={`plugin-card-media ${activePluginSeries === 'organic' ? 'plugin-card-media-organic' : ''}`}
+            >
               <img src={product.images[0]} alt={`${product.name} interface`} />
             </figure>
           ) : (

@@ -1139,10 +1139,16 @@ img {
   aspect-ratio: 16 / 7;
 }
 
-.plugin-card-organic .plugin-card-media img {
+.plugin-card-media-organic {
+  aspect-ratio: auto;
+  background: transparent;
+}
+
+.plugin-card-media-organic img {
+  height: auto;
   object-fit: contain;
-  padding: 0.32rem;
-  background: rgba(241, 249, 214, 0.78);
+  padding: 0;
+  background: transparent;
 }
 
 .plugin-feature-stage {
