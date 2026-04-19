@@ -28,37 +28,11 @@ type ProductSummary = {
   currency?: string | null;
 };
 
-type OrderRow = {
-  id: string;
-  created_at: string;
-  order_number: string | null;
-  payment_status: string | null;
-  currency: string | null;
-  transaction_id: string | null;
-  product: ProductSummary | null;
-};
-
-type OrderItemRow = {
-  id: string;
-  order_id: string;
-  quantity: number | null;
-  unit_price: number | null;
-  currency: string | null;
-  product: ProductSummary | null;
-};
-
 type OrderLine = {
   id: string;
-  order_id: string;
-  purchased_at: string;
-  order_number: string | null;
-  payment_status: string | null;
-  currency: string | null;
-  transaction_id: string | null;
-  product_name: string;
-  product_slug: string | null;
-  quantity: number;
-  unit_price: number | null;
+  product_name: string | null;
+  amount: number | null;
+  created_at: string;
 };
 
 type License = {
@@ -108,6 +82,18 @@ const formatDate = (dateText: string | null | undefined) => {
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const dd = String(date.getDate()).padStart(2, '0');
   return `${yyyy}.${mm}.${dd}`;
+};
+
+const formatOrderAmount = (value: number | null | undefined) => {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return '-';
+  }
+
+  return new Intl.NumberFormat('ko-KR', {
+    style: 'currency',
+    currency: 'KRW',
+    maximumFractionDigits: 0
+  }).format(value);
 };
 
 const formatCurrency = (value: number | null, currencyText: string | null | undefined, locale: PaymentLocale) => {
@@ -225,7 +211,7 @@ export default function MyPage() {
     const loadOrders = async (currentUser: User) => {
       const { data: orderRows, error: ordersError } = await supabase
         .from('orders')
-        .select('id, created_at, order_number, payment_status, currency, transaction_id, product:products(id, name, slug)')
+        .select('id, product_name, amount, created_at')
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false });
 
@@ -239,97 +225,17 @@ export default function MyPage() {
         return;
       }
 
-      const normalizedOrders: OrderRow[] = (orderRows ?? []).map((row) => ({
-        id: row.id,
-        created_at: row.created_at,
-        order_number: row.order_number,
-        payment_status: row.payment_status,
-        currency: row.currency,
-        transaction_id: row.transaction_id,
-        product: normalizeProduct(row.product as ProductSummary | ProductSummary[] | null)
-      }));
-
-      if (normalizedOrders.length === 0) {
-        setOrders([]);
-        setOrdersMessage('');
-        return;
-      }
-
-      const orderIds = normalizedOrders.map((order) => order.id);
-
-      const { data: itemRows, error: itemsError } = await supabase
-        .from('order_items')
-        .select('id, order_id, quantity, unit_price, currency, product:products(id, name, slug)')
-        .in('order_id', orderIds);
-
-      const normalizedItems: OrderItemRow[] = (itemRows ?? []).map((row) => ({
-        id: row.id,
-        order_id: row.order_id,
-        quantity: row.quantity,
-        unit_price: row.unit_price,
-        currency: row.currency,
-        product: normalizeProduct(row.product as ProductSummary | ProductSummary[] | null)
-      }));
-
-      const itemsByOrder = new Map<string, OrderItemRow[]>();
-      normalizedItems.forEach((item) => {
-        const list = itemsByOrder.get(item.order_id) ?? [];
-        list.push(item);
-        itemsByOrder.set(item.order_id, list);
+      const normalizedOrders: OrderLine[] = (orderRows ?? []).map((row) => {
+        const parsedAmount = typeof row.amount === 'number' ? row.amount : Number(row.amount);
+        return {
+          id: row.id,
+          product_name: row.product_name ?? null,
+          amount: Number.isNaN(parsedAmount) ? null : parsedAmount,
+          created_at: row.created_at
+        };
       });
 
-      const builtOrderLines: OrderLine[] = [];
-
-      normalizedOrders.forEach((order) => {
-        const linkedItems = itemsByOrder.get(order.id) ?? [];
-
-        if (linkedItems.length === 0) {
-          builtOrderLines.push({
-            id: `${order.id}-fallback`,
-            order_id: order.id,
-            purchased_at: order.created_at,
-            order_number: order.order_number,
-            payment_status: order.payment_status,
-            currency: order.currency,
-            transaction_id: order.transaction_id,
-            product_name: order.product?.name ?? uiText.orders.unknownProduct,
-            product_slug: order.product?.slug ?? null,
-            quantity: 1,
-            unit_price: null
-          });
-          return;
-        }
-
-        linkedItems.forEach((item) => {
-          builtOrderLines.push({
-            id: item.id,
-            order_id: order.id,
-            purchased_at: order.created_at,
-            order_number: order.order_number,
-            payment_status: order.payment_status,
-            currency: item.currency ?? order.currency,
-            transaction_id: order.transaction_id,
-            product_name: item.product?.name ?? order.product?.name ?? uiText.orders.unknownProduct,
-            product_slug: item.product?.slug ?? order.product?.slug ?? null,
-            quantity: item.quantity ?? 1,
-            unit_price: item.unit_price
-          });
-        });
-      });
-
-      setOrders(
-        builtOrderLines.sort((a, b) => {
-          const timeA = new Date(a.purchased_at).getTime();
-          const timeB = new Date(b.purchased_at).getTime();
-          return timeB - timeA;
-        })
-      );
-
-      if (itemsError) {
-        setOrdersMessage(uiText.orders.detailsPartial);
-        return;
-      }
-
+      setOrders(normalizedOrders);
       setOrdersMessage('');
     };
 
@@ -817,32 +723,19 @@ export default function MyPage() {
                   {ordersMessage ? <p>{ordersMessage}</p> : null}
 
                   {!ordersMessage && orders.length === 0 ? (
-                    <p>{paymentCopy.orders.empty}</p>
+                    <p>No purchases yet</p>
                   ) : null}
 
                   {orders.length > 0 ? (
                     <ul className="mypage-list">
                       {orders.map((order) => (
                         <li key={order.id} className="mypage-list-item">
-                          <div className="mypage-item-head">{order.product_name}</div>
+                          <div className="mypage-item-head">{order.product_name ?? paymentCopy.orders.unknownProduct}</div>
                           <div className="mypage-meta-row">
-                            ✔ {paymentCopy.orders.purchased} • {formatDate(order.purchased_at)}
+                            Amount: {formatOrderAmount(order.amount)}
                           </div>
                           <div className="mypage-meta-row">
-                            {paymentCopy.orders.qty} {order.quantity} •{' '}
-                            {formatCurrency(order.unit_price, order.currency, paymentLocale)}
-                          </div>
-                          <div className="mypage-meta-row">
-                            {paymentCopy.orders.status}: {normalizePaymentStatus(order.payment_status)}
-                          </div>
-                          <div className="mypage-meta-row">
-                            {paymentCopy.orders.currency}: {(order.currency ?? 'USD').toUpperCase()}
-                          </div>
-                          <div className="mypage-meta-row">
-                            {paymentCopy.orders.orderNumber}: {order.order_number ?? order.order_id}
-                          </div>
-                          <div className="mypage-meta-row">
-                            {paymentCopy.orders.transactionId}: {order.transaction_id ?? '-'}
+                            Purchased: {formatDate(order.created_at)}
                           </div>
                         </li>
                       ))}
