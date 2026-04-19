@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import AuthNav from '@/components/auth/AuthNav';
 import GlobalFooter from '@/components/farmverb/GlobalFooter';
 import { addItemToCart, getCartItemCount, getCartItems, subscribeToCart, type CartItem } from '@/lib/cart/store';
+import { formatKrwPrice, getLimitedSalePrice, getMainProductPrice, getProductPricing } from '@/lib/pricing/products';
 import { initFarmVerbSite } from '@/lib/ui/initFarmVerbSite';
 
 type PluginSeriesKey = 'nebula' | 'organic';
@@ -20,6 +21,37 @@ type PluginProduct = {
 
 const NEBULA_PRODUCT_TABS: NebulaProductTabKey[] = ['all', 'Nebula Crush', 'Nebula Space'];
 const ORGANIC_PRODUCT_TABS: OrganicProductTabKey[] = ['all', 'Germinate', 'Jeju Citrus Air', 'Boseong Green Tea'];
+
+function ProductPrice({
+  productName,
+  className = ''
+}: {
+  productName: string;
+  className?: string;
+}) {
+  const pricing = getProductPricing(productName);
+  if (!pricing) {
+    return null;
+  }
+
+  const mainPrice = getMainProductPrice(pricing);
+  const regularPrice = pricing.regularPrice;
+  const limitedSalePrice = getLimitedSalePrice(pricing);
+
+  return (
+    <div className={`product-price ${className}`.trim()} aria-label={`${productName} pricing`}>
+      <div className="product-price-row">
+        <strong className="product-price-main">{formatKrwPrice(mainPrice)}</strong>
+        {regularPrice > mainPrice ? <span className="product-price-regular">{formatKrwPrice(regularPrice)}</span> : null}
+      </div>
+      {limitedSalePrice ? (
+        <p className="product-price-limited">
+          Limited Promo {formatKrwPrice(limitedSalePrice)}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 const PLUGIN_SERIES: Record<
   PluginSeriesKey,
@@ -204,6 +236,7 @@ export default function FarmVerbSite() {
         <div className="plugin-feature-copy">
           <h3>{selectedSeriesProduct.name}</h3>
           <p>{selectedSeriesProduct.description}</p>
+          <ProductPrice productName={selectedSeriesProduct.name} />
           {selectedSeriesProduct.unavailable ? <p className="plugin-card-status">Coming Soon</p> : null}
           <div className="plugin-feature-actions">
             <button
@@ -261,6 +294,7 @@ export default function FarmVerbSite() {
               </button>
             </h3>
             <p>{product.description}</p>
+            <ProductPrice productName={product.name} />
             {product.unavailable ? <p className="plugin-card-status">Coming Soon</p> : null}
           </div>
 
@@ -487,6 +521,7 @@ export default function FarmVerbSite() {
                   A Decent Sampler instrument designed with physical impact, warm transients, and playable low-end depth.
                 </p>
                 <p className="instrument-note">Built for beat makers, trailer composers, and experimental rhythm sculptors.</p>
+                <ProductPrice productName="Nebula Drums" className="section-price" />
                 <div className="section-actions">
                   <button
                     type="button"
@@ -535,6 +570,7 @@ export default function FarmVerbSite() {
                   <span>TRANSIENT</span>
                   <span>TEXTURE</span>
                 </div>
+                <ProductPrice productName="Glitch Drum Pack Vol.1" className="section-price" />
                 <div className="section-actions">
                   <button
                     type="button"

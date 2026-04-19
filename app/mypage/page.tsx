@@ -10,7 +10,7 @@ import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 const MY_PAGE_LOGIN_REDIRECT = '/login?redirect=%2Fmypage';
 
-type DashboardTabKey = 'account' | 'orders' | 'licenses' | 'security';
+type DashboardTabKey = 'account' | 'orders' | 'security';
 
 type Profile = {
   id: string;
@@ -20,16 +20,9 @@ type Profile = {
   created_at: string | null;
 };
 
-type ProductSummary = {
-  id: string;
-  name: string;
-  slug: string;
-  price?: number | null;
-  currency?: string | null;
-};
-
 type OrderLine = {
   id: string;
+  order_id: string | null;
   product_name: string | null;
   amount: number | null;
   created_at: string;
@@ -37,35 +30,22 @@ type OrderLine = {
 
 type License = {
   id: string;
+  order_id: string | null;
+  product_name: string | null;
   license_key: string;
   created_at: string;
-  product: ProductSummary | null;
 };
 
 const dashboardTabs: { key: DashboardTabKey; label: string }[] = [
   { key: 'account', label: 'Account Info' },
   { key: 'orders', label: 'Orders / Purchase History' },
-  { key: 'licenses', label: 'Licenses' },
   { key: 'security', label: 'Security' }
 ];
 
 const dashboardSectionCopy: Record<DashboardTabKey, string> = {
   account: 'Personal details and account profile settings.',
-  orders: 'Purchase records with payment and order metadata.',
-  licenses: 'License keys, copy tools, and secure download actions.',
+  orders: 'Purchase records with license keys and secure download actions.',
   security: 'Verification and password management for account safety.'
-};
-
-const normalizeProduct = (product: ProductSummary | ProductSummary[] | null): ProductSummary | null => {
-  if (!product) {
-    return null;
-  }
-
-  if (Array.isArray(product)) {
-    return product[0] ?? null;
-  }
-
-  return product;
 };
 
 const formatDate = (dateText: string | null | undefined) => {
@@ -123,6 +103,20 @@ function normalizePaymentStatus(status: string | null) {
     .split('_')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
     .join(' ');
+}
+
+function toProductSlug(productName: string | null | undefined): string | null {
+  if (!productName) {
+    return null;
+  }
+
+  const normalized = productName
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return normalized || null;
 }
 
 export default function MyPage() {
@@ -211,7 +205,7 @@ export default function MyPage() {
     const loadOrders = async (currentUser: User) => {
       const { data: orderRows, error: ordersError } = await supabase
         .from('orders')
-        .select('id, product_name, amount, created_at')
+        .select('id, order_id, product_name, amount, created_at')
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false });
 
@@ -229,6 +223,7 @@ export default function MyPage() {
         const parsedAmount = typeof row.amount === 'number' ? row.amount : Number(row.amount);
         return {
           id: row.id,
+          order_id: row.order_id ?? null,
           product_name: row.product_name ?? null,
           amount: Number.isNaN(parsedAmount) ? null : parsedAmount,
           created_at: row.created_at
@@ -242,7 +237,7 @@ export default function MyPage() {
     const loadLicenses = async (currentUser: User) => {
       const { data, error } = await supabase
         .from('licenses')
-        .select('id, license_key, created_at, product:products(id, name, slug)')
+        .select('id, order_id, product_name, license_key, created_at')
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false });
 
@@ -258,9 +253,10 @@ export default function MyPage() {
 
       const normalizedLicenses: License[] = (data ?? []).map((row) => ({
         id: row.id,
+        order_id: row.order_id ?? null,
+        product_name: row.product_name ?? null,
         license_key: row.license_key,
-        created_at: row.created_at,
-        product: normalizeProduct(row.product as ProductSummary | ProductSummary[] | null)
+        created_at: row.created_at
       }));
 
       setLicenses(normalizedLicenses);
@@ -552,13 +548,26 @@ export default function MyPage() {
 
   const accountJoinDate = profile?.created_at ?? user?.created_at ?? null;
 
-  const licenseCards = useMemo(() => {
-    return licenses.map((license) => ({
-      ...license,
-      productName: license.product?.name ?? paymentCopy.orders.unknownProduct,
-      productSlug: license.product?.slug ?? null
-    }));
-  }, [licenses, paymentCopy.orders.unknownProduct]);
+  const licensesByOrderId = useMemo(() => {
+    const map = new Map<string, License>();
+    licenses.forEach((license) => {
+      if (license.order_id) {
+        map.set(license.order_id, license);
+      }
+    });
+    return map;
+  }, [licenses]);
+
+  const licensesByProductName = useMemo(() => {
+    const map = new Map<string, License>();
+    licenses.forEach((license) => {
+      const key = (license.product_name ?? '').trim().toLowerCase();
+      if (key && !map.has(key)) {
+        map.set(key, license);
+      }
+    });
+    return map;
+  }, [licenses]);
 
   const activeDashboardTabMeta = useMemo(() => {
     return dashboardTabs.find((tab) => tab.key === activeTab) ?? dashboardTabs[0];
@@ -721,6 +730,7 @@ export default function MyPage() {
               {activeTab === 'orders' ? (
                 <>
                   {ordersMessage ? <p>{ordersMessage}</p> : null}
+                  {!ordersMessage && licensesMessage ? <p>{licensesMessage}</p> : null}
 
                   {!ordersMessage && orders.length === 0 ? (
                     <p>No purchases yet</p>
@@ -728,61 +738,51 @@ export default function MyPage() {
 
                   {orders.length > 0 ? (
                     <ul className="mypage-list">
-                      {orders.map((order) => (
-                        <li key={order.id} className="mypage-list-item">
-                          <div className="mypage-item-head">{order.product_name ?? paymentCopy.orders.unknownProduct}</div>
-                          <div className="mypage-meta-row">
-                            Amount: {formatOrderAmount(order.amount)}
-                          </div>
-                          <div className="mypage-meta-row">
-                            Purchased: {formatDate(order.created_at)}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </>
-              ) : null}
+                      {orders.map((order) => {
+                        const byOrder = order.order_id ? licensesByOrderId.get(order.order_id) : undefined;
+                        const byProduct = licensesByProductName.get((order.product_name ?? '').trim().toLowerCase());
+                        const license = byOrder ?? byProduct ?? null;
+                        const productSlug = toProductSlug(order.product_name);
 
-              {activeTab === 'licenses' ? (
-                <>
-                  {licensesMessage ? <p>{licensesMessage}</p> : null}
+                        return (
+                          <li key={order.id} className="mypage-list-item">
+                            <div className="mypage-item-head">{order.product_name ?? paymentCopy.orders.unknownProduct}</div>
+                            <div className="mypage-meta-row">
+                              Amount: {formatOrderAmount(order.amount)}
+                            </div>
+                            <div className="mypage-meta-row">
+                              Purchased: {formatDate(order.created_at)}
+                            </div>
 
-                  {!licensesMessage && licenseCards.length === 0 ? <p>{paymentCopy.licenses.empty}</p> : null}
+                            {license ? (
+                              <div className="mypage-license-row">
+                                <span className="mypage-meta-label">{paymentCopy.licenses.label}</span>
+                                <code className="mypage-license-key">{license.license_key}</code>
+                                <button
+                                  type="button"
+                                  className="auth-submit auth-submit-secondary mypage-small-button"
+                                  onClick={() => void handleCopyLicense(license.id, license.license_key)}
+                                >
+                                  {copiedLicenseId === license.id ? paymentCopy.licenses.copied : paymentCopy.licenses.copy}
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="mypage-meta-row">License will be issued soon.</div>
+                            )}
 
-                  {licenseCards.length > 0 ? (
-                    <ul className="mypage-list">
-                      {licenseCards.map((license) => (
-                        <li key={license.id} className="mypage-list-item">
-                          <div className="mypage-item-head">{license.productName}</div>
-                          <div className="mypage-meta-row">
-                            ✔ {paymentCopy.orders.purchased} • {formatDate(license.created_at)}
-                          </div>
-
-                          <div className="mypage-license-row">
-                            <span className="mypage-meta-label">{paymentCopy.licenses.label}</span>
-                            <code className="mypage-license-key">{license.license_key}</code>
-                            <button
-                              type="button"
-                              className="auth-submit auth-submit-secondary mypage-small-button"
-                              onClick={() => void handleCopyLicense(license.id, license.license_key)}
-                            >
-                              {copiedLicenseId === license.id ? paymentCopy.licenses.copied : paymentCopy.licenses.copy}
-                            </button>
-                          </div>
-
-                          {license.productSlug ? (
-                            <button
-                              type="button"
-                              className="auth-submit mypage-small-button"
-                              onClick={() => void handleDownload(license.productSlug as string)}
-                              disabled={isDownloading}
-                            >
-                              {isDownloading ? paymentCopy.licenses.preparing : paymentCopy.licenses.download}
-                            </button>
-                          ) : null}
-                        </li>
-                      ))}
+                            {productSlug ? (
+                              <button
+                                type="button"
+                                className="auth-submit mypage-small-button"
+                                onClick={() => void handleDownload(productSlug)}
+                                disabled={isDownloading}
+                              >
+                                {isDownloading ? paymentCopy.licenses.preparing : paymentCopy.licenses.download}
+                              </button>
+                            ) : null}
+                          </li>
+                        );
+                      })}
                     </ul>
                   ) : null}
 

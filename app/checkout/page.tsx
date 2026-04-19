@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
+import { getMainProductPrice, getProductPricing } from '@/lib/pricing/products';
 
 declare global {
   interface Window {
@@ -12,9 +13,11 @@ declare global {
   }
 }
 
+const germinatePricing = getProductPricing('Germinate');
+
 const CHECKOUT_PRODUCT = {
   name: 'Germinate',
-  amount: 89000,
+  amount: germinatePricing ? getMainProductPrice(germinatePricing) : 49000,
   currency: 'KRW'
 };
 

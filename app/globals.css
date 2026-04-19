@@ -1089,6 +1089,40 @@ img {
   color: rgba(57, 78, 36, 0.88);
 }
 
+.product-price {
+  margin-top: 0.62rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.product-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.product-price-main {
+  font-size: 0.98rem;
+  letter-spacing: 0.01em;
+  color: rgba(43, 65, 27, 0.96);
+}
+
+.product-price-regular {
+  font-size: 0.8rem;
+  color: rgba(71, 96, 44, 0.68);
+  text-decoration: line-through;
+}
+
+.product-price-limited {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(74, 102, 44, 0.78);
+}
+
 .plugin-card-status {
   font-size: 0.74rem;
   text-transform: uppercase;
@@ -1270,6 +1304,14 @@ img {
   color: rgba(56, 77, 35, 0.9);
 }
 
+.plugin-feature-copy .product-price {
+  margin-top: 0.85rem;
+}
+
+.plugin-feature-copy .product-price-main {
+  font-size: 1.22rem;
+}
+
 .plugin-feature-actions {
   margin-top: 1.25rem;
   display: grid;
@@ -1315,6 +1357,10 @@ img {
   display: flex;
   flex-wrap: wrap;
   gap: 0.52rem;
+}
+
+.section-price {
+  margin-top: 0.9rem;
 }
 
 .section-action-btn {

@@ -18,14 +18,16 @@ import {
 
 const formatCurrency = (amount: number, currency: string, locale: PaymentLocale) => {
   const numberLocale = locale === 'ko' ? 'ko-KR' : 'en-US';
+  const normalizedCurrency = currency.toUpperCase();
+  const maxFractionDigits = normalizedCurrency === 'KRW' ? 0 : 2;
   try {
     return new Intl.NumberFormat(numberLocale, {
       style: 'currency',
-      currency: currency.toUpperCase(),
-      maximumFractionDigits: 2
+      currency: normalizedCurrency,
+      maximumFractionDigits: maxFractionDigits
     }).format(amount);
   } catch {
-    return `${amount.toFixed(2)} ${currency.toUpperCase()}`;
+    return `${amount.toFixed(maxFractionDigits)} ${normalizedCurrency}`;
   }
 };
 
@@ -49,7 +51,7 @@ export default function CartPage() {
   const summary = useMemo(() => {
     const itemCount = getCartItemCount(cartItems);
     const subtotal = getCartSubtotal(cartItems);
-    const currency = (cartItems[0]?.currency ?? 'USD').toUpperCase();
+    const currency = (cartItems[0]?.currency ?? 'KRW').toUpperCase();
 
     return {
       itemCount,
