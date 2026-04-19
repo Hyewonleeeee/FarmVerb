@@ -1,19 +1,29 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
+import { clearCartItems } from '@/lib/cart/store';
+import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 type ApprovalState = 'loading' | 'success' | 'error';
 
 type TossApprovalResponse = {
   ok?: boolean;
+  alreadyProcessed?: boolean;
   payment?: {
     orderId?: string;
     orderName?: string;
     method?: string;
     totalAmount?: number;
     approvedAt?: string;
+  };
+  order?: {
+    id?: string;
+    order_id?: string;
+    product_name?: string;
+    amount?: number;
   };
   errorCode?: string;
   error?: string;
@@ -34,6 +44,7 @@ function formatKrw(value: number | undefined) {
 }
 
 export default function SuccessPage() {
+  const router = useRouter();
   const [state, setState] = useState<ApprovalState>('loading');
   const [message, setMessage] = useState('Approving payment...');
   const [payment, setPayment] = useState<TossApprovalResponse['payment'] | null>(null);
@@ -53,10 +64,23 @@ export default function SuccessPage() {
       }
 
       try {
-        const response = await fetch('/api/toss/confirm', {
+        const supabase = createBrowserSupabaseClient();
+        const {
+          data: { session }
+        } = await supabase.auth.getSession();
+        const accessToken = session?.access_token;
+
+        if (!accessToken) {
+          setState('error');
+          setMessage('Login is required to complete order processing.');
+          return;
+        }
+
+        const response = await fetch('/api/confirm-payment', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`
           },
           body: JSON.stringify({
             paymentKey,
@@ -73,9 +97,21 @@ export default function SuccessPage() {
           return;
         }
 
-        setPayment(payload.payment ?? null);
+        setPayment(
+          payload.payment ?? {
+            orderId: payload.order?.order_id ?? orderId,
+            orderName: payload.order?.product_name ?? '-',
+            totalAmount: payload.order?.amount ?? amount
+          }
+        );
+        clearCartItems();
         setState('success');
-        setMessage('Payment completed and approved.');
+        setMessage(
+          payload.alreadyProcessed ? 'Payment already confirmed. Order is safe.' : 'Payment completed and order saved.'
+        );
+        window.setTimeout(() => {
+          router.replace('/mypage');
+        }, 1200);
       } catch {
         setState('error');
         setMessage('Could not verify payment right now. Please try again.');
@@ -83,7 +119,7 @@ export default function SuccessPage() {
     };
 
     void confirmPayment();
-  }, []);
+  }, [router]);
 
   const amountLabel = useMemo(() => formatKrw(payment?.totalAmount), [payment?.totalAmount]);
 

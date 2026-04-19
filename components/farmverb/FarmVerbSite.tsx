@@ -8,8 +8,8 @@ import { addItemToCart, getCartItemCount, getCartItems, subscribeToCart, type Ca
 import { initFarmVerbSite } from '@/lib/ui/initFarmVerbSite';
 
 type PluginSeriesKey = 'nebula' | 'organic';
-type NebulaProductTabKey = 'all' | 'Nebula Crush' | 'Nebula Space' | 'Nebula Warp' | 'Nebula Rift';
-type OrganicProductTabKey = 'all' | 'Germinate' | 'Jeju Citrus' | 'Boseong Green Tea' | 'Icheon Grain';
+type NebulaProductTabKey = 'all' | 'Nebula Crush' | 'Nebula Space';
+type OrganicProductTabKey = 'all' | 'Germinate' | 'Jeju Citrus Air' | 'Boseong Green Tea';
 
 type PluginProduct = {
   name: string;
@@ -18,8 +18,8 @@ type PluginProduct = {
   unavailable?: boolean;
 };
 
-const NEBULA_PRODUCT_TABS: NebulaProductTabKey[] = ['all', 'Nebula Crush', 'Nebula Space', 'Nebula Warp', 'Nebula Rift'];
-const ORGANIC_PRODUCT_TABS: OrganicProductTabKey[] = ['all', 'Germinate', 'Jeju Citrus', 'Boseong Green Tea', 'Icheon Grain'];
+const NEBULA_PRODUCT_TABS: NebulaProductTabKey[] = ['all', 'Nebula Crush', 'Nebula Space'];
+const ORGANIC_PRODUCT_TABS: OrganicProductTabKey[] = ['all', 'Germinate', 'Jeju Citrus Air', 'Boseong Green Tea'];
 
 const PLUGIN_SERIES: Record<
   PluginSeriesKey,
@@ -42,16 +42,6 @@ const PLUGIN_SERIES: Record<
         name: 'Nebula Space',
         description: 'A deep atmospheric field for cinematic distance and blooming tails.',
         images: ['/Nebula%20Series/Space/Nebula%20Space.png', '/Nebula%20Series/Space/Nebula%20Space02.png']
-      },
-      {
-        name: 'Nebula Warp',
-        description: 'Elastic modulation for unstable drift, fluid movement, and stereo animation.',
-        unavailable: true
-      },
-      {
-        name: 'Nebula Rift',
-        description: 'Fragment-based texture design with controlled digital tension and rhythmic bite.',
-        unavailable: true
       }
     ]
   },
@@ -65,18 +55,13 @@ const PLUGIN_SERIES: Record<
         images: ['/Germinate/Germinate02.png', '/Germinate/Germinate.png']
       },
       {
-        name: 'Jeju Citrus',
+        name: 'Jeju Citrus Air',
         description: 'A citrus-toned organic processor slot, reserved for future release.',
         unavailable: true
       },
       {
         name: 'Boseong Green Tea',
         description: 'A breathable texture processor slot, reserved for future release.',
-        unavailable: true
-      },
-      {
-        name: 'Icheon Grain',
-        description: 'A grain-inspired organic processor slot, reserved for future release.',
         unavailable: true
       }
     ]
