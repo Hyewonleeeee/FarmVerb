@@ -29,36 +29,36 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
   {
     slug: 'germinate',
     name: 'Germinate',
-    price: priceOf('Germinate', 49000),
-    currency: 'KRW',
+    price: priceOf('Germinate', 49),
+    currency: 'USD',
     image: '/Germinate/Germinate.png'
   },
   {
     slug: 'nebula-crush',
     name: 'Nebula Crush',
-    price: priceOf('Nebula Crush', 39000),
-    currency: 'KRW',
+    price: priceOf('Nebula Crush', 39),
+    currency: 'USD',
     image: '/Nebula%20Series/Crush/Nebula%20Crush.png'
   },
   {
     slug: 'nebula-space',
     name: 'Nebula Space',
-    price: priceOf('Nebula Space', 59000),
-    currency: 'KRW',
+    price: priceOf('Nebula Space', 59),
+    currency: 'USD',
     image: null
   },
   {
     slug: 'nebula-drums',
     name: 'Nebula Drums',
-    price: priceOf('Nebula Drums', 49000),
-    currency: 'KRW',
+    price: priceOf('Nebula Drums', 49),
+    currency: 'USD',
     image: '/Nebula%20Series/Drums/Nebula%20Kinetic%20Drums_1.png'
   },
   {
     slug: 'glitch-drum-pack-vol-1',
     name: 'Glitch Drum Pack Vol.1',
-    price: priceOf('Glitch Drum Pack Vol.1', 49000),
-    currency: 'KRW',
+    price: priceOf('Glitch Drum Pack Vol.1', 49),
+    currency: 'USD',
     image: '/GlitchDrum/GlitchDrum.png'
   }
 ];
@@ -91,7 +91,7 @@ function resolveProduct(productName: string): CatalogProduct {
     slug: slugify(productName) || `custom-${Date.now()}`,
     name: productName,
     price: 0,
-    currency: 'KRW',
+    currency: 'USD',
     image: null
   };
 }
@@ -107,7 +107,7 @@ function normalizeCartItem(input: Partial<CartItem>): CartItem | null {
   const quantity = typeof input.quantity === 'number' && Number.isFinite(input.quantity) ? Math.floor(input.quantity) : 1;
   const safeQuantity = quantity > 0 ? quantity : 1;
   const price = typeof input.price === 'number' && Number.isFinite(input.price) ? input.price : 0;
-  const currency = typeof input.currency === 'string' && input.currency.trim() ? input.currency.trim().toUpperCase() : 'KRW';
+  const currency = typeof input.currency === 'string' && input.currency.trim() ? input.currency.trim().toUpperCase() : 'USD';
   const image = typeof input.image === 'string' && input.image.trim() ? input.image.trim() : null;
 
   return {

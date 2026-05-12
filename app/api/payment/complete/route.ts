@@ -31,11 +31,11 @@ function normalizeSlug(rawValue: unknown): string {
 
 function normalizeCurrency(rawValue: unknown): string {
   if (typeof rawValue !== 'string') {
-    return 'KRW';
+    return 'USD';
   }
 
   const normalized = rawValue.trim().toUpperCase();
-  return normalized.length === 3 ? normalized : 'KRW';
+  return normalized.length === 3 ? normalized : 'USD';
 }
 
 function normalizeUnitPrice(rawValue: unknown): number {

@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import AuthNav from '@/components/auth/AuthNav';
 import GlobalFooter from '@/components/farmverb/GlobalFooter';
 import { addItemToCart, getCartItemCount, getCartItems, subscribeToCart, type CartItem } from '@/lib/cart/store';
-import { formatKrwPrice, getLimitedSalePrice, getMainProductPrice, getProductPricing } from '@/lib/pricing/products';
+import { formatUsdPrice, getLimitedSalePrice, getMainProductPrice, getProductPricing } from '@/lib/pricing/products';
 import { initFarmVerbSite } from '@/lib/ui/initFarmVerbSite';
 
 type PluginSeriesKey = 'nebula' | 'organic';
@@ -41,12 +41,12 @@ function ProductPrice({
   return (
     <div className={`product-price ${className}`.trim()} aria-label={`${productName} pricing`}>
       <div className="product-price-row">
-        <strong className="product-price-main">{formatKrwPrice(mainPrice)}</strong>
-        {regularPrice > mainPrice ? <span className="product-price-regular">{formatKrwPrice(regularPrice)}</span> : null}
+        <strong className="product-price-main">{formatUsdPrice(mainPrice)}</strong>
+        {regularPrice > mainPrice ? <span className="product-price-regular">{formatUsdPrice(regularPrice)}</span> : null}
       </div>
       {limitedSalePrice ? (
         <p className="product-price-limited">
-          Limited Promo {formatKrwPrice(limitedSalePrice)}
+          Limited Promo {formatUsdPrice(limitedSalePrice)}
         </p>
       ) : null}
     </div>

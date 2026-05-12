@@ -17,8 +17,8 @@ const germinatePricing = getProductPricing('Germinate');
 
 const CHECKOUT_PRODUCT = {
   name: 'Germinate',
-  amount: germinatePricing ? getMainProductPrice(germinatePricing) : 49000,
-  currency: 'KRW'
+  amount: germinatePricing ? getMainProductPrice(germinatePricing) : 49,
+  currency: 'USD'
 };
 
 const TOSS_SDK_URL = 'https://js.tosspayments.com/v1/payment';
@@ -51,10 +51,10 @@ function loadTossScript() {
   });
 }
 
-function formatKrw(value: number) {
-  return new Intl.NumberFormat('ko-KR', {
+function formatUsd(value: number) {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'KRW',
+    currency: 'USD',
     maximumFractionDigits: 0
   }).format(value);
 }
@@ -69,7 +69,7 @@ export default function CheckoutPage() {
   const [isPaying, setIsPaying] = useState(false);
   const [message, setMessage] = useState('');
 
-  const priceLabel = useMemo(() => formatKrw(CHECKOUT_PRODUCT.amount), []);
+  const priceLabel = useMemo(() => formatUsd(CHECKOUT_PRODUCT.amount), []);
 
   useEffect(() => {
     let mounted = true;

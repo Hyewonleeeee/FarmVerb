@@ -1,5 +1,5 @@
 export type ProductPricing = {
-  currency: 'KRW';
+  currency: 'USD';
   regularPrice: number;
   launchPrice?: number;
   defaultPrice?: number;
@@ -11,41 +11,41 @@ const glitchSaleActive = process.env.NEXT_PUBLIC_GLITCH_SALE_ACTIVE === 'true';
 
 const PRICING_BY_PRODUCT_NAME: Record<string, ProductPricing> = {
   'Glitch Drum Pack Vol.1': {
-    currency: 'KRW',
-    regularPrice: 99000,
-    defaultPrice: 49000,
-    salePrice: 40000,
+    currency: 'USD',
+    regularPrice: 99,
+    defaultPrice: 49,
+    salePrice: 40,
     saleActive: glitchSaleActive
   },
   'Nebula Crush': {
-    currency: 'KRW',
-    launchPrice: 39000,
-    regularPrice: 59000
+    currency: 'USD',
+    launchPrice: 39,
+    regularPrice: 59
   },
   'Nebula Space': {
-    currency: 'KRW',
-    launchPrice: 59000,
-    regularPrice: 79000
+    currency: 'USD',
+    launchPrice: 59,
+    regularPrice: 79
   },
   'Nebula Drums': {
-    currency: 'KRW',
-    launchPrice: 49000,
-    regularPrice: 59000
+    currency: 'USD',
+    launchPrice: 49,
+    regularPrice: 59
   },
   'Germinate': {
-    currency: 'KRW',
-    launchPrice: 49000,
-    regularPrice: 69000
+    currency: 'USD',
+    launchPrice: 49,
+    regularPrice: 69
   },
   'Jeju Citrus Air': {
-    currency: 'KRW',
-    launchPrice: 49000,
-    regularPrice: 69000
+    currency: 'USD',
+    launchPrice: 49,
+    regularPrice: 69
   },
   'Boseong Green Tea': {
-    currency: 'KRW',
-    launchPrice: 39000,
-    regularPrice: 59000
+    currency: 'USD',
+    launchPrice: 39,
+    regularPrice: 59
   }
 };
 
@@ -73,10 +73,10 @@ export function getLimitedSalePrice(pricing: ProductPricing): number | null {
   return pricing.salePrice;
 }
 
-export function formatKrwPrice(value: number): string {
-  return new Intl.NumberFormat('ko-KR', {
+export function formatUsdPrice(value: number): string {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'KRW',
+    currency: 'USD',
     maximumFractionDigits: 0
   }).format(value);
 }

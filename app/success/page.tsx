@@ -31,14 +31,14 @@ type TossApprovalResponse = {
   detail?: string | null;
 };
 
-function formatKrw(value: number | undefined) {
+function formatUsd(value: number | undefined) {
   if (typeof value !== 'number' || Number.isNaN(value)) {
     return '-';
   }
 
-  return new Intl.NumberFormat('ko-KR', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'KRW',
+    currency: 'USD',
     maximumFractionDigits: 0
   }).format(value);
 }
@@ -121,7 +121,7 @@ export default function SuccessPage() {
     void confirmPayment();
   }, [router]);
 
-  const amountLabel = useMemo(() => formatKrw(payment?.totalAmount), [payment?.totalAmount]);
+  const amountLabel = useMemo(() => formatUsd(payment?.totalAmount), [payment?.totalAmount]);
 
   return (
     <div className="auth-page-shell">
