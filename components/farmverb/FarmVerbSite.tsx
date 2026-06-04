@@ -22,6 +22,64 @@ type PluginProduct = {
 const NEBULA_PRODUCT_TABS: NebulaProductTabKey[] = ['all', 'Nebula Crush', 'Nebula Space'];
 const ORGANIC_PRODUCT_TABS: OrganicProductTabKey[] = ['all', 'Germinate', 'Jeju Citrus Air', 'Boseong Green Tea'];
 
+const GLITCH_FEATURES = [
+  {
+    title: 'Drums',
+    body: 'Tight low-end impact and ultra-short transients designed for modern drum programming.'
+  },
+  {
+    title: 'Glitch Hats',
+    body: 'Irregular rhythmic elements, digital artifacts, and micro-textural movement.'
+  },
+  {
+    title: 'Texture',
+    body: 'Noise layers, grain sources, clicks, and atmospheric digital fragments.'
+  },
+  {
+    title: 'Perc FX & Clicks',
+    body: 'Experimental percussion elements for layering, transitions, and rhythmic accents.'
+  }
+] as const;
+
+const GLITCH_SPEC_GROUPS = [
+  {
+    items: [
+      { label: 'Format', value: 'WAV 24-bit / 48 kHz' },
+      { label: 'Files', value: '100 Samples' },
+      { label: 'Size', value: '284 MB' }
+    ]
+  },
+  {
+    items: [
+      { label: 'Categories', value: 'Drums, Glitch Hats, Texture, Perc FX, Clicks' },
+      { label: 'Compatibility', value: 'Ableton Live, Logic Pro, FL Studio, Pro Tools, Studio One, and most modern DAWs' }
+    ]
+  }
+] as const;
+
+const GLITCH_AUDIENCES = [
+  {
+    title: 'Electronic Producers',
+    body: 'For minimal techno, IDM, glitch, and experimental electronic music.'
+  },
+  {
+    title: 'Sound Designers',
+    body: 'For creating unique transient layers and digital textures.'
+  },
+  {
+    title: 'Game Audio Creators',
+    body: 'For futuristic percussion and interactive sound design workflows.'
+  }
+] as const;
+
+const GLITCH_LICENSE_USE = [
+  'Music releases',
+  'Games',
+  'Films',
+  'Broadcasts',
+  'Live performances'
+] as const;
+
 function ProductPrice({
   productName,
   className = ''
@@ -41,14 +99,18 @@ function ProductPrice({
   return (
     <div className={`product-price ${className}`.trim()} aria-label={`${productName} pricing`}>
       <div className="product-price-row">
-        <strong className="product-price-main">{formatUsdPrice(mainPrice)}</strong>
-        {regularPrice > mainPrice ? <span className="product-price-regular">{formatUsdPrice(regularPrice)}</span> : null}
+        <strong className="product-price-main">
+          {formatUsdPrice(mainPrice)} <span className="product-price-currency">USD</span>
+        </strong>
       </div>
-      {limitedSalePrice ? (
-        <p className="product-price-limited">
-          Limited Promo {formatUsdPrice(limitedSalePrice)}
-        </p>
-      ) : null}
+      <div className="product-price-meta">
+        {regularPrice > mainPrice ? (
+          <span className="product-price-regular">Regular Price {formatUsdPrice(regularPrice)}</span>
+        ) : null}
+        {limitedSalePrice ? (
+          <span className="product-price-limited">Limited Promo {formatUsdPrice(limitedSalePrice)} USD</span>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -557,19 +619,14 @@ export default function FarmVerbSite() {
 
         <section className="page page-sample-pack" data-page="sample-pack" aria-hidden="true">
           <div className="page-scroll page-shell">
-            <div className="sample-layout">
-              <div className="sample-copy parallax-node" data-depth="10">
+            <div className="sample-page-stack">
+              <div className="sample-hero-grid">
+                <div className="sample-copy parallax-node sample-hero-copy" data-depth="10">
                 <p className="section-overline">Sample Pack</p>
-                <h1 className="page-title glitch-title">Glitch Drum Pack Vol.1</h1>
+                <h1 className="page-title glitch-title">Glitch Drum Pack Vol. I</h1>
                 <p className="page-copy">
                   Raw, fractured percussion with aggressive transients and digital grain for modern production.
                 </p>
-                <div className="glitch-tags" aria-label="Pack mood tags">
-                  <span>GLITCH</span>
-                  <span>RAW</span>
-                  <span>TRANSIENT</span>
-                  <span>TEXTURE</span>
-                </div>
                 <ProductPrice productName="Glitch Drum Pack Vol.1" className="section-price" />
                 <div className="section-actions">
                   <button
@@ -589,16 +646,122 @@ export default function FarmVerbSite() {
                 </div>
               </div>
 
-              <figure className="pack-art pack-gallery interactive-tilt" data-auto-gallery>
+                <figure className="pack-art pack-gallery interactive-tilt sample-hero-art" data-auto-gallery>
                 <div className="pack-gallery-track">
                   <img src="/GlitchDrum/GlitchDrum.png" alt="Glitch Drum Pack artwork view 1" />
                   <img src="/GlitchDrum/GD_2.png" alt="Glitch Drum Pack artwork view 2" />
                 </div>
               </figure>
-
-              <div className="glitch-marquee" aria-hidden="true">
-                <span>FARMVERB GLITCH DRUM PACK VOL.1 / DIGITAL DUST / BROKEN RHYTHM / SHARP IMPACT /</span>
               </div>
+
+              <section className="sample-film-section sample-panel-section">
+                <p className="section-overline">Product Film</p>
+                <div className="sample-film-card">
+                  <video
+                    className="sample-film-video"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    poster="/GlitchDrum/GlitchDrum.png"
+                  >
+                    <source src="/GlitchDrum/GlitchMov.mp4" type="video/mp4" />
+                  </video>
+                </div>
+                <p className="sample-film-caption">Fractured rhythm. Digital texture. Controlled chaos.</p>
+              </section>
+
+              <section className="sample-panel-section sample-intro-section">
+                <p className="section-overline">NEW · DIGITAL DOWNLOAD</p>
+                <h2 className="sample-section-title">Glitch Drum Pack Vol. I</h2>
+                <p className="sample-section-copy">
+                  The first release from FARMVERB. A collection of precision-crafted percussion, fractured transients,
+                  and digital textures designed for modern electronic production.
+                </p>
+                <p className="sample-section-copy">
+                  Built for producers working across minimal techno, IDM, experimental club music, sound design, and
+                  contemporary electronic genres. Every sound was created with an emphasis on movement, detail, and
+                  controlled imperfection.
+                </p>
+              </section>
+
+              <section className="sample-panel-section">
+                <p className="section-overline">What&apos;s Inside</p>
+                <div className="sample-feature-grid">
+                  {GLITCH_FEATURES.map((feature) => (
+                    <article key={feature.title} className="sample-feature-card">
+                      <h3>{feature.title}</h3>
+                      <p>{feature.body}</p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+
+              <section className="sample-panel-section">
+                <p className="section-overline">Technical Specifications</p>
+                <div className="sample-spec-layout">
+                  {GLITCH_SPEC_GROUPS.map((group) => (
+                    <article key={group.items[0].label} className="sample-spec-card">
+                      <dl className="sample-spec-list">
+                        {group.items.map((item) => (
+                          <div key={item.label} className="sample-spec-row">
+                            <dt>{item.label}</dt>
+                            <dd>{item.value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </article>
+                  ))}
+                </div>
+              </section>
+
+              <section className="sample-panel-section">
+                <p className="section-overline">Designed For</p>
+                <div className="sample-audience-grid">
+                  {GLITCH_AUDIENCES.map((audience) => (
+                    <article key={audience.title} className="sample-audience-card">
+                      <h3>{audience.title}</h3>
+                      <p>{audience.body}</p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+
+              <section className="sample-panel-section sample-license-section">
+                <p className="section-overline">License</p>
+                <p className="sample-section-copy">Commercial use allowed.</p>
+                <p className="sample-section-copy">You may use these sounds in:</p>
+                <ul className="sample-license-list">
+                  {GLITCH_LICENSE_USE.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+                <p className="sample-section-copy">
+                  Redistribution or resale of the raw sample files is prohibited. Projects created with the samples
+                  may be distributed freely.
+                </p>
+              </section>
+
+              <section className="sample-panel-section sample-about-section">
+                <p className="section-overline">About FARMVERB</p>
+                <div className="sample-about-grid">
+                  <div>
+                    <h2 className="sample-section-title sample-about-title">FARMVERB</h2>
+                    <p className="sample-section-copy">
+                      FARMVERB is an independent audio label exploring the intersection of rhythm, texture, and
+                      space.
+                    </p>
+                    <p className="sample-section-copy">
+                      From sample libraries to audio plug-ins and experimental sound tools, every release is designed
+                      around a single goal: creating inspiring sonic materials for modern creators.
+                    </p>
+                  </div>
+                  <div className="sample-about-note">
+                    <p>Creating inspiring sonic materials for modern creators.</p>
+                  </div>
+                </div>
+              </section>
             </div>
 
             <div className="global-footer-host">
