@@ -4,10 +4,31 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
-import CountrySelect, { DEFAULT_COUNTRY_NAME, normalizeCountryName } from '@/components/ui/CountrySelect';
+import CountrySelect from '@/components/ui/CountrySelect';
+import { validateSignupEmail, validateSignupName, validateSignupPassword } from '@/lib/auth/signup-validation';
+import { DEFAULT_COUNTRY_NAME, normalizeCountryName } from '@/lib/ui/country';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
-export default function SignupPage() {
+type ValidationResponse =
+  | {
+      ok: true;
+      normalized?: {
+        name?: string;
+        email?: string;
+        country?: string;
+      };
+    }
+  | {
+      ok: false;
+      message?: string;
+      fieldErrors?: {
+        name?: string | null;
+        email?: string | null;
+        password?: string | null;
+      };
+    };
+
+function SignupPage() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [country, setCountry] = useState(DEFAULT_COUNTRY_NAME);
@@ -17,6 +38,21 @@ export default function SignupPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showEmailVerificationState, setShowEmailVerificationState] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  const nameValidation = validateSignupName(name);
+  const emailValidation = validateSignupEmail(email);
+  const passwordValidation = validateSignupPassword(password);
+  const sanitizedName = nameValidation.normalizedName;
+  const sanitizedEmail = emailValidation.normalizedEmail;
+  const sanitizedCountry = normalizeCountryName(country);
+  const canSubmit =
+    nameValidation.valid && emailValidation.valid && passwordValidation.valid && !isSubmitting && !showEmailVerificationState;
+
+  const showNameFeedback = hasSubmitted || name.trim().length > 0;
+  const showEmailFeedback = hasSubmitted || email.trim().length > 0;
+  const showPasswordFeedback = hasSubmitted || password.length > 0;
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
@@ -42,62 +78,131 @@ export default function SignupPage() {
     };
   }, [router]);
 
+  const syncServerValidation = async () => {
+    try {
+      const response = await fetch('/api/signup/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          country
+        })
+      });
+
+      const payload = (await response.json().catch(() => null)) as ValidationResponse | null;
+
+      if (!response.ok || !payload) {
+        return {
+          ok: false,
+          message: payload && 'message' in payload ? payload.message : 'Please enter your real name in English.',
+          normalized: null
+        };
+      }
+
+      if (!payload.ok) {
+        return {
+          ok: false,
+          message:
+            payload.message ??
+            payload.fieldErrors?.name ??
+            payload.fieldErrors?.email ??
+            payload.fieldErrors?.password ??
+            'Please enter your real name in English.',
+          normalized: null
+        };
+      }
+
+      return {
+        ok: true,
+        message: '',
+        normalized: {
+          name: payload.normalized?.name ?? sanitizedName,
+          email: payload.normalized?.email ?? sanitizedEmail,
+          country: payload.normalized?.country ?? sanitizedCountry
+        }
+      };
+    } catch {
+      return {
+        ok: false,
+        message: 'Please enter your real name in English.',
+        normalized: null
+      };
+    }
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsSubmitting(true);
+    setHasSubmitted(true);
     setMessage('');
-    setShowEmailVerificationState(false);
-    setVerificationEmail('');
 
-    const trimmedName = name.trim();
-    const trimmedCountry = normalizeCountryName(country).trim();
-    const normalizedEmail = email.trim().toLowerCase();
-
-    const supabase = createBrowserSupabaseClient();
-    const { data, error } = await supabase.auth.signUp({
-      email: normalizedEmail,
-      password,
-      options: {
-        data: {
-          name: trimmedName,
-          country: trimmedCountry
-        }
-      }
-    });
-
-    if (error) {
-      setMessage(error.message);
-      setIsSubmitting(false);
+    if (!canSubmit) {
+      setMessage(nameValidation.error ?? emailValidation.error ?? passwordValidation.error ?? 'Please review the highlighted fields.');
       return;
     }
 
-    if (data.user && data.session) {
-      const { error: profileError } = await supabase.from('profiles').upsert(
-        {
-          id: data.user.id,
-          email: normalizedEmail,
-          name: trimmedName || null,
-          country: trimmedCountry || null
-        },
-        { onConflict: 'id' }
-      );
+    try {
+      setIsSubmitting(true);
 
-      if (profileError) {
-        setMessage(`Sign up succeeded, but profile save failed: ${profileError.message}`);
+      const serverValidation = await syncServerValidation();
+      if (!serverValidation.ok || !serverValidation.normalized) {
+        setMessage(serverValidation.message || 'Please review the highlighted fields.');
         setIsSubmitting(false);
         return;
       }
-    }
 
-    if (data.session) {
-      router.push('/mypage');
-      router.refresh();
-      return;
-    }
+      const supabase = createBrowserSupabaseClient();
+      const { data, error } = await supabase.auth.signUp({
+        email: serverValidation.normalized.email,
+        password,
+        options: {
+          data: {
+            name: serverValidation.normalized.name,
+            country: serverValidation.normalized.country
+          }
+        }
+      });
 
-    setVerificationEmail(data.user?.email ?? normalizedEmail);
-    setShowEmailVerificationState(true);
-    setIsSubmitting(false);
+      if (error) {
+        setMessage(error.message);
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (data.user && data.session) {
+        const { error: profileError } = await supabase.from('profiles').upsert(
+          {
+            id: data.user.id,
+            email: serverValidation.normalized.email,
+            name: serverValidation.normalized.name,
+            country: serverValidation.normalized.country
+          },
+          { onConflict: 'id' }
+        );
+
+        if (profileError) {
+          setMessage(`Sign up succeeded, but profile save failed: ${profileError.message}`);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      if (data.session) {
+        router.push('/mypage');
+        router.refresh();
+        return;
+      }
+
+      setVerificationEmail(data.user?.email ?? serverValidation.normalized.email);
+      setShowEmailVerificationState(true);
+      setIsSubmitting(false);
+    } catch {
+      setMessage('Please enter your real name in English.');
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -124,7 +229,7 @@ export default function SignupPage() {
               </h1>
               <p className="auth-copy">Create your FarmVerb account with name, country, email, and password.</p>
 
-              <form className="auth-form" onSubmit={handleSubmit}>
+              <form className="auth-form" onSubmit={handleSubmit} noValidate>
                 <label className="auth-label" htmlFor="signup-name">
                   Name
                 </label>
@@ -135,8 +240,19 @@ export default function SignupPage() {
                   autoComplete="name"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
+                  onBlur={() => setName(sanitizedName)}
+                  aria-invalid={showNameFeedback && !nameValidation.valid}
+                  aria-describedby={showNameFeedback && !nameValidation.valid ? 'signup-name-error' : undefined}
                   required
+                  maxLength={50}
                 />
+                {showNameFeedback && !nameValidation.valid ? (
+                  <p className="auth-field-message" id="signup-name-error">
+                    Please enter your real name in English.
+                  </p>
+                ) : (
+                  <p className="auth-field-note">English letters only. Spaces, hyphens, and apostrophes are okay.</p>
+                )}
 
                 <label className="auth-label" htmlFor="signup-country">
                   Country
@@ -153,29 +269,68 @@ export default function SignupPage() {
                   autoComplete="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
+                  onBlur={() => setEmail(sanitizedEmail)}
+                  aria-invalid={showEmailFeedback && !emailValidation.valid}
+                  aria-describedby={showEmailFeedback && !emailValidation.valid ? 'signup-email-error' : undefined}
                   required
                 />
+                {showEmailFeedback && !emailValidation.valid ? (
+                  <p className="auth-field-message" id="signup-email-error">
+                    Please enter a valid email address.
+                  </p>
+                ) : (
+                  <p className="auth-field-note">Your email will be your login ID and needs verification.</p>
+                )}
 
                 <label className="auth-label" htmlFor="signup-password">
                   Password
                 </label>
-                <input
-                  id="signup-password"
-                  className="auth-input"
-                  type="password"
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                  minLength={6}
-                />
+                <div className="auth-password-field">
+                  <input
+                    id="signup-password"
+                    className="auth-input auth-password-input"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    aria-invalid={showPasswordFeedback && !passwordValidation.valid}
+                    aria-describedby="signup-password-help"
+                    required
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    className="auth-password-toggle"
+                    onClick={() => setShowPassword((current) => !current)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-pressed={showPassword}
+                  >
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
 
-                <button className="auth-submit" type="submit" disabled={isSubmitting}>
+                <div className="auth-password-meta" id="signup-password-help">
+                  <div className="auth-password-strength">
+                    Password strength: <strong>{passwordValidation.strength}</strong>
+                  </div>
+                  <ul className="auth-password-checklist" aria-live="polite">
+                    <li className={passwordValidation.checklist.minLength ? 'is-met' : ''}>8+ characters</li>
+                    <li className={passwordValidation.checklist.uppercase ? 'is-met' : ''}>One uppercase letter</li>
+                    <li className={passwordValidation.checklist.lowercase ? 'is-met' : ''}>One lowercase letter</li>
+                    <li className={passwordValidation.checklist.number ? 'is-met' : ''}>One number</li>
+                    <li className={passwordValidation.checklist.specialChar ? 'is-met' : ''}>One special character</li>
+                  </ul>
+                  {showPasswordFeedback && !passwordValidation.valid ? (
+                    <p className="auth-field-message">Please complete the password requirements below.</p>
+                  ) : null}
+                </div>
+
+                <button className="auth-submit" type="submit" disabled={!canSubmit}>
                   {isSubmitting ? 'Creating account...' : 'Sign Up'}
                 </button>
               </form>
 
-              {message ? <p className="auth-message">{message}</p> : null}
+              {message ? <p className="auth-message is-error">{message}</p> : null}
 
               <p className="auth-helper">
                 Already have an account? <Link href="/login">Go to login</Link>.
@@ -187,11 +342,9 @@ export default function SignupPage() {
               <h1 id="signup-title" className="auth-title">
                 Check your email
               </h1>
-              <p className="auth-copy">
-                We sent a verification link to <strong>{verificationEmail || 'your email address'}</strong>.
-              </p>
+              <p className="auth-copy">Please check your email to verify your account.</p>
               <p className="auth-copy" style={{ marginTop: '0.5rem' }}>
-                Please open your email and confirm your account before logging in.
+                We sent a verification link to <strong>{verificationEmail || 'your email address'}</strong>.
               </p>
               <p className="auth-copy" style={{ marginTop: '0.5rem' }}>
                 If you do not see the email, check your spam folder.
@@ -211,4 +364,8 @@ export default function SignupPage() {
       </main>
     </div>
   );
+}
+
+export default function SignupPageWrapper() {
+  return <SignupPage />;
 }

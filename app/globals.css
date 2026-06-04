@@ -1952,6 +1952,101 @@ img {
   outline-offset: 1px;
 }
 
+.auth-field-message,
+.auth-field-note {
+  margin: 0.3rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.auth-field-message {
+  color: rgba(120, 76, 34, 0.9);
+}
+
+.auth-field-note {
+  color: rgba(72, 93, 46, 0.74);
+}
+
+.auth-password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-password-input {
+  padding-right: 4.25rem;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 1px solid rgba(145, 179, 74, 0.3);
+  border-radius: 999px;
+  background: rgba(242, 248, 220, 0.92);
+  color: rgba(52, 73, 34, 0.9);
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.34rem 0.6rem;
+  cursor: pointer;
+  transition: background 180ms ease, transform 180ms ease, border-color 180ms ease;
+}
+
+.auth-password-toggle:hover {
+  transform: translateY(-50%) translateY(-1px);
+  background: rgba(232, 242, 195, 0.98);
+  border-color: rgba(132, 164, 63, 0.45);
+}
+
+.auth-password-meta {
+  margin-top: 0.45rem;
+  padding: 0.72rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid rgba(152, 183, 88, 0.28);
+  background: rgba(248, 251, 233, 0.72);
+}
+
+.auth-password-strength {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: rgba(60, 82, 36, 0.92);
+}
+
+.auth-password-checklist {
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.28rem;
+}
+
+.auth-password-checklist li {
+  position: relative;
+  padding-left: 1rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: rgba(73, 94, 49, 0.82);
+}
+
+.auth-password-checklist li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: rgba(135, 162, 76, 0.85);
+}
+
+.auth-password-checklist li.is-met {
+  color: rgba(48, 75, 25, 0.96);
+}
+
+.auth-password-checklist li.is-met::before {
+  color: rgba(96, 145, 42, 0.98);
+}
+
 .country-select {
   position: relative;
   width: 100%;
@@ -2117,6 +2212,14 @@ img {
   margin: 0.95rem 0 0;
   line-height: 1.6;
   font-size: 0.88rem;
+}
+
+.auth-message.is-error {
+  color: rgba(112, 71, 33, 0.94);
+}
+
+.auth-message.is-success {
+  color: rgba(49, 84, 27, 0.94);
 }
 
 .auth-helper {
