@@ -12,7 +12,6 @@ import {
   getCartSubtotal,
   removeCartItem,
   subscribeToCart,
-  updateCartItemQuantity,
   type CartItem
 } from '@/lib/cart/store';
 
@@ -20,6 +19,7 @@ const formatCurrency = (amount: number, currency: string, locale: PaymentLocale)
   const numberLocale = locale === 'ko' ? 'ko-KR' : 'en-US';
   const normalizedCurrency = currency.toUpperCase();
   const maxFractionDigits = normalizedCurrency === 'USD' ? 0 : 2;
+
   try {
     return new Intl.NumberFormat(numberLocale, {
       style: 'currency',
@@ -38,6 +38,7 @@ export default function CartPage() {
   const paymentCopy = getPaymentCopy(paymentLocale);
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [selectedSlugs, setSelectedSlugs] = useState<string[]>([]);
   const [cartMessage, setCartMessage] = useState('');
 
   useEffect(() => {
@@ -49,27 +50,40 @@ export default function CartPage() {
     return subscribeToCart(syncCart);
   }, []);
 
+  useEffect(() => {
+    if (cartItems.length === 0) {
+      setSelectedSlugs([]);
+      return;
+    }
+
+    setSelectedSlugs(cartItems.map((item) => item.slug));
+  }, [cartItems]);
+
+  const selectedItems = useMemo(
+    () => cartItems.filter((item) => selectedSlugs.includes(item.slug)),
+    [cartItems, selectedSlugs]
+  );
+
   const summary = useMemo(() => {
-    const itemCount = getCartItemCount(cartItems);
-    const subtotal = getCartSubtotal(cartItems);
-    const currency = (cartItems[0]?.currency ?? 'USD').toUpperCase();
+    const itemCount = getCartItemCount(selectedItems);
+    const subtotal = getCartSubtotal(selectedItems);
+    const currency = (selectedItems[0]?.currency ?? cartItems[0]?.currency ?? 'USD').toUpperCase();
 
     return {
       itemCount,
       subtotal,
       currency
     };
-  }, [cartItems]);
+  }, [cartItems, selectedItems]);
 
-  const handleIncreaseQuantity = (slug: string, quantity: number) => {
-    updateCartItemQuantity(slug, quantity + 1);
-    setCartItems(getCartItems());
-    setCartMessage('');
-  };
+  const handleToggleSelect = (slug: string) => {
+    setSelectedSlugs((current) => {
+      if (current.includes(slug)) {
+        return current.filter((itemSlug) => itemSlug !== slug);
+      }
 
-  const handleDecreaseQuantity = (slug: string, quantity: number) => {
-    updateCartItemQuantity(slug, quantity - 1);
-    setCartItems(getCartItems());
+      return [...current, slug];
+    });
     setCartMessage('');
   };
 
@@ -80,8 +94,8 @@ export default function CartPage() {
   };
 
   const handleCheckout = () => {
-    if (cartItems.length === 0) {
-      setCartMessage(paymentCopy.cart.emptyMessage);
+    if (selectedItems.length === 0) {
+      setCartMessage(paymentCopy.cart.selectAtLeastOneProductToCheckout);
       return;
     }
 
@@ -91,6 +105,7 @@ export default function CartPage() {
   const handleClearCart = () => {
     clearCartItems();
     setCartItems([]);
+    setSelectedSlugs([]);
     setCartMessage(paymentCopy.cart.cartCleared);
   };
 
@@ -127,48 +142,34 @@ export default function CartPage() {
               <section className="cart-page-lines" aria-label="Cart items">
                 <ul className="cart-page-line-list">
                   {cartItems.map((item) => {
-                    const lineTotal = item.price * item.quantity;
+                    const isSelected = selectedSlugs.includes(item.slug);
+
                     return (
-                      <li key={item.slug} className="cart-page-line-item">
+                      <li key={item.slug} className={`cart-page-line-item ${isSelected ? 'is-selected' : ''}`}>
+                        <label className="cart-page-item-select">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleSelect(item.slug)}
+                            aria-label={`Select ${item.name} for checkout`}
+                          />
+                          <span className="cart-page-item-checkbox" aria-hidden="true" />
+                        </label>
+
                         <div className="cart-page-line-main">
                           <div className="mypage-item-head">{item.name}</div>
-                          <div className="cart-page-meta">
-                            {formatCurrency(item.price, item.currency, paymentLocale)} {paymentCopy.cart.each}
-                          </div>
-                          <div className="cart-page-price-row">
-                            <span>{paymentCopy.cart.lineTotal}</span>
-                            <strong>{formatCurrency(lineTotal, item.currency, paymentLocale)}</strong>
-                          </div>
+                          <p className="cart-page-item-description">{item.description}</p>
                         </div>
 
-                        <div className="cart-page-actions">
-                          <button
-                            type="button"
-                            className="auth-submit auth-submit-secondary cart-page-qty-button"
-                            onClick={() => handleDecreaseQuantity(item.slug, item.quantity)}
-                            aria-label={`Decrease quantity for ${item.name}`}
-                          >
-                            -
-                          </button>
-                          <span className="cart-page-qty-label">
-                            {paymentCopy.cart.qty} {item.quantity}
-                          </span>
-                          <button
-                            type="button"
-                            className="auth-submit auth-submit-secondary cart-page-qty-button"
-                            onClick={() => handleIncreaseQuantity(item.slug, item.quantity)}
-                            aria-label={`Increase quantity for ${item.name}`}
-                          >
-                            +
-                          </button>
-                          <button
-                            type="button"
-                            className="auth-submit auth-submit-secondary cart-page-remove"
-                            onClick={() => handleRemove(item.slug)}
-                          >
-                            {paymentCopy.cart.remove}
-                          </button>
-                        </div>
+                        <div className="cart-page-item-price">{formatCurrency(item.price, item.currency, paymentLocale)}</div>
+
+                        <button
+                          type="button"
+                          className="auth-submit auth-submit-secondary cart-page-remove"
+                          onClick={() => handleRemove(item.slug)}
+                        >
+                          {paymentCopy.cart.remove}
+                        </button>
                       </li>
                     );
                   })}
@@ -181,23 +182,28 @@ export default function CartPage() {
                   <span>{paymentCopy.cart.items}</span>
                   <strong>{summary.itemCount}</strong>
                 </div>
-                <div className="cart-page-summary-row">
-                  <span>{paymentCopy.cart.subtotal}</span>
-                  <strong>{formatCurrency(summary.subtotal, summary.currency, paymentLocale)}</strong>
-                </div>
                 <div className="cart-page-summary-row cart-page-total-row">
                   <span>{paymentCopy.cart.total}</span>
                   <strong>{formatCurrency(summary.subtotal, summary.currency, paymentLocale)}</strong>
                 </div>
 
-                <button type="button" className="auth-submit cart-page-checkout" onClick={handleCheckout}>
+                <button
+                  type="button"
+                  className="auth-submit cart-page-checkout"
+                  onClick={handleCheckout}
+                  disabled={selectedItems.length === 0}
+                >
                   {paymentCopy.cart.checkout}
                 </button>
+
+                {selectedItems.length === 0 ? (
+                  <p className="cart-page-inline-message">{paymentCopy.cart.selectAtLeastOneProductToCheckout}</p>
+                ) : null}
               </aside>
             </div>
           )}
 
-          {cartMessage ? <p className="cart-page-inline-message">{cartMessage}</p> : null}
+          {cartMessage && selectedItems.length > 0 ? <p className="cart-page-inline-message">{cartMessage}</p> : null}
         </section>
       </main>
     </div>

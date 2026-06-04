@@ -21,9 +21,6 @@ type PaymentCopy = {
     emptyTitle: string;
     emptyDescription: string;
     browsePlugins: string;
-    each: string;
-    lineTotal: string;
-    qty: string;
     remove: string;
     orderSummary: string;
     items: string;
@@ -33,6 +30,7 @@ type PaymentCopy = {
     emptyMessage: string;
     checkoutSoon: string;
     cartCleared: string;
+    selectAtLeastOneProductToCheckout: string;
   };
   orders: {
     loadFailed: string;
@@ -79,9 +77,6 @@ const PAYMENT_COPY: Record<PaymentLocale, PaymentCopy> = {
       emptyTitle: 'No items in your cart yet.',
       emptyDescription: 'Your selected products will appear here.',
       browsePlugins: 'Browse Plugins',
-      each: 'each',
-      lineTotal: 'Line Total',
-      qty: 'Qty',
       remove: 'Remove',
       orderSummary: 'Order Summary',
       items: 'Items',
@@ -90,7 +85,8 @@ const PAYMENT_COPY: Record<PaymentLocale, PaymentCopy> = {
       checkout: 'Checkout',
       emptyMessage: 'Your cart is empty.',
       checkoutSoon: 'Checkout is coming soon.',
-      cartCleared: 'Cart cleared.'
+      cartCleared: 'Cart cleared.',
+      selectAtLeastOneProductToCheckout: 'Select at least one product to checkout.'
     },
     orders: {
       loadFailed: 'Could not load purchase history right now.',
@@ -146,9 +142,6 @@ const PAYMENT_COPY: Record<PaymentLocale, PaymentCopy> = {
       emptyTitle: '장바구니가 비어 있습니다.',
       emptyDescription: '선택한 상품이 여기에 표시됩니다.',
       browsePlugins: '플러그인 보기',
-      each: '개당',
-      lineTotal: '합계',
-      qty: '수량',
       remove: '삭제',
       orderSummary: '주문 요약',
       items: '상품 수',
@@ -157,7 +150,8 @@ const PAYMENT_COPY: Record<PaymentLocale, PaymentCopy> = {
       checkout: '결제하기',
       emptyMessage: '장바구니가 비어 있습니다.',
       checkoutSoon: '결제 기능은 곧 제공됩니다.',
-      cartCleared: '장바구니를 비웠습니다.'
+      cartCleared: '장바구니를 비웠습니다.',
+      selectAtLeastOneProductToCheckout: '결제할 상품을 하나 이상 선택해 주세요.'
     },
     orders: {
       loadFailed: '구매 내역을 불러오지 못했습니다.',
