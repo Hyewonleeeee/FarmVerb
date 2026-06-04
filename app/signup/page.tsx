@@ -5,7 +5,12 @@ import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import CountrySelect from '@/components/ui/CountrySelect';
-import { validateSignupEmail, validateSignupName, validateSignupPassword } from '@/lib/auth/signup-validation';
+import {
+  combineSignupName,
+  validateSignupEmail,
+  validateSignupName,
+  validateSignupPassword
+} from '@/lib/auth/signup-validation';
 import { DEFAULT_COUNTRY_NAME, normalizeCountryName } from '@/lib/ui/country';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
@@ -13,6 +18,8 @@ type ValidationResponse =
   | {
       ok: true;
       normalized?: {
+        firstName?: string;
+        lastName?: string;
         name?: string;
         email?: string;
         country?: string;
@@ -22,6 +29,8 @@ type ValidationResponse =
       ok: false;
       message?: string;
       fieldErrors?: {
+        firstName?: string | null;
+        lastName?: string | null;
         name?: string | null;
         email?: string | null;
         password?: string | null;
@@ -30,7 +39,8 @@ type ValidationResponse =
 
 function SignupPage() {
   const router = useRouter();
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [country, setCountry] = useState(DEFAULT_COUNTRY_NAME);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -41,16 +51,25 @@ function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  const nameValidation = validateSignupName(name);
+  const firstNameValidation = validateSignupName(firstName);
+  const lastNameValidation = validateSignupName(lastName);
   const emailValidation = validateSignupEmail(email);
   const passwordValidation = validateSignupPassword(password);
-  const sanitizedName = nameValidation.normalizedName;
+  const sanitizedFirstName = firstNameValidation.normalizedName;
+  const sanitizedLastName = lastNameValidation.normalizedName;
+  const sanitizedName = combineSignupName(sanitizedFirstName, sanitizedLastName);
   const sanitizedEmail = emailValidation.normalizedEmail;
   const sanitizedCountry = normalizeCountryName(country);
   const canSubmit =
-    nameValidation.valid && emailValidation.valid && passwordValidation.valid && !isSubmitting && !showEmailVerificationState;
+    firstNameValidation.valid &&
+    lastNameValidation.valid &&
+    emailValidation.valid &&
+    passwordValidation.valid &&
+    !isSubmitting &&
+    !showEmailVerificationState;
 
-  const showNameFeedback = hasSubmitted || name.trim().length > 0;
+  const showFirstNameFeedback = hasSubmitted || firstName.trim().length > 0;
+  const showLastNameFeedback = hasSubmitted || lastName.trim().length > 0;
   const showEmailFeedback = hasSubmitted || email.trim().length > 0;
   const showPasswordFeedback = hasSubmitted || password.length > 0;
 
@@ -86,7 +105,9 @@ function SignupPage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          name,
+          firstName,
+          lastName,
+          name: sanitizedName,
           email,
           password,
           country
@@ -108,7 +129,8 @@ function SignupPage() {
           ok: false,
           message:
             payload.message ??
-            payload.fieldErrors?.name ??
+            payload.fieldErrors?.firstName ??
+            payload.fieldErrors?.lastName ??
             payload.fieldErrors?.email ??
             payload.fieldErrors?.password ??
             'Please enter your real name in English.',
@@ -120,6 +142,8 @@ function SignupPage() {
         ok: true,
         message: '',
         normalized: {
+          firstName: payload.normalized?.firstName ?? sanitizedFirstName,
+          lastName: payload.normalized?.lastName ?? sanitizedLastName,
           name: payload.normalized?.name ?? sanitizedName,
           email: payload.normalized?.email ?? sanitizedEmail,
           country: payload.normalized?.country ?? sanitizedCountry
@@ -140,7 +164,13 @@ function SignupPage() {
     setMessage('');
 
     if (!canSubmit) {
-      setMessage(nameValidation.error ?? emailValidation.error ?? passwordValidation.error ?? 'Please review the highlighted fields.');
+      setMessage(
+        firstNameValidation.error ??
+          lastNameValidation.error ??
+          emailValidation.error ??
+          passwordValidation.error ??
+          'Please review the highlighted fields.'
+      );
       return;
     }
 
@@ -161,6 +191,8 @@ function SignupPage() {
         options: {
           data: {
             name: serverValidation.normalized.name,
+            first_name: serverValidation.normalized.firstName,
+            last_name: serverValidation.normalized.lastName,
             country: serverValidation.normalized.country
           }
         }
@@ -227,32 +259,62 @@ function SignupPage() {
               <h1 id="signup-title" className="auth-title">
                 Sign Up
               </h1>
-              <p className="auth-copy">Create your FarmVerb account with name, country, email, and password.</p>
+              <p className="auth-copy">Create your FarmVerb account with first name, last name, country, email, and password.</p>
 
               <form className="auth-form" onSubmit={handleSubmit} noValidate>
-                <label className="auth-label" htmlFor="signup-name">
-                  Name
-                </label>
-                <input
-                  id="signup-name"
-                  className="auth-input"
-                  type="text"
-                  autoComplete="name"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  onBlur={() => setName(sanitizedName)}
-                  aria-invalid={showNameFeedback && !nameValidation.valid}
-                  aria-describedby={showNameFeedback && !nameValidation.valid ? 'signup-name-error' : undefined}
-                  required
-                  maxLength={50}
-                />
-                {showNameFeedback && !nameValidation.valid ? (
-                  <p className="auth-field-message" id="signup-name-error">
-                    Please enter your real name in English.
-                  </p>
-                ) : (
-                  <p className="auth-field-note">English letters only. Spaces, hyphens, and apostrophes are okay.</p>
-                )}
+                <div className="auth-name-grid">
+                  <div className="auth-field-stack">
+                    <label className="auth-label" htmlFor="signup-first-name">
+                      First name
+                    </label>
+                    <input
+                      id="signup-first-name"
+                      className="auth-input"
+                      type="text"
+                      autoComplete="given-name"
+                      value={firstName}
+                      onChange={(event) => setFirstName(event.target.value)}
+                      onBlur={() => setFirstName(sanitizedFirstName)}
+                      aria-invalid={showFirstNameFeedback && !firstNameValidation.valid}
+                      aria-describedby={showFirstNameFeedback && !firstNameValidation.valid ? 'signup-first-name-error' : undefined}
+                      required
+                      maxLength={50}
+                    />
+                    {showFirstNameFeedback && !firstNameValidation.valid ? (
+                      <p className="auth-field-message" id="signup-first-name-error">
+                        Please enter your real name in English.
+                      </p>
+                    ) : (
+                      <p className="auth-field-note">English letters only. Spaces, hyphens, and apostrophes are okay.</p>
+                    )}
+                  </div>
+
+                  <div className="auth-field-stack">
+                    <label className="auth-label" htmlFor="signup-last-name">
+                      Last name
+                    </label>
+                    <input
+                      id="signup-last-name"
+                      className="auth-input"
+                      type="text"
+                      autoComplete="family-name"
+                      value={lastName}
+                      onChange={(event) => setLastName(event.target.value)}
+                      onBlur={() => setLastName(sanitizedLastName)}
+                      aria-invalid={showLastNameFeedback && !lastNameValidation.valid}
+                      aria-describedby={showLastNameFeedback && !lastNameValidation.valid ? 'signup-last-name-error' : undefined}
+                      required
+                      maxLength={50}
+                    />
+                    {showLastNameFeedback && !lastNameValidation.valid ? (
+                      <p className="auth-field-message" id="signup-last-name-error">
+                        Please enter your real name in English.
+                      </p>
+                    ) : (
+                      <p className="auth-field-note">English letters only. Spaces, hyphens, and apostrophes are okay.</p>
+                    )}
+                  </div>
+                </div>
 
                 <label className="auth-label" htmlFor="signup-country">
                   Country
@@ -309,21 +371,20 @@ function SignupPage() {
                   </button>
                 </div>
 
-                <div className="auth-password-meta" id="signup-password-help">
-                  <div className="auth-password-strength">
-                    Password strength: <strong>{passwordValidation.strength}</strong>
-                  </div>
-                  <ul className="auth-password-checklist" aria-live="polite">
-                    <li className={passwordValidation.checklist.minLength ? 'is-met' : ''}>8+ characters</li>
-                    <li className={passwordValidation.checklist.uppercase ? 'is-met' : ''}>One uppercase letter</li>
-                    <li className={passwordValidation.checklist.lowercase ? 'is-met' : ''}>One lowercase letter</li>
-                    <li className={passwordValidation.checklist.number ? 'is-met' : ''}>One number</li>
-                    <li className={passwordValidation.checklist.specialChar ? 'is-met' : ''}>One special character</li>
-                  </ul>
-                  {showPasswordFeedback && !passwordValidation.valid ? (
-                    <p className="auth-field-message">Please complete the password requirements below.</p>
-                  ) : null}
+                <div className="auth-password-meta auth-password-meta-inline" id="signup-password-help" aria-live="polite">
+                  <span className={`auth-password-strength is-${passwordValidation.strength.toLowerCase()}`}>
+                    Strength: {passwordValidation.strength}
+                  </span>
+                  <span className={`auth-password-pill ${passwordValidation.checklist.minLength ? 'is-met' : ''}`}>8+ chars</span>
+                  <span className={`auth-password-pill ${passwordValidation.checklist.uppercase ? 'is-met' : ''}`}>A-Z</span>
+                  <span className={`auth-password-pill ${passwordValidation.checklist.lowercase ? 'is-met' : ''}`}>a-z</span>
+                  <span className={`auth-password-pill ${passwordValidation.checklist.number ? 'is-met' : ''}`}>0-9</span>
+                  <span className={`auth-password-pill ${passwordValidation.checklist.specialChar ? 'is-met' : ''}`}>special</span>
                 </div>
+
+                {showPasswordFeedback && !passwordValidation.valid ? (
+                  <p className="auth-field-message">Please complete the password requirements below.</p>
+                ) : null}
 
                 <button className="auth-submit" type="submit" disabled={!canSubmit}>
                   {isSubmitting ? 'Creating account...' : 'Sign Up'}

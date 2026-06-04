@@ -1938,6 +1938,7 @@ img {
 }
 
 .auth-input {
+  width: 100%;
   border-radius: 10px;
   border: 1px solid rgba(149, 183, 75, 0.4);
   background: rgba(252, 253, 242, 0.94);
@@ -1967,21 +1968,35 @@ img {
   color: rgba(72, 93, 46, 0.74);
 }
 
-.auth-password-field {
-  position: relative;
+.auth-name-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.auth-field-stack {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.auth-password-field {
+  display: flex;
+  align-items: stretch;
+  gap: 0.55rem;
 }
 
 .auth-password-input {
-  padding-right: 4.25rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-right: 0.82rem;
 }
 
 .auth-password-toggle {
-  position: absolute;
-  right: 0.45rem;
-  top: 50%;
-  transform: translateY(-50%);
+  position: static;
+  transform: none;
+  flex: 0 0 auto;
+  min-width: 4.7rem;
   border: 1px solid rgba(145, 179, 74, 0.3);
   border-radius: 999px;
   background: rgba(242, 248, 220, 0.92);
@@ -1997,54 +2012,70 @@ img {
 }
 
 .auth-password-toggle:hover {
-  transform: translateY(-50%) translateY(-1px);
+  transform: translateY(-1px);
   background: rgba(232, 242, 195, 0.98);
   border-color: rgba(132, 164, 63, 0.45);
 }
 
 .auth-password-meta {
   margin-top: 0.45rem;
-  padding: 0.72rem 0.8rem;
-  border-radius: 10px;
-  border: 1px solid rgba(152, 183, 88, 0.28);
-  background: rgba(248, 251, 233, 0.72);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.auth-password-meta-inline {
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .auth-password-strength {
-  font-size: 0.8rem;
-  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(152, 183, 88, 0.26);
+  background: rgba(248, 251, 233, 0.82);
+  padding: 0.28rem 0.58rem;
+  font-size: 0.73rem;
+  line-height: 1.2;
   color: rgba(60, 82, 36, 0.92);
 }
 
-.auth-password-checklist {
-  margin: 0.55rem 0 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 0.28rem;
+.auth-password-strength.is-weak {
+  color: rgba(118, 79, 31, 0.94);
 }
 
-.auth-password-checklist li {
-  position: relative;
-  padding-left: 1rem;
-  font-size: 0.78rem;
-  line-height: 1.4;
-  color: rgba(73, 94, 49, 0.82);
+.auth-password-strength.is-fair {
+  color: rgba(94, 98, 31, 0.94);
 }
 
-.auth-password-checklist li::before {
-  content: "•";
-  position: absolute;
-  left: 0;
-  color: rgba(135, 162, 76, 0.85);
+.auth-password-strength.is-good {
+  color: rgba(58, 87, 28, 0.96);
 }
 
-.auth-password-checklist li.is-met {
+.auth-password-strength.is-strong {
   color: rgba(48, 75, 25, 0.96);
 }
 
-.auth-password-checklist li.is-met::before {
-  color: rgba(96, 145, 42, 0.98);
+.auth-password-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(152, 183, 88, 0.26);
+  background: rgba(248, 251, 233, 0.76);
+  color: rgba(74, 95, 48, 0.82);
+  padding: 0.28rem 0.5rem;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.auth-password-pill.is-met {
+  color: rgba(48, 75, 25, 0.96);
+  background: rgba(230, 244, 188, 0.94);
+  border-color: rgba(128, 164, 58, 0.35);
 }
 
 .country-select {
@@ -3040,6 +3071,18 @@ img {
 
   .auth-card,
   .mypage-card {
+    width: 100%;
+  }
+
+  .auth-name-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-password-field {
+    flex-direction: column;
+  }
+
+  .auth-password-toggle {
     width: 100%;
   }
 

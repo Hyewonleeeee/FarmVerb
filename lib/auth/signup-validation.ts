@@ -21,14 +21,20 @@ export type PasswordChecklist = {
 };
 
 export type SignupValidationResult = {
+  normalizedFirstName: string;
+  normalizedLastName: string;
   normalizedName: string;
   normalizedEmail: string;
   normalizedCountry: string;
+  firstNameValid: boolean;
+  lastNameValid: boolean;
   nameValid: boolean;
   emailValid: boolean;
   passwordValid: boolean;
   passwordChecklist: PasswordChecklist;
   passwordStrength: 'Weak' | 'Fair' | 'Good' | 'Strong';
+  firstNameError: string | null;
+  lastNameError: string | null;
   nameError: string | null;
   emailError: string | null;
   passwordError: string | null;
@@ -124,6 +130,10 @@ export function validateSignupName(rawName: string) {
   };
 }
 
+export function combineSignupName(firstName: string, lastName: string) {
+  return [normalizeSignupName(firstName), normalizeSignupName(lastName)].filter(Boolean).join(' ').trim();
+}
+
 export function normalizeSignupEmail(rawEmail: string) {
   return collapseWhitespace(rawEmail).toLowerCase();
 }
@@ -187,29 +197,53 @@ export function validateSignupPassword(password: string) {
 }
 
 export function validateSignupPayload(input: {
+  firstName?: string;
+  lastName?: string;
   name: string;
   email: string;
   password: string;
   country?: string;
 }) {
-  const name = validateSignupName(input.name);
+  const fallbackParts = collapseWhitespace(input.name).split(' ').filter(Boolean);
+  const firstNameInput = collapseWhitespace(input.firstName ?? fallbackParts[0] ?? '');
+  const lastNameInput = collapseWhitespace(input.lastName ?? fallbackParts.slice(1).join(' '));
+  const firstName = validateSignupName(firstNameInput);
+  const lastName = validateSignupName(lastNameInput);
   const email = validateSignupEmail(input.email);
   const password = validateSignupPassword(input.password);
   const normalizedCountry = normalizeCountryName(input.country ?? '');
+  const normalizedName = combineSignupName(firstName.normalizedName, lastName.normalizedName);
 
   return {
-    valid: name.valid && email.valid && password.valid,
+    valid: firstName.valid && lastName.valid && email.valid && password.valid,
     normalized: {
-      name: name.normalizedName,
+      firstName: firstName.normalizedName,
+      lastName: lastName.normalizedName,
+      name: normalizedName,
       email: email.normalizedEmail,
       country: normalizedCountry
     },
     errors: {
-      name: name.error,
+      firstName: firstName.error,
+      lastName: lastName.error,
+      name: firstName.error ?? lastName.error,
       email: email.error,
       password: password.error
     },
     passwordChecklist: password.checklist,
-    passwordStrength: password.strength
+    passwordStrength: password.strength,
+    normalizedFirstName: firstName.normalizedName,
+    normalizedLastName: lastName.normalizedName,
+    normalizedName,
+    firstNameValid: firstName.valid,
+    lastNameValid: lastName.valid,
+    nameValid: firstName.valid && lastName.valid,
+    emailValid: email.valid,
+    passwordValid: password.valid,
+    firstNameError: firstName.error,
+    lastNameError: lastName.error,
+    nameError: firstName.error ?? lastName.error,
+    emailError: email.error,
+    passwordError: password.error
   };
 }

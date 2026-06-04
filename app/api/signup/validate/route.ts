@@ -3,6 +3,8 @@ import { validateSignupPayload } from '@/lib/auth/signup-validation';
 
 export async function POST(request: Request) {
   let body: {
+    firstName?: string;
+    lastName?: string;
     name?: string;
     email?: string;
     password?: string;
@@ -27,6 +29,8 @@ export async function POST(request: Request) {
   }
 
   const validation = validateSignupPayload({
+    firstName: body.firstName ?? '',
+    lastName: body.lastName ?? '',
     name: body.name ?? '',
     email: body.email ?? '',
     password: body.password ?? '',
@@ -37,7 +41,12 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         ok: false,
-        message: validation.errors.name ?? validation.errors.email ?? validation.errors.password ?? 'Invalid signup details.',
+        message:
+          validation.errors.firstName ??
+          validation.errors.lastName ??
+          validation.errors.email ??
+          validation.errors.password ??
+          'Invalid signup details.',
         fieldErrors: validation.errors
       },
       { status: 400 }
