@@ -562,7 +562,7 @@ export default function FarmVerbSite() {
       <div className="grain-layer" aria-hidden="true" />
 
       <header className="site-header">
-        <nav className="site-nav" aria-label="Primary navigation">
+        <nav className="site-nav site-container" aria-label="Primary navigation">
           <div className="nav-group nav-left">
             <Link href="/instrument" className="nav-link" data-route="instrument">
               Software Instrument
@@ -661,7 +661,7 @@ export default function FarmVerbSite() {
             </span>
           </div>
 
-          <div className="page-scroll page-shell home-scroll">
+          <div className="page-scroll page-shell site-container home-scroll">
             <div className="home-stage parallax-node" data-depth="16">
               <p className="section-overline">FarmVerb Sonic Atelier</p>
               <h1 className="hero-title">Grow Your Sound</h1>
@@ -678,7 +678,7 @@ export default function FarmVerbSite() {
         </section>
 
         <section className="page page-plugins" data-page="plugins" aria-hidden="true">
-          <div className="page-scroll page-shell">
+          <div className="page-scroll page-shell site-container">
             <section className="plugins-hero parallax-node" data-depth="10">
               <p className="section-overline">Audio Plugins</p>
               <h1 className="page-title">Signal Shaping for Living Space</h1>
@@ -729,7 +729,7 @@ export default function FarmVerbSite() {
         </section>
 
         <section className="page page-instrument" data-page="instrument" aria-hidden="true">
-          <div className="page-scroll page-shell">
+          <div className="page-scroll page-shell site-container">
             <div className="instrument-layout">
               <div className="instrument-copy parallax-node" data-depth="12">
                 <p className="section-overline">Software Instrument</p>
@@ -773,7 +773,7 @@ export default function FarmVerbSite() {
         </section>
 
         <section className="page page-sample-pack" data-page="sample-pack" aria-hidden="true">
-          <div className="page-scroll page-shell">
+          <div className="page-scroll page-shell site-container">
             <div className="sample-page-stack">
               <div className="sample-hero-grid">
                 <div className="sample-copy parallax-node sample-hero-copy" data-depth="10">
@@ -833,11 +833,6 @@ export default function FarmVerbSite() {
                     work.
                   </p>
                 </div>
-
-                <blockquote className="sample-intro-quote">
-                  <p>Precision-crafted percussion for modern electronic production.</p>
-                  <p>Fractured rhythm. Digital texture. Controlled chaos.</p>
-                </blockquote>
               </section>
 
               <section className="sample-film-section sample-panel-section">
@@ -1020,7 +1015,7 @@ export default function FarmVerbSite() {
         </section>
 
         <section className="page page-support" data-page="support" aria-hidden="true">
-          <div className="page-scroll page-shell support-layout">
+          <div className="page-scroll page-shell site-container support-layout">
             <p className="section-overline">Support</p>
             <h1 className="page-title">Need Help With Your Setup?</h1>
             <p className="page-copy">For installation, license, and product support, reach out anytime.</p>
