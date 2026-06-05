@@ -1,33 +1,33 @@
 type RouteKey = 'home' | 'instrument' | 'plugins' | 'sample-pack' | 'support';
 
 type SwitchOptions = {
-  fromHash?: boolean;
+  fromHistory?: boolean;
 };
 
 type RouteConfig = {
-  hash: string;
+  path: string;
   title: string;
 };
 
 const ROUTES: Record<RouteKey, RouteConfig> = {
   home: {
-    hash: '#/',
+    path: '/',
     title: 'FarmVerb | Grow Your Sound'
   },
   instrument: {
-    hash: '#/instrument',
+    path: '/instrument',
     title: 'FarmVerb | Software Instrument'
   },
   plugins: {
-    hash: '#/plugins',
+    path: '/plugins',
     title: 'FarmVerb | Audio Plugins'
   },
   'sample-pack': {
-    hash: '#/sample-pack',
+    path: '/sample-pack',
     title: 'FarmVerb | Sample Pack'
   },
   support: {
-    hash: '#/support',
+    path: '/support',
     title: 'FarmVerb | Support'
   }
 };
@@ -576,8 +576,8 @@ export function initFarmVerbSite() {
     return 'home';
   };
 
-  const routeFromHash = (hash: string) => {
-    const route = hash.replace(/^#\/?/, '').trim();
+  const routeFromPath = (pathname: string) => {
+    const route = pathname.replace(/^\/+/, '').replace(/\/+$/, '').trim();
     return normalizeRoute(route || 'home');
   };
 
@@ -593,13 +593,13 @@ export function initFarmVerbSite() {
 
   const switchTo = (route: string, options: SwitchOptions = {}) => {
     const nextRoute = normalizeRoute(route);
-    const { fromHash = false } = options;
+    const { fromHistory = false } = options;
 
     if (nextRoute === activeRoute) {
       updateNavState(nextRoute);
       updateTitle(nextRoute);
-      if (!fromHash && window.location.hash !== ROUTES[nextRoute].hash) {
-        history.replaceState(null, '', ROUTES[nextRoute].hash);
+      if (!fromHistory && window.location.pathname !== ROUTES[nextRoute].path) {
+        history.replaceState(null, '', ROUTES[nextRoute].path);
       }
       return;
     }
@@ -632,8 +632,8 @@ export function initFarmVerbSite() {
     updateNavState(nextRoute);
     updateTitle(nextRoute);
 
-    if (!fromHash && window.location.hash !== ROUTES[nextRoute].hash) {
-      history.pushState(null, '', ROUTES[nextRoute].hash);
+    if (!fromHistory && window.location.pathname !== ROUTES[nextRoute].path) {
+      history.pushState(null, '', ROUTES[nextRoute].path);
     }
   };
 
@@ -656,13 +656,13 @@ export function initFarmVerbSite() {
     switchTo(routeKey);
   };
 
-  const onHashChange = () => {
-    switchTo(routeFromHash(window.location.hash), { fromHash: true });
+  const onPopState = () => {
+    switchTo(routeFromPath(window.location.pathname), { fromHistory: true });
   };
 
   document.addEventListener('click', onDocumentClick);
-  window.addEventListener('hashchange', onHashChange);
-  switchTo(routeFromHash(window.location.hash), { fromHash: true });
+  window.addEventListener('popstate', onPopState);
+  switchTo(routeFromPath(window.location.pathname), { fromHistory: true });
 
   const homeCanvas = document.getElementById('home-canvas');
   const ambient = homeCanvas instanceof HTMLCanvasElement ? new HomeAmbient(homeCanvas, prefersReducedMotion) : null;
@@ -1031,7 +1031,7 @@ export function initFarmVerbSite() {
 
   return () => {
     document.removeEventListener('click', onDocumentClick);
-    window.removeEventListener('hashchange', onHashChange);
+    window.removeEventListener('popstate', onPopState);
 
     if (transitionTimer !== null) {
       window.clearTimeout(transitionTimer);

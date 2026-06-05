@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function GlobalFooter() {
   return (
     <footer className="global-footer" aria-label="FarmVerb site footer">
@@ -11,22 +13,22 @@ export default function GlobalFooter() {
         <div className="footer-columns">
           <section className="footer-column" aria-label="Products links">
             <h2>Products</h2>
-            <a href="#/instrument" data-route="instrument">
+            <Link href="/instrument" data-route="instrument">
               Software Instrument
-            </a>
-            <a href="#/plugins" data-route="plugins">
+            </Link>
+            <Link href="/plugins" data-route="plugins">
               Audio Plugins
-            </a>
-            <a href="#/sample-pack" data-route="sample-pack">
+            </Link>
+            <Link href="/sample-pack" data-route="sample-pack">
               Sample Pack
-            </a>
+            </Link>
           </section>
 
           <section className="footer-column" aria-label="Support links">
             <h2>Support</h2>
-            <a href="#/support" data-route="support">
+            <Link href="/support" data-route="support">
               Support
-            </a>
+            </Link>
             <a href="mailto:support@farmverb.com?subject=FarmVerb%20FAQ">FAQ</a>
           </section>
 

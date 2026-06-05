@@ -133,7 +133,7 @@ export default function CartPage() {
             <section className="cart-page-empty" aria-label="Empty cart">
               <p>{paymentCopy.cart.emptyTitle}</p>
               <p>{paymentCopy.cart.emptyDescription}</p>
-              <Link href="/#/plugins" className="auth-submit cart-page-empty-link">
+              <Link href="/plugins" className="auth-submit cart-page-empty-link">
                 {paymentCopy.cart.browsePlugins}
               </Link>
             </section>

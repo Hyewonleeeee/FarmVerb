@@ -409,25 +409,25 @@ export default function FarmVerbSite() {
       <header className="site-header">
         <nav className="site-nav" aria-label="Primary navigation">
           <div className="nav-group nav-left">
-            <a href="#/instrument" className="nav-link" data-route="instrument">
+            <Link href="/instrument" className="nav-link" data-route="instrument">
               Software Instrument
-            </a>
-            <a href="#/plugins" className="nav-link" data-route="plugins">
+            </Link>
+            <Link href="/plugins" className="nav-link" data-route="plugins">
               Audio Plugins
-            </a>
-            <a href="#/sample-pack" className="nav-link" data-route="sample-pack">
+            </Link>
+            <Link href="/sample-pack" className="nav-link" data-route="sample-pack">
               Sample Pack
-            </a>
+            </Link>
           </div>
 
-          <a href="#/" className="brand" data-route="home" aria-label="FarmVerb home">
+          <Link href="/" className="brand" data-route="home" aria-label="FarmVerb home">
             FARMVERB
-          </a>
+          </Link>
 
           <div className="nav-group nav-right">
-            <a href="#/support" className="nav-link nav-link-support" data-route="support">
+            <Link href="/support" className="nav-link nav-link-support" data-route="support">
               Support
-            </a>
+            </Link>
             <Link
               href="/cart"
               className="cart-trigger"
@@ -511,9 +511,9 @@ export default function FarmVerbSite() {
               <p className="section-overline">FarmVerb Sonic Atelier</p>
               <h1 className="hero-title">Grow Your Sound</h1>
               <p className="hero-copy">Organic tools for producers and sound designers</p>
-              <a href="#/plugins" className="hero-link" data-route="plugins">
+              <Link href="/plugins" className="hero-link" data-route="plugins">
                 Enter Audio Plugins
-              </a>
+              </Link>
             </div>
 
             <div className="global-footer-host">
