@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import AuthNav from '@/components/auth/AuthNav';
 import GlobalFooter from '@/components/farmverb/GlobalFooter';
 import { addItemToCart, getCartItemCount, getCartItems, subscribeToCart, type CartItem } from '@/lib/cart/store';
@@ -79,6 +79,18 @@ const GLITCH_LICENSE_USE = [
   'Broadcasts',
   'Live performances'
 ] as const;
+
+function formatTimeLabel(seconds: number) {
+  if (!Number.isFinite(seconds) || seconds < 0) {
+    return '0:00';
+  }
+
+  const rounded = Math.floor(seconds);
+  const minutes = Math.floor(rounded / 60);
+  const remainingSeconds = rounded % 60;
+
+  return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`;
+}
 
 function ProductPrice({
   productName,
@@ -169,7 +181,13 @@ export default function FarmVerbSite() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [buyNowNotice, setBuyNowNotice] = useState<string | null>(null);
   const sampleFilmRef = useRef<HTMLVideoElement | null>(null);
+  const sampleFilmContainerRef = useRef<HTMLDivElement | null>(null);
   const [sampleFilmPlaying, setSampleFilmPlaying] = useState(false);
+  const [sampleFilmCurrentTime, setSampleFilmCurrentTime] = useState(0);
+  const [sampleFilmDuration, setSampleFilmDuration] = useState(0);
+  const [sampleFilmMuted, setSampleFilmMuted] = useState(false);
+  const [sampleFilmVolume, setSampleFilmVolume] = useState(0.85);
+  const [sampleFilmFullscreen, setSampleFilmFullscreen] = useState(false);
 
   useEffect(() => {
     return initFarmVerbSite();
@@ -200,22 +218,64 @@ export default function FarmVerbSite() {
       return;
     }
 
-    const syncPlaying = () => {
-      setSampleFilmPlaying(!video.paused && !video.ended);
-    };
-
-    const syncPaused = () => {
-      setSampleFilmPlaying(false);
+    const syncPlaying = () => setSampleFilmPlaying(!video.paused && !video.ended);
+    const syncPaused = () => setSampleFilmPlaying(false);
+    const syncTime = () => setSampleFilmCurrentTime(video.currentTime || 0);
+    const syncMetadata = () => setSampleFilmDuration(Number.isFinite(video.duration) ? video.duration : 0);
+    const syncVolume = () => {
+      setSampleFilmMuted(video.muted);
+      setSampleFilmVolume(video.volume);
     };
 
     video.addEventListener('play', syncPlaying);
     video.addEventListener('pause', syncPaused);
     video.addEventListener('ended', syncPaused);
+    video.addEventListener('timeupdate', syncTime);
+    video.addEventListener('loadedmetadata', syncMetadata);
+    video.addEventListener('durationchange', syncMetadata);
+    video.addEventListener('volumechange', syncVolume);
+
+    syncMetadata();
+    syncVolume();
 
     return () => {
       video.removeEventListener('play', syncPlaying);
       video.removeEventListener('pause', syncPaused);
       video.removeEventListener('ended', syncPaused);
+      video.removeEventListener('timeupdate', syncTime);
+      video.removeEventListener('loadedmetadata', syncMetadata);
+      video.removeEventListener('durationchange', syncMetadata);
+      video.removeEventListener('volumechange', syncVolume);
+    };
+  }, []);
+
+  useEffect(() => {
+    const video = sampleFilmRef.current;
+    if (!video) {
+      return;
+    }
+
+    video.muted = sampleFilmMuted;
+  }, [sampleFilmMuted]);
+
+  useEffect(() => {
+    const video = sampleFilmRef.current;
+    if (!video) {
+      return;
+    }
+
+    video.volume = sampleFilmVolume;
+  }, [sampleFilmVolume]);
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      setSampleFilmFullscreen(Boolean(document.fullscreenElement));
+    };
+
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
     };
   }, []);
 
@@ -249,6 +309,10 @@ export default function FarmVerbSite() {
 
     return null;
   }, [activeNebulaProductTab, activeOrganicProductTab, activePluginSeries, activeSeries.products]);
+
+  const glitchPackPricing = getProductPricing('Glitch Drum Pack Vol.1');
+  const glitchPackPrice = glitchPackPricing ? getMainProductPrice(glitchPackPricing) : 49;
+  const glitchPackRegularPrice = glitchPackPricing?.regularPrice ?? 99;
 
   const showSeriesFeature = Boolean(selectedSeriesProduct);
 
@@ -436,8 +500,7 @@ export default function FarmVerbSite() {
     }
 
     if (video.paused || video.ended) {
-      video.muted = false;
-      video.volume = 1;
+      video.muted = sampleFilmMuted;
 
       try {
         await video.play();
@@ -448,6 +511,50 @@ export default function FarmVerbSite() {
     }
 
     video.pause();
+  };
+
+  const seekSampleFilm = (nextTime: number) => {
+    const video = sampleFilmRef.current;
+    if (!video || !Number.isFinite(nextTime)) {
+      return;
+    }
+
+    const clampedTime = Math.max(0, Math.min(sampleFilmDuration || nextTime, nextTime));
+    video.currentTime = clampedTime;
+    setSampleFilmCurrentTime(clampedTime);
+  };
+
+  const handleSampleFilmProgressChange = (event: ChangeEvent<HTMLInputElement>) => {
+    seekSampleFilm(Number(event.target.value));
+  };
+
+  const handleSampleFilmVolumeChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextVolume = Math.max(0, Math.min(1, Number(event.target.value)));
+    setSampleFilmVolume(nextVolume);
+    if (nextVolume > 0 && sampleFilmMuted) {
+      setSampleFilmMuted(false);
+    }
+  };
+
+  const toggleSampleFilmMuted = () => {
+    setSampleFilmMuted((currentMuted) => !currentMuted);
+  };
+
+  const toggleSampleFilmFullscreen = async () => {
+    const target = sampleFilmContainerRef.current;
+    if (!target) {
+      return;
+    }
+
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (target.requestFullscreen) {
+        await target.requestFullscreen();
+      }
+    } catch {
+      // Ignore fullscreen failures.
+    }
   };
 
   return (
@@ -679,11 +786,11 @@ export default function FarmVerbSite() {
 
                   <div className="sample-price-rail" aria-label="Glitch Drum Pack Vol. I pricing">
                     <div className="sample-price-main">
-                      <span className="sample-price-value">$49</span>
+                      <span className="sample-price-value">{formatUsdPrice(glitchPackPrice)}</span>
                       <span className="sample-price-unit">USD</span>
                     </div>
                     <div className="sample-price-meta">
-                      <span className="sample-price-regular">Regular price $99</span>
+                      <span className="sample-price-regular">Regular price {formatUsdPrice(glitchPackRegularPrice)}</span>
                       <span className="sample-price-pill">Intro offer</span>
                     </div>
                   </div>
@@ -715,14 +822,12 @@ export default function FarmVerbSite() {
               </div>
 
               <section className="sample-film-section sample-panel-section">
-                <div className="sample-film-header">
-                  <p className="section-overline">Product Film</p>
-                  <p className="sample-film-kicker">Muted preview, click for sound.</p>
-                </div>
-                <div className="sample-film-card">
+                <p className="section-overline">Product Film</p>
+                <div className={`sample-film-card ${sampleFilmPlaying ? 'is-playing' : ''}`} ref={sampleFilmContainerRef}>
                   <video
                     ref={sampleFilmRef}
-                    className={`sample-film-video ${sampleFilmPlaying ? 'is-playing' : ''}`}
+                    className="sample-film-video"
+                    muted={sampleFilmMuted}
                     loop
                     playsInline
                     preload="metadata"
@@ -740,33 +845,95 @@ export default function FarmVerbSite() {
                     <span className="sample-film-play-icon" aria-hidden="true">
                       {sampleFilmPlaying ? '❚❚' : '▶'}
                     </span>
-                    <span className="sample-film-play-text">{sampleFilmPlaying ? 'Pause' : 'Play'}</span>
                   </button>
+                  <div className="sample-film-controls" aria-label="Video controls">
+                    <button
+                      type="button"
+                      className="sample-film-control-button"
+                      onClick={() => void toggleSampleFilm()}
+                      aria-label={sampleFilmPlaying ? 'Pause video' : 'Play video'}
+                    >
+                      {sampleFilmPlaying ? (
+                        <span aria-hidden="true">❚❚</span>
+                      ) : (
+                        <span aria-hidden="true">▶</span>
+                      )}
+                    </button>
+
+                    <span className="sample-film-time" aria-label="Playback time">
+                      {formatTimeLabel(sampleFilmCurrentTime)} / {formatTimeLabel(sampleFilmDuration)}
+                    </span>
+
+                    <div className="sample-film-range-wrap sample-film-progress-wrap">
+                      <input
+                        className="sample-film-range sample-film-progress"
+                        type="range"
+                        min={0}
+                        max={sampleFilmDuration || 0}
+                        step="0.01"
+                        value={Math.min(sampleFilmCurrentTime, sampleFilmDuration || sampleFilmCurrentTime)}
+                        onChange={handleSampleFilmProgressChange}
+                        aria-label="Seek video"
+                        disabled={sampleFilmDuration <= 0}
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      className="sample-film-control-button"
+                      onClick={toggleSampleFilmMuted}
+                      aria-label={sampleFilmMuted || sampleFilmVolume === 0 ? 'Unmute video' : 'Mute video'}
+                    >
+                      {sampleFilmMuted || sampleFilmVolume === 0 ? (
+                        <span aria-hidden="true">🔇</span>
+                      ) : (
+                        <span aria-hidden="true">🔈</span>
+                      )}
+                    </button>
+
+                    <div className="sample-film-range-wrap sample-film-volume-wrap">
+                      <input
+                        className="sample-film-range sample-film-volume"
+                        type="range"
+                        min={0}
+                        max={1}
+                        step="0.01"
+                        value={sampleFilmVolume}
+                        onChange={handleSampleFilmVolumeChange}
+                        aria-label="Volume"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      className="sample-film-control-button"
+                      onClick={() => void toggleSampleFilmFullscreen()}
+                      aria-label={sampleFilmFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                    >
+                      {sampleFilmFullscreen ? <span aria-hidden="true">⤢</span> : <span aria-hidden="true">⛶</span>}
+                    </button>
+                  </div>
                 </div>
                 <p className="sample-film-caption">Fractured rhythm. Digital texture. Controlled chaos.</p>
               </section>
 
               <section className="sample-panel-section sample-intro-section">
-                <div className="sample-intro-grid">
-                  <div className="sample-intro-copy">
-                    <p className="section-overline">NEW · DIGITAL DOWNLOAD</p>
-                    <h2 className="sample-section-title">Glitch Drum Pack Vol. I</h2>
-                    <p className="sample-section-copy">
-                      The first release from FARMVERB. A collection of precision-crafted percussion, fractured
-                      transients, and digital textures designed for modern electronic production.
-                    </p>
-                    <p className="sample-section-copy">
-                      Built for minimal techno, IDM, experimental club music, sound design, and contemporary
-                      electronic work.
-                    </p>
-                  </div>
-
-                  <aside className="sample-intro-note">
-                    <p className="sample-note-label">Editorial note</p>
-                    <p>Precision-crafted percussion for modern electronic production.</p>
-                    <p>Fractured rhythm. Digital texture. Controlled chaos.</p>
-                  </aside>
+                <div className="sample-intro-copy">
+                  <p className="section-overline">NEW · DIGITAL DOWNLOAD</p>
+                  <p className="sample-section-copy">
+                    The first release from FARMVERB. Precision-crafted percussion and digital textures for modern
+                    electronic production.
+                  </p>
+                  <p className="sample-section-copy">
+                    Built for minimal techno, IDM, experimental club music, sound design, and contemporary electronic
+                    work.
+                  </p>
                 </div>
+
+                <blockquote className="sample-intro-quote">
+                  <p>Precision-crafted percussion for modern electronic production.</p>
+                  <p>Fractured rhythm. Digital texture. Controlled chaos.</p>
+                </blockquote>
               </section>
 
               <section className="sample-panel-section">
