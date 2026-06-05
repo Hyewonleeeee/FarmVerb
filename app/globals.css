@@ -1514,7 +1514,7 @@ img {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: clamp(1rem, 2.1vw, 2rem);
+  gap: clamp(0.88rem, 1.8vw, 1.6rem);
 }
 
 .sample-hero-grid {
@@ -1551,12 +1551,12 @@ img {
 }
 
 .sample-price-rail {
-  margin-top: 0.85rem;
+  margin-top: 0.92rem;
   display: inline-flex;
   flex-direction: column;
   gap: 0.48rem;
-  padding: 0.92rem 1rem 0.95rem;
-  min-width: min(100%, 18rem);
+  padding: 1.02rem 1.08rem 1rem;
+  min-width: min(100%, 20.5rem);
   border-radius: 16px;
   border: 1px solid rgba(149, 182, 74, 0.28);
   background: linear-gradient(160deg, rgba(250, 252, 242, 0.94), rgba(232, 242, 201, 0.9));
@@ -1570,7 +1570,7 @@ img {
 }
 
 .sample-price-value {
-  font-size: clamp(2.15rem, 5vw, 3rem);
+  font-size: clamp(2.45rem, 5.3vw, 3.25rem);
   line-height: 0.96;
   font-weight: 750;
   letter-spacing: -0.04em;
@@ -1610,7 +1610,7 @@ img {
 }
 
 .sample-hero-actions {
-  margin-top: 0.82rem;
+  margin-top: 0.72rem;
 }
 
 .sample-hero-art {
@@ -1633,7 +1633,7 @@ img {
 
 .sample-film-section,
 .sample-panel-section {
-  padding-top: clamp(0.85rem, 1.8vw, 1.25rem);
+  padding-top: clamp(0.75rem, 1.6vw, 1.1rem);
   border-top: 1px solid rgba(163, 193, 95, 0.24);
 }
 
@@ -1661,6 +1661,8 @@ img {
 .sample-film-card {
   position: relative;
   overflow: hidden;
+  width: min(100%, 1100px);
+  margin-inline: auto;
   border-radius: 30px;
   border: 1px solid rgba(151, 182, 86, 0.34);
   background: rgba(242, 249, 221, 0.92);

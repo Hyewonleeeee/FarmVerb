@@ -821,6 +821,25 @@ export default function FarmVerbSite() {
                 </figure>
               </div>
 
+              <section className="sample-panel-section sample-intro-section">
+                <div className="sample-intro-copy">
+                  <p className="section-overline">NEW · DIGITAL DOWNLOAD</p>
+                  <p className="sample-section-copy">
+                    The first release from FARMVERB. Precision-crafted percussion and digital textures for modern
+                    electronic production.
+                  </p>
+                  <p className="sample-section-copy">
+                    Built for minimal techno, IDM, experimental club music, sound design, and contemporary electronic
+                    work.
+                  </p>
+                </div>
+
+                <blockquote className="sample-intro-quote">
+                  <p>Precision-crafted percussion for modern electronic production.</p>
+                  <p>Fractured rhythm. Digital texture. Controlled chaos.</p>
+                </blockquote>
+              </section>
+
               <section className="sample-film-section sample-panel-section">
                 <p className="section-overline">Product Film</p>
                 <div className={`sample-film-card ${sampleFilmPlaying ? 'is-playing' : ''}`} ref={sampleFilmContainerRef}>
@@ -915,25 +934,6 @@ export default function FarmVerbSite() {
                   </div>
                 </div>
                 <p className="sample-film-caption">Fractured rhythm. Digital texture. Controlled chaos.</p>
-              </section>
-
-              <section className="sample-panel-section sample-intro-section">
-                <div className="sample-intro-copy">
-                  <p className="section-overline">NEW · DIGITAL DOWNLOAD</p>
-                  <p className="sample-section-copy">
-                    The first release from FARMVERB. Precision-crafted percussion and digital textures for modern
-                    electronic production.
-                  </p>
-                  <p className="sample-section-copy">
-                    Built for minimal techno, IDM, experimental club music, sound design, and contemporary electronic
-                    work.
-                  </p>
-                </div>
-
-                <blockquote className="sample-intro-quote">
-                  <p>Precision-crafted percussion for modern electronic production.</p>
-                  <p>Fractured rhythm. Digital texture. Controlled chaos.</p>
-                </blockquote>
               </section>
 
               <section className="sample-panel-section">
