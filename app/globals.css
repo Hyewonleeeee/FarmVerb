@@ -39,7 +39,8 @@ body.font-vars {
   position: relative;
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 a {
@@ -1523,10 +1524,17 @@ img {
   align-items: center;
 }
 
+.sample-hero-copy {
+  min-width: 0;
+  position: relative;
+  z-index: 2;
+}
+
 .sample-hero-title {
   margin-top: 0.28rem;
   font-size: clamp(2.4rem, 4.8vw, 5rem);
   color: #243818;
+  white-space: normal;
 }
 
 @media (min-width: 1180px) {
@@ -1612,6 +1620,9 @@ img {
   margin-inline: auto;
   border-radius: 26px;
   box-shadow: 0 24px 46px rgba(145, 170, 88, 0.24);
+  position: relative;
+  z-index: 1;
+  align-self: start;
 }
 
 .sample-hero-track img {
@@ -2138,6 +2149,7 @@ img {
 .farmverb-root.is-sample-pack-active .page-scroll {
   width: min(1380px, 95vw);
   padding-top: 1.7rem;
+  padding-bottom: clamp(3.2rem, 7vh, 5rem);
 }
 
 .pack-art {
