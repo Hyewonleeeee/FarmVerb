@@ -563,6 +563,7 @@ export function initFarmVerbSite() {
     return () => undefined;
   }
 
+  const root = document.querySelector<HTMLElement>('.farmverb-root');
   const navLinks = Array.from(document.querySelectorAll<HTMLElement>('.site-header .nav-link[data-route]'));
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -589,6 +590,17 @@ export function initFarmVerbSite() {
 
   const updateTitle = (route: RouteKey) => {
     document.title = ROUTES[route].title;
+  };
+
+  const syncRouteChrome = (route: RouteKey) => {
+    root?.classList.toggle('is-sample-pack-active', route === 'sample-pack');
+
+    if (route !== 'sample-pack') {
+      const sampleVideo = document.querySelector<HTMLVideoElement>('.sample-film-video');
+      if (sampleVideo && !sampleVideo.paused) {
+        sampleVideo.pause();
+      }
+    }
   };
 
   const switchTo = (route: string, options: SwitchOptions = {}) => {
@@ -631,6 +643,7 @@ export function initFarmVerbSite() {
     activeRoute = nextRoute;
     updateNavState(nextRoute);
     updateTitle(nextRoute);
+    syncRouteChrome(nextRoute);
 
     if (!fromHistory && window.location.pathname !== ROUTES[nextRoute].path) {
       history.pushState(null, '', ROUTES[nextRoute].path);

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import AuthNav from '@/components/auth/AuthNav';
 import GlobalFooter from '@/components/farmverb/GlobalFooter';
 import { addItemToCart, getCartItemCount, getCartItems, subscribeToCart, type CartItem } from '@/lib/cart/store';
@@ -41,21 +41,21 @@ const GLITCH_FEATURES = [
   }
 ] as const;
 
-const GLITCH_SPEC_GROUPS = [
+type SampleSpecItem = {
+  label: string;
+  value: string;
+};
+
+const GLITCH_SPEC_ITEMS: SampleSpecItem[] = [
+  { label: 'Format', value: 'WAV 24-bit / 48 kHz' },
+  { label: 'Files', value: '100 Samples' },
+  { label: 'Size', value: '284 MB' },
+  { label: 'Categories', value: 'Drums, Glitch Hats, Texture, Perc FX, Clicks' },
   {
-    items: [
-      { label: 'Format', value: 'WAV 24-bit / 48 kHz' },
-      { label: 'Files', value: '100 Samples' },
-      { label: 'Size', value: '284 MB' }
-    ]
-  },
-  {
-    items: [
-      { label: 'Categories', value: 'Drums, Glitch Hats, Texture, Perc FX, Clicks' },
-      { label: 'Compatibility', value: 'Ableton Live, Logic Pro, FL Studio, Pro Tools, Studio One, and most modern DAWs' }
-    ]
+    label: 'Compatibility',
+    value: 'Ableton Live, Logic Pro, FL Studio, Pro Tools, Studio One, and most modern DAWs'
   }
-] as const;
+];
 
 const GLITCH_AUDIENCES = [
   {
@@ -168,6 +168,8 @@ export default function FarmVerbSite() {
   const [activeOrganicProductTab, setActiveOrganicProductTab] = useState<OrganicProductTabKey>('all');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [buyNowNotice, setBuyNowNotice] = useState<string | null>(null);
+  const sampleFilmRef = useRef<HTMLVideoElement | null>(null);
+  const [sampleFilmPlaying, setSampleFilmPlaying] = useState(false);
 
   useEffect(() => {
     return initFarmVerbSite();
@@ -191,6 +193,31 @@ export default function FarmVerbSite() {
 
     return () => window.clearTimeout(timeoutId);
   }, [buyNowNotice]);
+
+  useEffect(() => {
+    const video = sampleFilmRef.current;
+    if (!video) {
+      return;
+    }
+
+    const syncPlaying = () => {
+      setSampleFilmPlaying(!video.paused && !video.ended);
+    };
+
+    const syncPaused = () => {
+      setSampleFilmPlaying(false);
+    };
+
+    video.addEventListener('play', syncPlaying);
+    video.addEventListener('pause', syncPaused);
+    video.addEventListener('ended', syncPaused);
+
+    return () => {
+      video.removeEventListener('play', syncPlaying);
+      video.removeEventListener('pause', syncPaused);
+      video.removeEventListener('ended', syncPaused);
+    };
+  }, []);
 
   const activeSeries = useMemo(() => PLUGIN_SERIES[activePluginSeries], [activePluginSeries]);
   const visibleProducts = useMemo(() => {
@@ -400,6 +427,27 @@ export default function FarmVerbSite() {
 
   const onBuyNow = (productName: string) => {
     setBuyNowNotice(`${productName} checkout is coming soon.`);
+  };
+
+  const toggleSampleFilm = async () => {
+    const video = sampleFilmRef.current;
+    if (!video) {
+      return;
+    }
+
+    if (video.paused || video.ended) {
+      video.muted = false;
+      video.volume = 1;
+
+      try {
+        await video.play();
+      } catch {
+        setSampleFilmPlaying(false);
+      }
+      return;
+    }
+
+    video.pause();
   };
 
   return (
@@ -622,45 +670,59 @@ export default function FarmVerbSite() {
             <div className="sample-page-stack">
               <div className="sample-hero-grid">
                 <div className="sample-copy parallax-node sample-hero-copy" data-depth="10">
-                <p className="section-overline">Sample Pack</p>
-                <h1 className="page-title glitch-title">Glitch Drum Pack Vol. I</h1>
-                <p className="page-copy">
-                  Raw, fractured percussion with aggressive transients and digital grain for modern production.
-                </p>
-                <ProductPrice productName="Glitch Drum Pack Vol.1" className="section-price" />
-                <div className="section-actions">
-                  <button
-                    type="button"
-                    className="section-action-btn section-action-cart"
-                    onClick={() => addToCart('Glitch Drum Pack Vol.1')}
-                  >
-                    Add to Cart
-                  </button>
-                  <button
-                    type="button"
-                    className="section-action-btn section-action-buy"
-                    onClick={() => onBuyNow('Glitch Drum Pack Vol.1')}
-                  >
-                    Buy Now
-                  </button>
+                  <p className="section-overline">Sample Pack</p>
+                  <h1 className="page-title sample-hero-title">Glitch Drum Pack Vol. I</h1>
+                  <p className="sample-hero-copy-text">
+                    Precision-cut percussion, fractured transients, and digital texture for modern electronic
+                    production.
+                  </p>
+
+                  <div className="sample-price-rail" aria-label="Glitch Drum Pack Vol. I pricing">
+                    <div className="sample-price-main">
+                      <span className="sample-price-value">$49</span>
+                      <span className="sample-price-unit">USD</span>
+                    </div>
+                    <div className="sample-price-meta">
+                      <span className="sample-price-regular">Regular price $99</span>
+                      <span className="sample-price-pill">Intro offer</span>
+                    </div>
+                  </div>
+
+                  <div className="section-actions sample-hero-actions">
+                    <button
+                      type="button"
+                      className="section-action-btn section-action-cart"
+                      onClick={() => addToCart('Glitch Drum Pack Vol.1')}
+                    >
+                      Add to Cart
+                    </button>
+                    <button
+                      type="button"
+                      className="section-action-btn section-action-buy"
+                      onClick={() => onBuyNow('Glitch Drum Pack Vol.1')}
+                    >
+                      Buy Now
+                    </button>
+                  </div>
                 </div>
-              </div>
 
                 <figure className="pack-art pack-gallery interactive-tilt sample-hero-art" data-auto-gallery>
-                <div className="pack-gallery-track">
-                  <img src="/GlitchDrum/GlitchDrum.png" alt="Glitch Drum Pack artwork view 1" />
-                  <img src="/GlitchDrum/GD_2.png" alt="Glitch Drum Pack artwork view 2" />
-                </div>
-              </figure>
+                  <div className="pack-gallery-track sample-hero-track">
+                    <img src="/GlitchDrum/GlitchDrum.png" alt="Glitch Drum Pack artwork view 1" />
+                    <img src="/GlitchDrum/GD_2.png" alt="Glitch Drum Pack artwork view 2" />
+                  </div>
+                </figure>
               </div>
 
               <section className="sample-film-section sample-panel-section">
-                <p className="section-overline">Product Film</p>
+                <div className="sample-film-header">
+                  <p className="section-overline">Product Film</p>
+                  <p className="sample-film-kicker">Muted preview, click for sound.</p>
+                </div>
                 <div className="sample-film-card">
                   <video
-                    className="sample-film-video"
-                    autoPlay
-                    muted
+                    ref={sampleFilmRef}
+                    className={`sample-film-video ${sampleFilmPlaying ? 'is-playing' : ''}`}
                     loop
                     playsInline
                     preload="metadata"
@@ -668,22 +730,43 @@ export default function FarmVerbSite() {
                   >
                     <source src="/GlitchDrum/GlitchMov.mp4" type="video/mp4" />
                   </video>
+                  <div className="sample-film-overlay" aria-hidden="true" />
+                  <button
+                    type="button"
+                    className="sample-film-play"
+                    onClick={() => void toggleSampleFilm()}
+                    aria-label={sampleFilmPlaying ? 'Pause product film' : 'Play product film with sound'}
+                  >
+                    <span className="sample-film-play-icon" aria-hidden="true">
+                      {sampleFilmPlaying ? '❚❚' : '▶'}
+                    </span>
+                    <span className="sample-film-play-text">{sampleFilmPlaying ? 'Pause' : 'Play'}</span>
+                  </button>
                 </div>
                 <p className="sample-film-caption">Fractured rhythm. Digital texture. Controlled chaos.</p>
               </section>
 
               <section className="sample-panel-section sample-intro-section">
-                <p className="section-overline">NEW · DIGITAL DOWNLOAD</p>
-                <h2 className="sample-section-title">Glitch Drum Pack Vol. I</h2>
-                <p className="sample-section-copy">
-                  The first release from FARMVERB. A collection of precision-crafted percussion, fractured transients,
-                  and digital textures designed for modern electronic production.
-                </p>
-                <p className="sample-section-copy">
-                  Built for producers working across minimal techno, IDM, experimental club music, sound design, and
-                  contemporary electronic genres. Every sound was created with an emphasis on movement, detail, and
-                  controlled imperfection.
-                </p>
+                <div className="sample-intro-grid">
+                  <div className="sample-intro-copy">
+                    <p className="section-overline">NEW · DIGITAL DOWNLOAD</p>
+                    <h2 className="sample-section-title">Glitch Drum Pack Vol. I</h2>
+                    <p className="sample-section-copy">
+                      The first release from FARMVERB. A collection of precision-crafted percussion, fractured
+                      transients, and digital textures designed for modern electronic production.
+                    </p>
+                    <p className="sample-section-copy">
+                      Built for minimal techno, IDM, experimental club music, sound design, and contemporary
+                      electronic work.
+                    </p>
+                  </div>
+
+                  <aside className="sample-intro-note">
+                    <p className="sample-note-label">Editorial note</p>
+                    <p>Precision-crafted percussion for modern electronic production.</p>
+                    <p>Fractured rhythm. Digital texture. Controlled chaos.</p>
+                  </aside>
+                </div>
               </section>
 
               <section className="sample-panel-section">
@@ -700,24 +783,21 @@ export default function FarmVerbSite() {
 
               <section className="sample-panel-section">
                 <p className="section-overline">Technical Specifications</p>
-                <div className="sample-spec-layout">
-                  {GLITCH_SPEC_GROUPS.map((group) => (
-                    <article key={group.items[0].label} className="sample-spec-card">
-                      <dl className="sample-spec-list">
-                        {group.items.map((item) => (
-                          <div key={item.label} className="sample-spec-row">
-                            <dt>{item.label}</dt>
-                            <dd>{item.value}</dd>
-                          </div>
-                        ))}
-                      </dl>
-                    </article>
-                  ))}
-                </div>
+                <article className="sample-spec-card sample-spec-card-wide">
+                  <p className="sample-spec-note">Built for modern DAWs and sample-based production workflows.</p>
+                  <dl className="sample-spec-list sample-spec-list-wide">
+                    {GLITCH_SPEC_ITEMS.map((item) => (
+                      <div key={item.label} className="sample-spec-row">
+                        <dt>{item.label}</dt>
+                        <dd>{item.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </article>
               </section>
 
               <section className="sample-panel-section">
-                <p className="section-overline">Designed For</p>
+                <p className="section-overline">Built For</p>
                 <div className="sample-audience-grid">
                   {GLITCH_AUDIENCES.map((audience) => (
                     <article key={audience.title} className="sample-audience-card">
@@ -730,17 +810,19 @@ export default function FarmVerbSite() {
 
               <section className="sample-panel-section sample-license-section">
                 <p className="section-overline">License</p>
-                <p className="sample-section-copy">Commercial use allowed.</p>
-                <p className="sample-section-copy">You may use these sounds in:</p>
-                <ul className="sample-license-list">
-                  {GLITCH_LICENSE_USE.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-                <p className="sample-section-copy">
-                  Redistribution or resale of the raw sample files is prohibited. Projects created with the samples
-                  may be distributed freely.
-                </p>
+                <article className="sample-license-card">
+                  <p className="sample-license-body">Commercial use allowed.</p>
+                  <p className="sample-license-body">You may use these sounds in music releases, games, films, broadcasts, and live performances.</p>
+                  <p className="sample-license-body">
+                    Redistribution or resale of the raw sample files is prohibited. Projects created with the samples
+                    may be distributed freely.
+                  </p>
+                  <ul className="sample-license-list">
+                    {GLITCH_LICENSE_USE.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </article>
               </section>
 
               <section className="sample-panel-section sample-about-section">
