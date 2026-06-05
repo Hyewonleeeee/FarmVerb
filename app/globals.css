@@ -1518,8 +1518,8 @@ img {
 
 .sample-hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.34fr) minmax(0, 0.66fr);
-  gap: clamp(1rem, 2.2vw, 2.15rem);
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: clamp(1.1rem, 2.5vw, 2.35rem);
   align-items: center;
 }
 
@@ -1608,7 +1608,7 @@ img {
 .sample-hero-art {
   width: 100%;
   aspect-ratio: 4 / 5;
-  max-width: 540px;
+  max-width: 620px;
   margin-inline: auto;
   border-radius: 26px;
   box-shadow: 0 24px 46px rgba(145, 170, 88, 0.24);
@@ -1661,9 +1661,11 @@ img {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center center;
-  background: rgba(238, 246, 208, 0.88);
+  background:
+    radial-gradient(circle at 50% 45%, rgba(245, 250, 225, 0.18) 0%, transparent 48%),
+    linear-gradient(160deg, rgba(239, 245, 212, 0.96) 0%, rgba(221, 234, 186, 0.92) 100%);
 }
 
 .sample-film-overlay {
@@ -1963,11 +1965,12 @@ img {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.82rem;
+  align-items: start;
 }
 
 .sample-feature-card {
-  min-height: 132px;
-  padding: 0.95rem 1rem 1rem;
+  min-height: 0;
+  padding: 0.88rem 0.96rem 0.96rem;
   border-radius: 20px;
   border: 1px solid rgba(156, 188, 87, 0.3);
   background: linear-gradient(150deg, rgba(248, 251, 233, 0.98), rgba(232, 244, 182, 0.82));
@@ -2056,11 +2059,12 @@ img {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.82rem;
+  align-items: start;
 }
 
 .sample-audience-card {
-  min-height: 146px;
-  padding: 0.95rem 1rem 1rem;
+  min-height: 0;
+  padding: 0.88rem 0.96rem 0.96rem;
   border-radius: 20px;
   border: 1px solid rgba(156, 188, 87, 0.3);
   background: linear-gradient(150deg, rgba(247, 251, 230, 0.94), rgba(236, 245, 198, 0.84));
@@ -2068,12 +2072,12 @@ img {
 }
 
 .sample-license-section {
-  max-width: 900px;
+  max-width: none;
 }
 
 .sample-license-card {
   margin-top: 1rem;
-  padding: 1rem 1.08rem 1.08rem;
+  padding: 0.96rem 1rem 1rem;
   border-radius: 20px;
   border: 1px solid rgba(150, 182, 86, 0.3);
   background: rgba(248, 251, 234, 0.9);
@@ -2108,7 +2112,7 @@ img {
 }
 
 .sample-about-note {
-  padding: 0.95rem 1rem 1rem;
+  padding: 0.88rem 0.96rem 0.96rem;
   border-radius: 20px;
   border: 1px solid rgba(150, 182, 86, 0.3);
   background: linear-gradient(150deg, rgba(245, 250, 227, 0.98), rgba(231, 244, 183, 0.82));
@@ -2132,6 +2136,7 @@ img {
 }
 
 .farmverb-root.is-sample-pack-active .page-scroll {
+  width: min(1380px, 95vw);
   padding-top: 1.7rem;
 }
 
