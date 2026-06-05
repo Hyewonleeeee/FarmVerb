@@ -1514,14 +1514,14 @@ img {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: clamp(1.35rem, 3vw, 2.6rem);
+  gap: clamp(1rem, 2.1vw, 2rem);
 }
 
 .sample-hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
-  gap: clamp(1.1rem, 2.5vw, 2.35rem);
-  align-items: center;
+  grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr);
+  gap: clamp(0.95rem, 2vw, 1.7rem);
+  align-items: start;
 }
 
 .sample-hero-copy {
@@ -1531,8 +1531,8 @@ img {
 }
 
 .sample-hero-title {
-  margin-top: 0.28rem;
-  font-size: clamp(2.4rem, 4.8vw, 5rem);
+  margin-top: 0.18rem;
+  font-size: clamp(2.35rem, 4.5vw, 4.8rem);
   color: #243818;
   white-space: normal;
 }
@@ -1544,14 +1544,14 @@ img {
 }
 
 .sample-hero-copy-text {
-  margin-top: 1.15rem;
-  max-width: 34rem;
+  margin-top: 0.9rem;
+  max-width: 38rem;
   line-height: 1.74;
   color: rgba(49, 73, 31, 0.9);
 }
 
 .sample-price-rail {
-  margin-top: 1.1rem;
+  margin-top: 0.85rem;
   display: inline-flex;
   flex-direction: column;
   gap: 0.48rem;
@@ -1610,13 +1610,13 @@ img {
 }
 
 .sample-hero-actions {
-  margin-top: 1rem;
+  margin-top: 0.82rem;
 }
 
 .sample-hero-art {
   width: 100%;
-  aspect-ratio: 4 / 5;
-  max-width: 620px;
+  aspect-ratio: 1 / 1;
+  max-width: 580px;
   margin-inline: auto;
   border-radius: 26px;
   box-shadow: 0 24px 46px rgba(145, 170, 88, 0.24);
@@ -1633,7 +1633,7 @@ img {
 
 .sample-film-section,
 .sample-panel-section {
-  padding-top: clamp(1rem, 2.2vw, 1.55rem);
+  padding-top: clamp(0.85rem, 1.8vw, 1.25rem);
   border-top: 1px solid rgba(163, 193, 95, 0.24);
 }
 
@@ -1972,7 +1972,7 @@ img {
 }
 
 .sample-feature-grid {
-  margin-top: 1rem;
+  margin-top: 0.82rem;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.82rem;
@@ -2066,7 +2066,7 @@ img {
 }
 
 .sample-audience-grid {
-  margin-top: 1rem;
+  margin-top: 0.82rem;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.82rem;
@@ -2087,7 +2087,7 @@ img {
 }
 
 .sample-license-card {
-  margin-top: 1rem;
+  margin-top: 0.82rem;
   padding: 0.96rem 1rem 1rem;
   border-radius: 20px;
   border: 1px solid rgba(150, 182, 86, 0.3);
@@ -2115,7 +2115,7 @@ img {
 }
 
 .sample-about-grid {
-  margin-top: 1rem;
+  margin-top: 0.82rem;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
   gap: 1rem;
