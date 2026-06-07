@@ -1525,7 +1525,7 @@ img {
 .sample-hero-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
-  gap: clamp(1.4rem, 3vw, 3rem);
+  gap: clamp(1.55rem, 3.4vw, 3.6rem);
   align-items: center;
 }
 
@@ -1536,14 +1536,14 @@ img {
 }
 
 .sample-hero-title {
-  margin-top: 0.18rem;
+  margin-top: 0.42rem;
   font-size: clamp(2.35rem, 4.5vw, 4.8rem);
   color: #243818;
   white-space: normal;
   display: flex;
   flex-direction: column;
-  gap: 0.04em;
-  max-width: 12ch;
+  gap: 0.12em;
+  max-width: 15ch;
 }
 
 .sample-hero-title-line {
@@ -1556,7 +1556,7 @@ img {
 
 .sample-hero-copy-text {
   margin-top: 0.9rem;
-  max-width: 32rem;
+  max-width: 36rem;
   line-height: 1.74;
   color: rgba(49, 73, 31, 0.9);
 }
@@ -1917,8 +1917,8 @@ img {
 
 .sample-story-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
-  gap: clamp(1rem, 2.4vw, 2rem);
+  grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr);
+  gap: clamp(1.15rem, 2.8vw, 2.6rem);
   align-items: center;
 }
 
@@ -1927,7 +1927,7 @@ img {
 }
 
 .sample-story-grid-secondary {
-  margin-top: 0.9rem;
+  margin-top: 1rem;
   grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
 }
 
@@ -1954,10 +1954,15 @@ img {
 
 .sample-story-art {
   width: 100%;
-  max-width: 560px;
-  aspect-ratio: 3 / 2;
+  max-width: 100%;
+  aspect-ratio: auto;
   justify-self: end;
   align-self: center;
+  border-radius: 22px;
+  background: linear-gradient(160deg, rgba(247, 250, 231, 0.9), rgba(232, 243, 194, 0.82));
+  box-shadow:
+    0 16px 30px rgba(145, 170, 88, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.64);
 }
 
 .sample-story-art-secondary {
@@ -1965,26 +1970,30 @@ img {
 }
 
 .sample-story-art img {
-  object-fit: contain;
-  background: rgba(241, 249, 215, 0.72);
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: initial;
+  background: transparent;
 }
 
 .sample-story-side {
-  max-width: 34rem;
+  max-width: 38rem;
 }
 
 .sample-story-side-title {
-  margin: 0.35rem 0 0;
+  margin: 0.42rem 0 0;
   font-family: var(--font-display);
-  font-size: clamp(1.25rem, 2.4vw, 2rem);
-  line-height: 1.02;
+  font-size: clamp(1.3rem, 2.6vw, 2.15rem);
+  line-height: 1.08;
   letter-spacing: -0.03em;
   color: #253819;
+  max-width: 18ch;
 }
 
 .sample-story-copy-tight {
   margin-top: 0.75rem;
-  max-width: 30rem;
+  max-width: 34rem;
 }
 
 .sample-section-title {
