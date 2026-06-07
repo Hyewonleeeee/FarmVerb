@@ -80,6 +80,13 @@ const GLITCH_LICENSE_USE = [
   'Live performances'
 ] as const;
 
+const GLITCH_VALUE_STRIP = [
+  '100 Samples',
+  '24-bit / 48 kHz WAV',
+  '284 MB Download',
+  'Commercial Use Included'
+] as const;
+
 function formatTimeLabel(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) {
     return '0:00';
@@ -813,29 +820,20 @@ export default function FarmVerbSite() {
                   </div>
                 </div>
 
-                <figure className="pack-art pack-gallery interactive-tilt sample-hero-art" data-auto-gallery>
-                  <div className="pack-gallery-track sample-hero-track">
-                    <img src="/GlitchDrum/GlitchDrum.png" alt="Glitch Drum Pack artwork view 1" />
-                    <img src="/GlitchDrum/GD_2.png" alt="Glitch Drum Pack artwork view 2" />
-                  </div>
+                <figure className="pack-art interactive-tilt sample-hero-art sample-hero-cover">
+                  <img src="/GlitchDrum/GlitchDrum.png" alt="Glitch Drum Pack artwork" />
                 </figure>
               </div>
 
-              <section className="sample-panel-section sample-intro-section">
-                <div className="sample-intro-copy">
-                  <p className="section-overline">NEW · DIGITAL DOWNLOAD</p>
-                  <p className="sample-section-copy">
-                    The first release from FARMVERB. Precision-crafted percussion and digital textures for modern
-                    electronic production.
-                  </p>
-                  <p className="sample-section-copy">
-                    Built for minimal techno, IDM, experimental club music, sound design, and contemporary electronic
-                    work.
-                  </p>
-                </div>
+              <section className="sample-value-strip" aria-label="Product facts">
+                {GLITCH_VALUE_STRIP.map((item) => (
+                  <div key={item} className="sample-value-item">
+                    {item}
+                  </div>
+                ))}
               </section>
 
-              <section className="sample-film-section sample-panel-section">
+              <section className="sample-panel-section sample-film-section">
                 <p className="section-overline">Product Film</p>
                 <div className={`sample-film-card ${sampleFilmPlaying ? 'is-playing' : ''}`} ref={sampleFilmContainerRef}>
                   <video
@@ -929,6 +927,22 @@ export default function FarmVerbSite() {
                   </div>
                 </div>
                 <p className="sample-film-caption">Fractured rhythm. Digital texture. Controlled chaos.</p>
+              </section>
+
+              <section className="sample-panel-section sample-story-section">
+                <div className="sample-story-grid">
+                  <div className="sample-story-head">
+                    <p className="section-overline">Why This Pack</p>
+                    <h2 className="sample-story-title">Fractured rhythm. Digital texture. Controlled chaos.</h2>
+                    <p className="sample-story-copy">
+                      Glitch Drum Pack Vol. I is designed for producers who want precise transients, unstable digital
+                      textures, and percussion that cuts through modern electronic production.
+                    </p>
+                  </div>
+                  <figure className="pack-art interactive-tilt sample-story-art">
+                    <img src="/GlitchDrum/GD_2.png" alt="Glitch Drum Pack product still" />
+                  </figure>
+                </div>
               </section>
 
               <section className="sample-panel-section">
