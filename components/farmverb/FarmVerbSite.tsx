@@ -782,14 +782,17 @@ export default function FarmVerbSite() {
         <section className="page page-sample-pack" data-page="sample-pack" aria-hidden="true">
           <div className="page-scroll page-shell site-container">
             <div className="sample-page-stack">
-              <div className="sample-hero-grid">
-                <div className="sample-copy parallax-node sample-hero-copy" data-depth="10">
-                  <p className="section-overline">Sample Pack</p>
-                  <h1 className="page-title sample-hero-title">Glitch Drum Pack Vol. I</h1>
-                  <p className="sample-hero-copy-text">
-                    Precision-cut percussion, fractured transients, and digital texture for modern electronic
-                    production.
-                  </p>
+                <div className="sample-hero-grid">
+                  <div className="sample-copy parallax-node sample-hero-copy" data-depth="10">
+                    <p className="section-overline">Sample Pack</p>
+                    <h1 className="page-title sample-hero-title">
+                      <span className="sample-hero-title-line">Glitch Drum Pack</span>
+                      <span className="sample-hero-title-line sample-hero-title-line-sub">Vol. I</span>
+                    </h1>
+                    <p className="sample-hero-copy-text">
+                      Precision-cut percussion, fractured transients, and digital texture for modern electronic
+                      production.
+                    </p>
 
                   <div className="sample-price-rail" aria-label="Glitch Drum Pack Vol. I pricing">
                     <div className="sample-price-main">
@@ -930,7 +933,7 @@ export default function FarmVerbSite() {
               </section>
 
               <section className="sample-panel-section sample-story-section">
-                <div className="sample-story-grid">
+                <div className="sample-story-grid sample-story-grid-primary">
                   <div className="sample-story-head">
                     <p className="section-overline">Why This Pack</p>
                     <h2 className="sample-story-title">Fractured rhythm. Digital texture. Controlled chaos.</h2>
@@ -942,6 +945,20 @@ export default function FarmVerbSite() {
                   <figure className="pack-art interactive-tilt sample-story-art">
                     <img src="/GlitchDrum/GD_2.png" alt="Glitch Drum Pack product still" />
                   </figure>
+                </div>
+
+                <div className="sample-story-grid sample-story-grid-secondary">
+                  <figure className="pack-art interactive-tilt sample-story-art sample-story-art-secondary">
+                    <img src="/GlitchDrum/GD_4.png" alt="Glitch Drum Pack studio scene" />
+                  </figure>
+                  <div className="sample-story-side">
+                    <p className="section-overline">Studio Detail</p>
+                    <h3 className="sample-story-side-title">Built to sit cleanly inside a modern mix.</h3>
+                    <p className="sample-story-copy sample-story-copy-tight">
+                      Tight transients, unstable fragments, and quiet digital grit shaped for fast production and
+                      deliberate contrast.
+                    </p>
+                  </div>
                 </div>
               </section>
 

@@ -1524,8 +1524,8 @@ img {
 
 .sample-hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr);
-  gap: clamp(1.1rem, 2.4vw, 2rem);
+  grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+  gap: clamp(1.4rem, 3vw, 3rem);
   align-items: center;
 }
 
@@ -1540,17 +1540,23 @@ img {
   font-size: clamp(2.35rem, 4.5vw, 4.8rem);
   color: #243818;
   white-space: normal;
+  display: flex;
+  flex-direction: column;
+  gap: 0.04em;
+  max-width: 12ch;
 }
 
-@media (min-width: 1180px) {
-  .sample-hero-title {
-    white-space: nowrap;
-  }
+.sample-hero-title-line {
+  display: block;
+}
+
+.sample-hero-title-line-sub {
+  max-width: fit-content;
 }
 
 .sample-hero-copy-text {
   margin-top: 0.9rem;
-  max-width: 34rem;
+  max-width: 32rem;
   line-height: 1.74;
   color: rgba(49, 73, 31, 0.9);
 }
@@ -1621,7 +1627,7 @@ img {
 .sample-hero-art {
   width: 100%;
   aspect-ratio: 1 / 1;
-  max-width: 540px;
+  max-width: 500px;
   margin-inline: auto;
   border-radius: 26px;
   box-shadow: 0 24px 46px rgba(145, 170, 88, 0.24);
@@ -1916,6 +1922,15 @@ img {
   align-items: center;
 }
 
+.sample-story-grid-primary {
+  padding-bottom: 0.3rem;
+}
+
+.sample-story-grid-secondary {
+  margin-top: 0.9rem;
+  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+}
+
 .sample-story-head {
   max-width: 38rem;
 }
@@ -1945,9 +1960,31 @@ img {
   align-self: center;
 }
 
+.sample-story-art-secondary {
+  justify-self: start;
+}
+
 .sample-story-art img {
   object-fit: contain;
   background: rgba(241, 249, 215, 0.72);
+}
+
+.sample-story-side {
+  max-width: 34rem;
+}
+
+.sample-story-side-title {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 2.4vw, 2rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  color: #253819;
+}
+
+.sample-story-copy-tight {
+  margin-top: 0.75rem;
+  max-width: 30rem;
 }
 
 .sample-section-title {
@@ -3483,6 +3520,10 @@ img {
 
   .sample-story-grid {
     grid-template-columns: 1fr;
+  }
+
+  .sample-story-grid-secondary {
+    margin-top: 0.75rem;
   }
 
   .sample-story-art {
