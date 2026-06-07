@@ -1535,8 +1535,12 @@ img {
   z-index: 2;
 }
 
+.sample-hero-copy > .section-overline {
+  margin-bottom: 0.56rem;
+}
+
 .sample-hero-title {
-  margin-top: 0.42rem;
+  margin-top: 0;
   font-size: clamp(2.35rem, 4.5vw, 4.8rem);
   color: #243818;
   white-space: normal;
@@ -1958,11 +1962,11 @@ img {
   aspect-ratio: auto;
   justify-self: end;
   align-self: center;
-  border-radius: 22px;
-  background: linear-gradient(160deg, rgba(247, 250, 231, 0.9), rgba(232, 243, 194, 0.82));
-  box-shadow:
-    0 16px 30px rgba(145, 170, 88, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.64);
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+  filter: drop-shadow(0 18px 30px rgba(145, 170, 88, 0.16));
 }
 
 .sample-story-art-secondary {
@@ -1975,6 +1979,7 @@ img {
   display: block;
   object-fit: initial;
   background: transparent;
+  border-radius: 18px;
 }
 
 .sample-story-side {
@@ -1984,11 +1989,11 @@ img {
 .sample-story-side-title {
   margin: 0.42rem 0 0;
   font-family: var(--font-display);
-  font-size: clamp(1.3rem, 2.6vw, 2.15rem);
-  line-height: 1.08;
+  font-size: clamp(1.3rem, 2.6vw, 2.2rem);
+  line-height: 1.02;
   letter-spacing: -0.03em;
   color: #253819;
-  max-width: 18ch;
+  max-width: 22ch;
 }
 
 .sample-story-copy-tight {

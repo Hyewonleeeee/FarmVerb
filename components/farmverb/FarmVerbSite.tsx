@@ -942,13 +942,13 @@ export default function FarmVerbSite() {
                       textures, and percussion that cuts through modern electronic production.
                     </p>
                   </div>
-                  <figure className="pack-art interactive-tilt sample-story-art">
+                  <figure className="sample-story-art interactive-tilt sample-story-art-primary">
                     <img src="/GlitchDrum/GD_2.png" alt="Glitch Drum Pack product still" />
                   </figure>
                 </div>
 
                 <div className="sample-story-grid sample-story-grid-secondary">
-                  <figure className="pack-art interactive-tilt sample-story-art sample-story-art-secondary">
+                  <figure className="sample-story-art interactive-tilt sample-story-art-secondary">
                     <img src="/GlitchDrum/GD_4.png" alt="Glitch Drum Pack studio scene" />
                   </figure>
                   <div className="sample-story-side">
