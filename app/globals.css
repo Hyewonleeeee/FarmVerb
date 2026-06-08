@@ -1927,12 +1927,12 @@ img {
 }
 
 .sample-story-grid-primary {
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   padding-bottom: 0.2rem;
 }
 
 .sample-story-grid-secondary {
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   margin-top: clamp(1.2rem, 2.5vw, 1.85rem);
   align-items: start;
 }
@@ -1976,8 +1976,17 @@ img {
   filter: drop-shadow(0 18px 30px rgba(145, 170, 88, 0.16));
 }
 
+.sample-story-art-primary,
 .sample-story-art-secondary {
-  justify-self: stretch;
+  max-width: min(100%, 94%);
+}
+
+.sample-story-art-primary {
+  justify-self: end;
+}
+
+.sample-story-art-secondary {
+  justify-self: start;
   margin-top: 0;
 }
 
