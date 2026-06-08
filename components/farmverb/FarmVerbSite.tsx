@@ -949,7 +949,7 @@ export default function FarmVerbSite() {
 
                 <div className="sample-story-grid sample-story-grid-secondary">
                   <figure className="sample-story-art interactive-tilt sample-story-art-secondary">
-                    <img src="/GlitchDrum/GD_4.png" alt="Glitch Drum Pack studio scene" />
+                    <img src="/GlitchDrum/GD_5.png" alt="Glitch Drum Pack studio scene" />
                   </figure>
                   <div className="sample-story-side">
                     <p className="section-overline">Studio Detail</p>

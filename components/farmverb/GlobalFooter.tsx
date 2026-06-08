@@ -49,6 +49,22 @@ export default function GlobalFooter() {
           </section>
         </div>
       </div>
+
+      <nav className="footer-legal" aria-label="Legal links">
+        <Link href="/privacy-policy">Privacy Policy</Link>
+        <span className="footer-legal-separator" aria-hidden="true">
+          ·
+        </span>
+        <Link href="/terms-of-service">Terms of Service</Link>
+        <span className="footer-legal-separator" aria-hidden="true">
+          ·
+        </span>
+        <Link href="/eula">EULA</Link>
+        <span className="footer-legal-separator" aria-hidden="true">
+          ·
+        </span>
+        <a href="mailto:support@farmverb.com">Contact</a>
+      </nav>
     </footer>
   );
 }
