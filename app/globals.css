@@ -1927,10 +1927,12 @@ img {
 }
 
 .sample-story-grid-primary {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   padding-bottom: 0.2rem;
 }
 
 .sample-story-grid-secondary {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   margin-top: clamp(1.2rem, 2.5vw, 1.85rem);
   align-items: start;
 }
