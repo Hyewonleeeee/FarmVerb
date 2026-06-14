@@ -9,6 +9,8 @@ type RouteConfig = {
   title: string;
 };
 
+type ThemeKey = 'home' | 'nebula' | 'glitch';
+
 const ROUTES: Record<RouteKey, RouteConfig> = {
   home: {
     path: '/',
@@ -30,6 +32,14 @@ const ROUTES: Record<RouteKey, RouteConfig> = {
     path: '/support',
     title: 'FarmVerb | Support'
   }
+};
+
+const THEME_BY_ROUTE: Record<RouteKey, ThemeKey> = {
+  home: 'home',
+  instrument: 'nebula',
+  plugins: 'nebula',
+  'sample-pack': 'glitch',
+  support: 'home'
 };
 
 type Source = {
@@ -593,6 +603,15 @@ export function initFarmVerbSite() {
   };
 
   const syncRouteChrome = (route: RouteKey) => {
+    const theme = THEME_BY_ROUTE[route];
+
+    if (root) {
+      root.dataset.theme = theme;
+      root.classList.toggle('theme-home', theme === 'home');
+      root.classList.toggle('theme-nebula', theme === 'nebula');
+      root.classList.toggle('theme-glitch', theme === 'glitch');
+    }
+
     root?.classList.toggle('is-sample-pack-active', route === 'sample-pack');
 
     if (route !== 'sample-pack') {

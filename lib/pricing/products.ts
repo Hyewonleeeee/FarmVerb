@@ -27,6 +27,16 @@ const PRICING_BY_PRODUCT_NAME: Record<string, ProductPricing> = {
     launchPrice: 59,
     regularPrice: 79
   },
+  'Nebula Drift': {
+    currency: 'USD',
+    launchPrice: 49,
+    regularPrice: 69
+  },
+  'Nebula Rift': {
+    currency: 'USD',
+    launchPrice: 59,
+    regularPrice: 79
+  },
   'Nebula Drums': {
     currency: 'USD',
     launchPrice: 49,

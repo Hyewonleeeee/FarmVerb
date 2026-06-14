@@ -8,9 +8,7 @@ import { addItemToCart, getCartItemCount, getCartItems, subscribeToCart, type Ca
 import { formatUsdPrice, getLimitedSalePrice, getMainProductPrice, getProductPricing } from '@/lib/pricing/products';
 import { initFarmVerbSite } from '@/lib/ui/initFarmVerbSite';
 
-type PluginSeriesKey = 'nebula' | 'organic';
-type NebulaProductTabKey = 'all' | 'Nebula Crush' | 'Nebula Space';
-type OrganicProductTabKey = 'all' | 'Germinate' | 'Jeju Citrus Air' | 'Boseong Green Tea';
+type NebulaProductTabKey = 'all' | 'Nebula Crush' | 'Nebula Space' | 'Nebula Drift' | 'Nebula Rift';
 
 type PluginProduct = {
   name: string;
@@ -19,8 +17,14 @@ type PluginProduct = {
   unavailable?: boolean;
 };
 
-const NEBULA_PRODUCT_TABS: NebulaProductTabKey[] = ['all', 'Nebula Crush', 'Nebula Space'];
-const ORGANIC_PRODUCT_TABS: OrganicProductTabKey[] = ['all', 'Germinate', 'Jeju Citrus Air', 'Boseong Green Tea'];
+const NEBULA_PRODUCT_TABS: NebulaProductTabKey[] = ['all', 'Nebula Crush', 'Nebula Space', 'Nebula Drift', 'Nebula Rift'];
+const AUDIO_PLUGIN_MENU_ITEMS: Array<{ label: string; tab: NebulaProductTabKey }> = [
+  { label: 'Nebula Series', tab: 'all' },
+  { label: 'Nebula Crush', tab: 'Nebula Crush' },
+  { label: 'Nebula Space', tab: 'Nebula Space' },
+  { label: 'Nebula Drift', tab: 'Nebula Drift' },
+  { label: 'Nebula Rift', tab: 'Nebula Rift' }
+];
 
 const GLITCH_FEATURES = [
   {
@@ -134,57 +138,33 @@ function ProductPrice({
   );
 }
 
-const PLUGIN_SERIES: Record<
-  PluginSeriesKey,
+const NEBULA_PRODUCTS: PluginProduct[] = [
   {
-    title: string;
-    description: string;
-    products: PluginProduct[];
-  }
-> = {
-  nebula: {
-    title: 'Nebula Series',
-    description: 'Four devices tuned for weight, movement, and dimension.',
-    products: [
-      {
-        name: 'Nebula Crush',
-        description: 'Energy-driven harmonic pressure with animated contour and modern punch.',
-        images: ['/Nebula%20Series/Crush/Nebula%20Crush.png', '/Nebula%20Series/Crush/Nebula%20Crush02.png']
-      },
-      {
-        name: 'Nebula Space',
-        description: 'A deep atmospheric field for cinematic distance and blooming tails.',
-        images: ['/Nebula%20Series/Space/Nebula%20Space.png', '/Nebula%20Series/Space/Nebula%20Space02.png']
-      }
-    ]
+    name: 'Nebula Crush',
+    description: 'Energy-driven harmonic pressure with animated contour and modern punch.',
+    images: ['/Nebula%20Series/Crush/Nebula%20Crush.png', '/Nebula%20Series/Crush/Nebula%20Crush02.png']
   },
-  organic: {
-    title: 'Organic Series',
-    description: 'Warm movement inspired by natural growth and breathable dynamics.',
-    products: [
-      {
-        name: 'Germinate',
-        description: 'Granular delay that blooms over time with gentle unpredictability and tactile rhythm.',
-        images: ['/Germinate/Germinate02.png', '/Germinate/Germinate.png']
-      },
-      {
-        name: 'Jeju Citrus Air',
-        description: 'A citrus-toned organic processor slot, reserved for future release.',
-        unavailable: true
-      },
-      {
-        name: 'Boseong Green Tea',
-        description: 'A breathable texture processor slot, reserved for future release.',
-        unavailable: true
-      }
-    ]
+  {
+    name: 'Nebula Space',
+    description: 'A deep atmospheric field for cinematic distance and blooming tails.',
+    images: ['/Nebula%20Series/Space/Nebula%20Space.png', '/Nebula%20Series/Space/Nebula%20Space02.png']
+  },
+  {
+    name: 'Nebula Drift',
+    description: 'Soft-moving modulation and spectral motion for wide, floating spatial depth.',
+    unavailable: true
+  },
+  {
+    name: 'Nebula Rift',
+    description: 'Sharper fractured motion with tension, contrast, and premium digital grit.',
+    unavailable: true
   }
-};
+];
 
 export default function FarmVerbSite() {
-  const [activePluginSeries, setActivePluginSeries] = useState<PluginSeriesKey>('nebula');
   const [activeNebulaProductTab, setActiveNebulaProductTab] = useState<NebulaProductTabKey>('all');
-  const [activeOrganicProductTab, setActiveOrganicProductTab] = useState<OrganicProductTabKey>('all');
+  const [pluginMenuOpen, setPluginMenuOpen] = useState(false);
+  const audioPluginsMenuRef = useRef<HTMLDivElement | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [buyNowNotice, setBuyNowNotice] = useState<string | null>(null);
   const sampleFilmRef = useRef<HTMLVideoElement | null>(null);
@@ -218,6 +198,31 @@ export default function FarmVerbSite() {
 
     return () => window.clearTimeout(timeoutId);
   }, [buyNowNotice]);
+
+  useEffect(() => {
+    if (!pluginMenuOpen) {
+      return;
+    }
+
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (audioPluginsMenuRef.current?.contains(target)) {
+        return;
+      }
+
+      setPluginMenuOpen(false);
+    };
+
+    document.addEventListener('pointerdown', onPointerDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+    };
+  }, [pluginMenuOpen]);
 
   useEffect(() => {
     const video = sampleFilmRef.current;
@@ -286,36 +291,21 @@ export default function FarmVerbSite() {
     };
   }, []);
 
-  const activeSeries = useMemo(() => PLUGIN_SERIES[activePluginSeries], [activePluginSeries]);
   const visibleProducts = useMemo(() => {
-    if (activePluginSeries === 'nebula') {
-      if (activeNebulaProductTab === 'all') {
-        return activeSeries.products;
-      }
-      return activeSeries.products.filter((product) => product.name === activeNebulaProductTab);
+    if (activeNebulaProductTab === 'all') {
+      return NEBULA_PRODUCTS;
     }
 
-    if (activePluginSeries === 'organic') {
-      if (activeOrganicProductTab === 'all') {
-        return activeSeries.products;
-      }
-      return activeSeries.products.filter((product) => product.name === activeOrganicProductTab);
-    }
-
-    return activeSeries.products;
-  }, [activeNebulaProductTab, activeOrganicProductTab, activePluginSeries, activeSeries.products]);
+    return NEBULA_PRODUCTS.filter((product) => product.name === activeNebulaProductTab);
+  }, [activeNebulaProductTab]);
 
   const selectedSeriesProduct = useMemo(() => {
-    if (activePluginSeries === 'nebula' && activeNebulaProductTab !== 'all') {
-      return activeSeries.products.find((product) => product.name === activeNebulaProductTab) ?? null;
-    }
-
-    if (activePluginSeries === 'organic' && activeOrganicProductTab !== 'all') {
-      return activeSeries.products.find((product) => product.name === activeOrganicProductTab) ?? null;
+    if (activeNebulaProductTab !== 'all') {
+      return NEBULA_PRODUCTS.find((product) => product.name === activeNebulaProductTab) ?? null;
     }
 
     return null;
-  }, [activeNebulaProductTab, activeOrganicProductTab, activePluginSeries, activeSeries.products]);
+  }, [activeNebulaProductTab]);
 
   const glitchPackPricing = getProductPricing('Glitch Drum Pack Vol.1');
   const glitchPackPrice = glitchPackPricing ? getMainProductPrice(glitchPackPricing) : 49;
@@ -323,35 +313,24 @@ export default function FarmVerbSite() {
 
   const showSeriesFeature = Boolean(selectedSeriesProduct);
 
-  const currentSubtabs = activePluginSeries === 'nebula' ? NEBULA_PRODUCT_TABS : ORGANIC_PRODUCT_TABS;
-  const activeSubtab = activePluginSeries === 'nebula' ? activeNebulaProductTab : activeOrganicProductTab;
-  const onSubtabClick = (tabKey: NebulaProductTabKey | OrganicProductTabKey) => {
-    if (activePluginSeries === 'nebula') {
-      setActiveNebulaProductTab(tabKey as NebulaProductTabKey);
-      return;
-    }
-
-    setActiveOrganicProductTab(tabKey as OrganicProductTabKey);
+  const activeSubtab = activeNebulaProductTab;
+  const onSubtabClick = (tabKey: NebulaProductTabKey) => {
+    setActiveNebulaProductTab(tabKey);
+    setPluginMenuOpen(false);
   };
 
-  const onSeriesTabClick = (series: PluginSeriesKey) => {
-    setActivePluginSeries(series);
+  const selectNebulaTab = (tabKey: NebulaProductTabKey) => {
+    setActiveNebulaProductTab(tabKey);
+    setPluginMenuOpen(false);
   };
 
   const onProductNameClick = (productName: string) => {
-    if (activePluginSeries === 'nebula') {
-      setActiveNebulaProductTab(productName as NebulaProductTabKey);
-      return;
-    }
-
-    setActiveOrganicProductTab(productName as OrganicProductTabKey);
+    setActiveNebulaProductTab(productName as NebulaProductTabKey);
   };
 
-  const subtabAriaLabel = activePluginSeries === 'nebula' ? 'Nebula products' : 'Organic products';
-
   const renderSubtabs = () => (
-    <div className="plugin-subtabs" role="tablist" aria-label={subtabAriaLabel}>
-      {currentSubtabs.map((tabKey) => (
+    <div className="plugin-subtabs" role="tablist" aria-label="Nebula products">
+      {NEBULA_PRODUCT_TABS.map((tabKey) => (
         <button
           key={tabKey}
           type="button"
@@ -372,7 +351,7 @@ export default function FarmVerbSite() {
     }
 
     return (
-      <section className={`plugin-feature-stage plugin-feature-${activePluginSeries} interactive-tilt`} aria-label={`${selectedSeriesProduct.name} detail`}>
+      <section className="plugin-feature-stage plugin-feature-nebula interactive-tilt" aria-label={`${selectedSeriesProduct.name} detail`}>
         {selectedSeriesProduct.images && selectedSeriesProduct.images.length > 0 ? (
           <figure className={`plugin-feature-media ${selectedSeriesProduct.images.length > 1 ? 'plugin-feature-gallery' : ''}`}>
             {selectedSeriesProduct.images.length > 1 ? (
@@ -422,18 +401,16 @@ export default function FarmVerbSite() {
   };
 
   const renderSeriesGrid = () => (
-    <div className={`plugin-grid plugin-grid-${activePluginSeries}`} role="list" aria-label={`${activeSeries.title} products`}>
+    <div className="plugin-grid plugin-grid-nebula" role="list" aria-label="Nebula Series products">
       {visibleProducts.map((product) => (
         <article
           key={product.name}
-          className={`plugin-card plugin-card-${activePluginSeries} interactive-tilt ${product.unavailable ? 'is-unavailable' : ''}`}
+          className={`plugin-card plugin-card-nebula interactive-tilt ${product.unavailable ? 'is-unavailable' : ''}`}
           role="listitem"
           tabIndex={0}
         >
           {product.images && product.images.length > 0 ? (
-            <figure
-              className={`plugin-card-media ${activePluginSeries === 'organic' ? 'plugin-card-media-organic' : ''}`}
-            >
+            <figure className="plugin-card-media">
               <img src={product.images[0]} alt={`${product.name} interface`} />
             </figure>
           ) : (
@@ -574,9 +551,35 @@ export default function FarmVerbSite() {
             <Link href="/instrument" className="nav-link" data-route="instrument">
               Software Instrument
             </Link>
-            <Link href="/plugins" className="nav-link" data-route="plugins">
-              Audio Plugins
-            </Link>
+            <div className={`nav-dropdown ${pluginMenuOpen ? 'is-open' : ''}`} ref={audioPluginsMenuRef}>
+              <button
+                type="button"
+                className="nav-link nav-link-trigger"
+                aria-haspopup="menu"
+                aria-expanded={pluginMenuOpen}
+                aria-controls="audio-plugins-dropdown"
+                onClick={() => setPluginMenuOpen((current) => !current)}
+              >
+                <span>Audio Plugins</span>
+                <span className="nav-dropdown-caret" aria-hidden="true">
+                  ▾
+                </span>
+              </button>
+              <div id="audio-plugins-dropdown" className="nav-dropdown-panel" role="menu" aria-label="Audio Plugins">
+                {AUDIO_PLUGIN_MENU_ITEMS.map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    className={`nav-dropdown-item ${activeNebulaProductTab === item.tab ? 'is-active' : ''}`}
+                    data-route="plugins"
+                    role="menuitem"
+                    onClick={() => selectNebulaTab(item.tab)}
+                  >
+                    <span className="nav-dropdown-item-label">{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
             <Link href="/sample-pack" className="nav-link" data-route="sample-pack">
               Sample Pack
             </Link>
@@ -694,35 +697,11 @@ export default function FarmVerbSite() {
               </p>
             </section>
 
-            <section className="plugin-tabs-wrap" aria-label="Plugin series tabs">
-              <div className="plugin-tabs" role="tablist" aria-label="Plugin series">
-                <button
-                  id="plugin-tab-nebula"
-                  type="button"
-                  role="tab"
-                  aria-selected={activePluginSeries === 'nebula'}
-                  className={`plugin-tab ${activePluginSeries === 'nebula' ? 'is-active' : ''}`}
-                  onClick={() => onSeriesTabClick('nebula')}
-                >
-                  Nebula Series
-                </button>
-                <button
-                  id="plugin-tab-organic"
-                  type="button"
-                  role="tab"
-                  aria-selected={activePluginSeries === 'organic'}
-                  className={`plugin-tab ${activePluginSeries === 'organic' ? 'is-active' : ''}`}
-                  onClick={() => onSeriesTabClick('organic')}
-                >
-                  Organic Series
-                </button>
-              </div>
-            </section>
-
-            <section className="plugin-series-view" role="tabpanel" aria-labelledby={`plugin-tab-${activePluginSeries}`}>
+            <section className="plugin-series-view">
               <div className="title-block">
-                <h2>{activeSeries.title}</h2>
-                <p>{activeSeries.description}</p>
+                <p className="section-overline">Nebula Series</p>
+                <h2>Nebula Series</h2>
+                <p>Four devices tuned for weight, movement, and dimension.</p>
               </div>
 
               {renderSubtabs()}
