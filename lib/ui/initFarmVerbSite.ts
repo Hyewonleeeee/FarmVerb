@@ -1,45 +1,18 @@
-type RouteKey = 'home' | 'instrument' | 'plugins' | 'sample-pack' | 'support';
+import {
+  DEFAULT_PLUGIN_SECTION,
+  ROUTES,
+  THEME_BY_ROUTE,
+  type PluginSectionKey,
+  type RouteKey,
+  buildRouteHref,
+  getRouteStateFromLocation,
+  normalizePluginSectionKey,
+  normalizeRouteKey
+} from '@/lib/ui/farmVerbRoutes';
 
 type SwitchOptions = {
   fromHistory?: boolean;
-};
-
-type RouteConfig = {
-  path: string;
-  title: string;
-};
-
-type ThemeKey = 'home' | 'nebula' | 'glitch';
-
-const ROUTES: Record<RouteKey, RouteConfig> = {
-  home: {
-    path: '/',
-    title: 'FarmVerb | Grow Your Sound'
-  },
-  instrument: {
-    path: '/instrument',
-    title: 'FarmVerb | Software Instrument'
-  },
-  plugins: {
-    path: '/plugins',
-    title: 'FarmVerb | Audio Plugins'
-  },
-  'sample-pack': {
-    path: '/sample-pack',
-    title: 'FarmVerb | Sample Pack'
-  },
-  support: {
-    path: '/support',
-    title: 'FarmVerb | Support'
-  }
-};
-
-const THEME_BY_ROUTE: Record<RouteKey, ThemeKey> = {
-  home: 'home',
-  instrument: 'nebula',
-  plugins: 'nebula',
-  'sample-pack': 'glitch',
-  support: 'home'
+  pluginSection?: PluginSectionKey;
 };
 
 type Source = {
@@ -578,19 +551,8 @@ export function initFarmVerbSite() {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let activeRoute: RouteKey = 'home';
+  let activePluginSection: PluginSectionKey = DEFAULT_PLUGIN_SECTION;
   let transitionTimer: number | null = null;
-
-  const normalizeRoute = (inputRoute: string): RouteKey => {
-    if (inputRoute in ROUTES) {
-      return inputRoute as RouteKey;
-    }
-    return 'home';
-  };
-
-  const routeFromPath = (pathname: string) => {
-    const route = pathname.replace(/^\/+/, '').replace(/\/+$/, '').trim();
-    return normalizeRoute(route || 'home');
-  };
 
   const updateNavState = (route: RouteKey) => {
     navLinks.forEach((link) => {
@@ -602,17 +564,16 @@ export function initFarmVerbSite() {
     document.title = ROUTES[route].title;
   };
 
-  const syncRouteChrome = (route: RouteKey) => {
+  const syncRouteChrome = (route: RouteKey, pluginSection: PluginSectionKey) => {
     const theme = THEME_BY_ROUTE[route];
 
     if (root) {
       root.dataset.theme = theme;
+      root.dataset.pluginSection = pluginSection;
       root.classList.toggle('theme-home', theme === 'home');
       root.classList.toggle('theme-nebula', theme === 'nebula');
       root.classList.toggle('theme-glitch', theme === 'glitch');
     }
-
-    root?.classList.toggle('is-sample-pack-active', route === 'sample-pack');
 
     if (route !== 'sample-pack') {
       const sampleVideo = document.querySelector<HTMLVideoElement>('.sample-film-video');
@@ -623,14 +584,47 @@ export function initFarmVerbSite() {
   };
 
   const switchTo = (route: string, options: SwitchOptions = {}) => {
-    const nextRoute = normalizeRoute(route);
+    const nextRoute = normalizeRouteKey(route);
+    const nextPluginSection = nextRoute === 'plugins' ? normalizePluginSectionKey(options.pluginSection) : DEFAULT_PLUGIN_SECTION;
     const { fromHistory = false } = options;
+    const nextHref = buildRouteHref(nextRoute, nextPluginSection);
+    const sameRoute = nextRoute === activeRoute;
+    const sameSection = nextPluginSection === activePluginSection;
 
-    if (nextRoute === activeRoute) {
+    if (sameRoute && sameSection) {
       updateNavState(nextRoute);
       updateTitle(nextRoute);
-      if (!fromHistory && window.location.pathname !== ROUTES[nextRoute].path) {
-        history.replaceState(null, '', ROUTES[nextRoute].path);
+      if (!fromHistory && `${window.location.pathname}${window.location.search}` !== nextHref) {
+        history.replaceState(null, '', nextHref);
+      }
+      window.dispatchEvent(
+        new CustomEvent('farmverb-routechange', {
+          detail: {
+            route: nextRoute,
+            pluginSection: nextPluginSection
+          }
+        })
+      );
+      return;
+    }
+
+    if (sameRoute) {
+      activePluginSection = nextPluginSection;
+      updateNavState(nextRoute);
+      updateTitle(nextRoute);
+      syncRouteChrome(nextRoute, nextPluginSection);
+
+      window.dispatchEvent(
+        new CustomEvent('farmverb-routechange', {
+          detail: {
+            route: nextRoute,
+            pluginSection: nextPluginSection
+          }
+        })
+      );
+
+      if (!fromHistory && `${window.location.pathname}${window.location.search}` !== nextHref) {
+        history.pushState(null, '', nextHref);
       }
       return;
     }
@@ -660,12 +654,22 @@ export function initFarmVerbSite() {
     }, prefersReducedMotion ? 0 : 650);
 
     activeRoute = nextRoute;
+    activePluginSection = nextPluginSection;
     updateNavState(nextRoute);
     updateTitle(nextRoute);
-    syncRouteChrome(nextRoute);
+    syncRouteChrome(nextRoute, nextPluginSection);
 
-    if (!fromHistory && window.location.pathname !== ROUTES[nextRoute].path) {
-      history.pushState(null, '', ROUTES[nextRoute].path);
+    window.dispatchEvent(
+      new CustomEvent('farmverb-routechange', {
+        detail: {
+          route: nextRoute,
+          pluginSection: nextPluginSection
+        }
+      })
+    );
+
+    if (!fromHistory && `${window.location.pathname}${window.location.search}` !== nextHref) {
+      history.pushState(null, '', nextHref);
     }
   };
 
@@ -685,16 +689,20 @@ export function initFarmVerbSite() {
     }
 
     event.preventDefault();
-    switchTo(routeKey);
+    switchTo(routeKey, {
+      pluginSection: routeLink.dataset.pluginSection ? normalizePluginSectionKey(routeLink.dataset.pluginSection) : undefined
+    });
   };
 
   const onPopState = () => {
-    switchTo(routeFromPath(window.location.pathname), { fromHistory: true });
+    const { route, pluginSection } = getRouteStateFromLocation(window.location.pathname, window.location.search);
+    switchTo(route, { fromHistory: true, pluginSection });
   };
 
   document.addEventListener('click', onDocumentClick);
   window.addEventListener('popstate', onPopState);
-  switchTo(routeFromPath(window.location.pathname), { fromHistory: true });
+  const initialRouteState = getRouteStateFromLocation(window.location.pathname, window.location.search);
+  switchTo(initialRouteState.route, { fromHistory: true, pluginSection: initialRouteState.pluginSection });
 
   const homeCanvas = document.getElementById('home-canvas');
   const ambient = homeCanvas instanceof HTMLCanvasElement ? new HomeAmbient(homeCanvas, prefersReducedMotion) : null;
@@ -1042,6 +1050,16 @@ export function initFarmVerbSite() {
       });
 
       updateFloatingFollow(event.clientX, event.clientY);
+
+      if (root?.classList.contains('theme-glitch')) {
+        const glitchPanX = Math.max(-10, Math.min(10, offsetX * 12));
+        const glitchPanY = Math.max(-8, Math.min(8, offsetY * 10));
+        const glitchWarp = Math.min(1, Math.hypot(offsetX, offsetY) * 0.7);
+
+        root.style.setProperty('--glitch-pan-x', `${glitchPanX.toFixed(2)}px`);
+        root.style.setProperty('--glitch-pan-y', `${glitchPanY.toFixed(2)}px`);
+        root.style.setProperty('--glitch-warp', glitchWarp.toFixed(3));
+      }
     };
 
     const onWindowPointerLeave = () => {
@@ -1050,6 +1068,12 @@ export function initFarmVerbSite() {
         node.style.setProperty('--py', '0px');
       });
       resetFloatingFollow();
+
+      if (root?.classList.contains('theme-glitch')) {
+        root.style.setProperty('--glitch-pan-x', '0px');
+        root.style.setProperty('--glitch-pan-y', '0px');
+        root.style.setProperty('--glitch-warp', '0');
+      }
     };
 
     window.addEventListener('pointermove', onWindowPointerMove);

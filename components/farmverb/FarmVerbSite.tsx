@@ -6,24 +6,28 @@ import AuthNav from '@/components/auth/AuthNav';
 import GlobalFooter from '@/components/farmverb/GlobalFooter';
 import { addItemToCart, getCartItemCount, getCartItems, subscribeToCart, type CartItem } from '@/lib/cart/store';
 import { formatUsdPrice, getLimitedSalePrice, getMainProductPrice, getProductPricing } from '@/lib/pricing/products';
+import {
+  DEFAULT_PLUGIN_SECTION,
+  type PluginSectionKey,
+  type RouteKey,
+  getRouteStateFromLocation,
+} from '@/lib/ui/farmVerbRoutes';
 import { initFarmVerbSite } from '@/lib/ui/initFarmVerbSite';
 
-type NebulaProductTabKey = 'all' | 'Nebula Crush' | 'Nebula Space' | 'Nebula Drift' | 'Nebula Rift';
-
 type PluginProduct = {
+  section: Exclude<PluginSectionKey, 'series'>;
   name: string;
   description: string;
   images?: string[];
   unavailable?: boolean;
 };
 
-const NEBULA_PRODUCT_TABS: NebulaProductTabKey[] = ['all', 'Nebula Crush', 'Nebula Space', 'Nebula Drift', 'Nebula Rift'];
-const AUDIO_PLUGIN_MENU_ITEMS: Array<{ label: string; tab: NebulaProductTabKey }> = [
-  { label: 'Nebula Series', tab: 'all' },
-  { label: 'Nebula Crush', tab: 'Nebula Crush' },
-  { label: 'Nebula Space', tab: 'Nebula Space' },
-  { label: 'Nebula Drift', tab: 'Nebula Drift' },
-  { label: 'Nebula Rift', tab: 'Nebula Rift' }
+const AUDIO_PLUGIN_MENU_ITEMS: Array<{ label: string; section: PluginSectionKey }> = [
+  { label: 'Nebula Series', section: 'series' },
+  { label: 'Nebula Crush', section: 'nebula-crush' },
+  { label: 'Nebula Space', section: 'nebula-space' },
+  { label: 'Nebula Drift', section: 'nebula-drift' },
+  { label: 'Nebula Rift', section: 'nebula-rift' }
 ];
 
 const GLITCH_FEATURES = [
@@ -140,21 +144,25 @@ function ProductPrice({
 
 const NEBULA_PRODUCTS: PluginProduct[] = [
   {
+    section: 'nebula-crush',
     name: 'Nebula Crush',
     description: 'Energy-driven harmonic pressure with animated contour and modern punch.',
     images: ['/Nebula%20Series/Crush/Nebula%20Crush.png', '/Nebula%20Series/Crush/Nebula%20Crush02.png']
   },
   {
+    section: 'nebula-space',
     name: 'Nebula Space',
     description: 'A deep atmospheric field for cinematic distance and blooming tails.',
     images: ['/Nebula%20Series/Space/Nebula%20Space.png', '/Nebula%20Series/Space/Nebula%20Space02.png']
   },
   {
+    section: 'nebula-drift',
     name: 'Nebula Drift',
     description: 'Soft-moving modulation and spectral motion for wide, floating spatial depth.',
     unavailable: true
   },
   {
+    section: 'nebula-rift',
     name: 'Nebula Rift',
     description: 'Sharper fractured motion with tension, contrast, and premium digital grit.',
     unavailable: true
@@ -162,7 +170,8 @@ const NEBULA_PRODUCTS: PluginProduct[] = [
 ];
 
 export default function FarmVerbSite() {
-  const [activeNebulaProductTab, setActiveNebulaProductTab] = useState<NebulaProductTabKey>('all');
+  const [currentRoute, setCurrentRoute] = useState<RouteKey>('home');
+  const [activeNebulaSection, setActiveNebulaSection] = useState<PluginSectionKey>(DEFAULT_PLUGIN_SECTION);
   const [pluginMenuOpen, setPluginMenuOpen] = useState(false);
   const audioPluginsMenuRef = useRef<HTMLDivElement | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -178,6 +187,35 @@ export default function FarmVerbSite() {
 
   useEffect(() => {
     return initFarmVerbSite();
+  }, []);
+
+  useEffect(() => {
+    const syncFromLocation = () => {
+      const { route, pluginSection } = getRouteStateFromLocation(window.location.pathname, window.location.search);
+      setCurrentRoute(route);
+      setActiveNebulaSection(pluginSection);
+      setPluginMenuOpen(false);
+    };
+
+    const onRouteChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ route?: RouteKey; pluginSection?: PluginSectionKey }>).detail;
+      if (!detail?.route) {
+        return;
+      }
+
+      setCurrentRoute(detail.route);
+      setActiveNebulaSection(detail.pluginSection ?? DEFAULT_PLUGIN_SECTION);
+      setPluginMenuOpen(false);
+    };
+
+    syncFromLocation();
+    window.addEventListener('farmverb-routechange', onRouteChange as EventListener);
+    window.addEventListener('popstate', syncFromLocation);
+
+    return () => {
+      window.removeEventListener('farmverb-routechange', onRouteChange as EventListener);
+      window.removeEventListener('popstate', syncFromLocation);
+    };
   }, []);
 
   useEffect(() => {
@@ -291,59 +329,39 @@ export default function FarmVerbSite() {
     };
   }, []);
 
+  const selectedSeriesProduct = useMemo(() => {
+    if (activeNebulaSection === DEFAULT_PLUGIN_SECTION) {
+      return null;
+    }
+
+    return NEBULA_PRODUCTS.find((product) => product.section === activeNebulaSection) ?? null;
+  }, [activeNebulaSection]);
+
   const visibleProducts = useMemo(() => {
-    if (activeNebulaProductTab === 'all') {
+    if (activeNebulaSection === DEFAULT_PLUGIN_SECTION) {
       return NEBULA_PRODUCTS;
     }
 
-    return NEBULA_PRODUCTS.filter((product) => product.name === activeNebulaProductTab);
-  }, [activeNebulaProductTab]);
-
-  const selectedSeriesProduct = useMemo(() => {
-    if (activeNebulaProductTab !== 'all') {
-      return NEBULA_PRODUCTS.find((product) => product.name === activeNebulaProductTab) ?? null;
-    }
-
-    return null;
-  }, [activeNebulaProductTab]);
+    return selectedSeriesProduct ? [selectedSeriesProduct] : NEBULA_PRODUCTS;
+  }, [activeNebulaSection, selectedSeriesProduct]);
 
   const glitchPackPricing = getProductPricing('Glitch Drum Pack Vol.1');
   const glitchPackPrice = glitchPackPricing ? getMainProductPrice(glitchPackPricing) : 49;
   const glitchPackRegularPrice = glitchPackPricing?.regularPrice ?? 99;
 
-  const showSeriesFeature = Boolean(selectedSeriesProduct);
+  const showSeriesFeature = Boolean(selectedSeriesProduct) && activeNebulaSection !== DEFAULT_PLUGIN_SECTION && currentRoute === 'plugins';
 
-  const activeSubtab = activeNebulaProductTab;
-  const onSubtabClick = (tabKey: NebulaProductTabKey) => {
-    setActiveNebulaProductTab(tabKey);
+  const activePluginMenuSection = currentRoute === 'plugins' ? activeNebulaSection : null;
+
+  const selectNebulaSection = (section: PluginSectionKey) => {
+    setCurrentRoute('plugins');
+    setActiveNebulaSection(section);
     setPluginMenuOpen(false);
   };
 
-  const selectNebulaTab = (tabKey: NebulaProductTabKey) => {
-    setActiveNebulaProductTab(tabKey);
-    setPluginMenuOpen(false);
+  const onProductNameClick = (section: Exclude<PluginSectionKey, 'series'>) => {
+    selectNebulaSection(section);
   };
-
-  const onProductNameClick = (productName: string) => {
-    setActiveNebulaProductTab(productName as NebulaProductTabKey);
-  };
-
-  const renderSubtabs = () => (
-    <div className="plugin-subtabs" role="tablist" aria-label="Nebula products">
-      {NEBULA_PRODUCT_TABS.map((tabKey) => (
-        <button
-          key={tabKey}
-          type="button"
-          role="tab"
-          aria-selected={activeSubtab === tabKey}
-          className={`plugin-subtab ${activeSubtab === tabKey ? 'is-active' : ''}`}
-          onClick={() => onSubtabClick(tabKey)}
-        >
-          {tabKey === 'all' ? 'All' : tabKey}
-        </button>
-      ))}
-    </div>
-  );
 
   const renderSeriesFeature = () => {
     if (!showSeriesFeature || !selectedSeriesProduct) {
@@ -424,8 +442,10 @@ export default function FarmVerbSite() {
               <button
                 type="button"
                 className="plugin-card-name-link"
-                onClick={() => onProductNameClick(product.name)}
-                aria-label={`Open ${product.name} tab`}
+                onClick={() => onProductNameClick(product.section)}
+                data-route="plugins"
+                data-plugin-section={product.section}
+                aria-label={`Open ${product.name} section`}
               >
                 {product.name}
               </button>
@@ -570,10 +590,11 @@ export default function FarmVerbSite() {
                   <button
                     key={item.label}
                     type="button"
-                    className={`nav-dropdown-item ${activeNebulaProductTab === item.tab ? 'is-active' : ''}`}
+                    className={`nav-dropdown-item ${activePluginMenuSection === item.section ? 'is-active' : ''}`}
                     data-route="plugins"
+                    data-plugin-section={item.section}
                     role="menuitem"
-                    onClick={() => selectNebulaTab(item.tab)}
+                    onClick={() => selectNebulaSection(item.section)}
                   >
                     <span className="nav-dropdown-item-label">{item.label}</span>
                   </button>
@@ -701,10 +722,9 @@ export default function FarmVerbSite() {
               <div className="title-block">
                 <p className="section-overline">Nebula Series</p>
                 <h2>Nebula Series</h2>
-                <p>Four devices tuned for weight, movement, and dimension.</p>
+                <p>Choose the overview or jump straight into an individual device from the Audio Plugins menu.</p>
               </div>
 
-              {renderSubtabs()}
               {renderSeriesContent()}
             </section>
 
