@@ -35,6 +35,15 @@ type HomeFeatureCard = {
   ctaLabel: string;
 };
 
+type HomeEditorialCard = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  image: string;
+  href: string;
+  ctaLabel: string;
+};
+
 const AUDIO_PLUGIN_MENU_ITEMS: Array<{ label: string; section: PluginSectionKey }> = [
   { label: 'Nebula Series', section: 'series' },
   { label: 'Nebula Crush', section: 'nebula-crush' },
@@ -187,7 +196,7 @@ const HOME_FEATURE_CARDS: HomeFeatureCard[] = [
     eyebrow: 'Software Instrument',
     name: 'Nebula Drums',
     description: 'A tactile Decent Sampler instrument with physical impact and warm low-end movement.',
-    image: '/Main/Main.jpg',
+    image: '/Nebula%20Series/Drums/Nebula%20Kinetic%20Drums_1.png',
     href: buildRouteHref('instrument'),
     route: 'instrument',
     productName: 'Nebula Drums',
@@ -197,7 +206,7 @@ const HOME_FEATURE_CARDS: HomeFeatureCard[] = [
     eyebrow: 'Sample Pack',
     name: 'Glitch Drum Pack Vol. I',
     description: 'Fractured percussion, digital grit, and ready-to-use motion for modern production.',
-    image: '/Main/Main_2.jpg',
+    image: '/GlitchDrum/GlitchDrum.png',
     href: buildRouteHref('sample-pack'),
     route: 'sample-pack',
     productName: 'Glitch Drum Pack Vol.1',
@@ -207,12 +216,39 @@ const HOME_FEATURE_CARDS: HomeFeatureCard[] = [
     eyebrow: 'Audio Plugin',
     name: 'Nebula Crush',
     description: 'Energy-driven harmonic pressure with animated contour and premium punch.',
-    image: '/Main/Main_3.jpg',
+    image: '/Nebula%20Series/Crush/Nebula%20Crush.png',
     href: buildRouteHref('plugins', 'nebula-crush'),
     route: 'plugins',
     pluginSection: 'nebula-crush',
     productName: 'Nebula Crush',
     ctaLabel: 'Explore Plugin'
+  }
+];
+
+const HOME_EDITORIAL_CARDS: HomeEditorialCard[] = [
+  {
+    eyebrow: 'FarmVerb Journal',
+    title: 'In a field of noise, make music that matters.',
+    description: 'A warm editorial moment for the homepage, shaped like a brand story instead of a product listing.',
+    image: '/Main/Main.jpg',
+    href: buildRouteHref('plugins'),
+    ctaLabel: 'Explore Products'
+  },
+  {
+    eyebrow: 'Studio View',
+    title: 'Texture, motion, and depth.',
+    description: 'Images and type working together like a premium landing page, not a shop grid.',
+    image: '/Main/Main_2.jpg',
+    href: buildRouteHref('sample-pack'),
+    ctaLabel: 'View Sample Pack'
+  },
+  {
+    eyebrow: 'Creative Tools',
+    title: 'Warm tools for modern sound.',
+    description: 'Clear, editorial spacing with room for the FarmVerb identity to breathe.',
+    image: '/Main/Main_3.jpg',
+    href: buildRouteHref('instrument'),
+    ctaLabel: 'View Instrument'
   }
 ];
 
@@ -748,6 +784,42 @@ export default function FarmVerbSite() {
                 Enter Audio Plugins
               </Link>
             </div>
+
+            <section className="home-editorial" aria-label="FarmVerb editorial highlights">
+              <div className="home-editorial-grid">
+                <article className="home-editorial-feature interactive-tilt">
+                  <figure className="home-editorial-feature-media">
+                    <img src={HOME_EDITORIAL_CARDS[0].image} alt={HOME_EDITORIAL_CARDS[0].title} />
+                  </figure>
+                  <div className="home-editorial-feature-copy">
+                    <p className="section-overline">{HOME_EDITORIAL_CARDS[0].eyebrow}</p>
+                    <h2>{HOME_EDITORIAL_CARDS[0].title}</h2>
+                    <p>{HOME_EDITORIAL_CARDS[0].description}</p>
+                    <Link href={HOME_EDITORIAL_CARDS[0].href} className="home-editorial-link">
+                      {HOME_EDITORIAL_CARDS[0].ctaLabel}
+                    </Link>
+                  </div>
+                </article>
+
+                <div className="home-editorial-stack" aria-label="Additional homepage visuals">
+                  {HOME_EDITORIAL_CARDS.slice(1).map((card) => (
+                    <article key={card.title} className="home-editorial-card interactive-tilt">
+                      <figure className="home-editorial-card-media">
+                        <img src={card.image} alt={card.title} />
+                      </figure>
+                      <div className="home-editorial-card-copy">
+                        <p className="section-overline">{card.eyebrow}</p>
+                        <h3>{card.title}</h3>
+                        <p>{card.description}</p>
+                        <Link href={card.href} className="home-editorial-link">
+                          {card.ctaLabel}
+                        </Link>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
 
             <section className="home-showcase" aria-label="Featured FarmVerb products">
               <div className="home-showcase-head">

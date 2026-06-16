@@ -553,6 +553,28 @@ export function initFarmVerbSite() {
   let activeRoute: RouteKey = 'home';
   let activePluginSection: PluginSectionKey = DEFAULT_PLUGIN_SECTION;
   let transitionTimer: number | null = null;
+  let lastWindowPointerX = window.innerWidth * 0.5;
+  let lastWindowPointerY = window.innerHeight * 0.5;
+
+  const resetThemeMotionState = () => {
+    if (!root) {
+      return;
+    }
+
+    root.style.setProperty('--glitch-pan-x', '0px');
+    root.style.setProperty('--glitch-pan-y', '0px');
+    root.style.setProperty('--glitch-warp', '0');
+    root.style.setProperty('--glitch-cursor-x', '50%');
+    root.style.setProperty('--glitch-cursor-y', '42%');
+    root.style.setProperty('--glitch-cursor-alpha', '0');
+    root.style.setProperty('--glitch-cursor-alpha-soft', '0');
+    root.style.setProperty('--nebula-pan-x', '0px');
+    root.style.setProperty('--nebula-pan-y', '0px');
+    root.style.setProperty('--nebula-cursor-x', '50%');
+    root.style.setProperty('--nebula-cursor-y', '42%');
+    root.style.setProperty('--nebula-cursor-alpha', '0');
+    root.style.setProperty('--nebula-cursor-alpha-soft', '0');
+  };
 
   const updateNavState = (route: RouteKey) => {
     navLinks.forEach((link) => {
@@ -574,6 +596,8 @@ export function initFarmVerbSite() {
       root.classList.toggle('theme-nebula', theme === 'nebula');
       root.classList.toggle('theme-glitch', theme === 'glitch');
     }
+
+    resetThemeMotionState();
 
     if (route !== 'sample-pack') {
       const sampleVideo = document.querySelector<HTMLVideoElement>('.sample-film-video');
@@ -1042,6 +1066,10 @@ export function initFarmVerbSite() {
       const centerY = window.innerHeight / 2;
       const offsetX = (event.clientX - centerX) / centerX;
       const offsetY = (event.clientY - centerY) / centerY;
+      const moveSpeed = Math.hypot(event.clientX - lastWindowPointerX, event.clientY - lastWindowPointerY);
+
+      lastWindowPointerX = event.clientX;
+      lastWindowPointerY = event.clientY;
 
       parallaxNodes.forEach((node) => {
         const depth = Number(node.dataset.depth || 8) * 0.55;
@@ -1055,10 +1083,28 @@ export function initFarmVerbSite() {
         const glitchPanX = Math.max(-10, Math.min(10, offsetX * 12));
         const glitchPanY = Math.max(-8, Math.min(8, offsetY * 10));
         const glitchWarp = Math.min(1, Math.hypot(offsetX, offsetY) * 0.7);
+        const glitchCursorAlpha = Math.min(0.28, 0.06 + moveSpeed / 90 + Math.hypot(offsetX, offsetY) * 0.1);
 
         root.style.setProperty('--glitch-pan-x', `${glitchPanX.toFixed(2)}px`);
         root.style.setProperty('--glitch-pan-y', `${glitchPanY.toFixed(2)}px`);
         root.style.setProperty('--glitch-warp', glitchWarp.toFixed(3));
+        root.style.setProperty('--glitch-cursor-x', `${((event.clientX / window.innerWidth) * 100).toFixed(2)}%`);
+        root.style.setProperty('--glitch-cursor-y', `${((event.clientY / window.innerHeight) * 100).toFixed(2)}%`);
+        root.style.setProperty('--glitch-cursor-alpha', glitchCursorAlpha.toFixed(3));
+        root.style.setProperty('--glitch-cursor-alpha-soft', Math.max(0, glitchCursorAlpha * 0.62).toFixed(3));
+      }
+
+      if (root?.classList.contains('theme-nebula')) {
+        const nebulaPanX = Math.max(-16, Math.min(16, offsetX * 18));
+        const nebulaPanY = Math.max(-12, Math.min(12, offsetY * 14));
+        const nebulaPulse = Math.min(0.3, 0.08 + moveSpeed / 120 + Math.hypot(offsetX, offsetY) * 0.08);
+
+        root.style.setProperty('--nebula-pan-x', `${nebulaPanX.toFixed(2)}px`);
+        root.style.setProperty('--nebula-pan-y', `${nebulaPanY.toFixed(2)}px`);
+        root.style.setProperty('--nebula-cursor-x', `${((event.clientX / window.innerWidth) * 100).toFixed(2)}%`);
+        root.style.setProperty('--nebula-cursor-y', `${((event.clientY / window.innerHeight) * 100).toFixed(2)}%`);
+        root.style.setProperty('--nebula-cursor-alpha', nebulaPulse.toFixed(3));
+        root.style.setProperty('--nebula-cursor-alpha-soft', Math.max(0, nebulaPulse * 0.62).toFixed(3));
       }
     };
 
@@ -1068,12 +1114,9 @@ export function initFarmVerbSite() {
         node.style.setProperty('--py', '0px');
       });
       resetFloatingFollow();
-
-      if (root?.classList.contains('theme-glitch')) {
-        root.style.setProperty('--glitch-pan-x', '0px');
-        root.style.setProperty('--glitch-pan-y', '0px');
-        root.style.setProperty('--glitch-warp', '0');
-      }
+      lastWindowPointerX = window.innerWidth * 0.5;
+      lastWindowPointerY = window.innerHeight * 0.5;
+      resetThemeMotionState();
     };
 
     window.addEventListener('pointermove', onWindowPointerMove);
