@@ -10,6 +10,7 @@ import {
   DEFAULT_PLUGIN_SECTION,
   type PluginSectionKey,
   type RouteKey,
+  buildRouteHref,
   getRouteStateFromLocation,
 } from '@/lib/ui/farmVerbRoutes';
 import { initFarmVerbSite } from '@/lib/ui/initFarmVerbSite';
@@ -20,6 +21,18 @@ type PluginProduct = {
   description: string;
   images?: string[];
   unavailable?: boolean;
+};
+
+type HomeFeatureCard = {
+  eyebrow: string;
+  name: string;
+  description: string;
+  image: string;
+  href: string;
+  route: RouteKey;
+  pluginSection?: PluginSectionKey;
+  productName: string;
+  ctaLabel: string;
 };
 
 const AUDIO_PLUGIN_MENU_ITEMS: Array<{ label: string; section: PluginSectionKey }> = [
@@ -166,6 +179,40 @@ const NEBULA_PRODUCTS: PluginProduct[] = [
     name: 'Nebula Rift',
     description: 'Sharper fractured motion with tension, contrast, and premium digital grit.',
     unavailable: true
+  }
+];
+
+const HOME_FEATURE_CARDS: HomeFeatureCard[] = [
+  {
+    eyebrow: 'Software Instrument',
+    name: 'Nebula Drums',
+    description: 'A tactile Decent Sampler instrument with physical impact and warm low-end movement.',
+    image: '/Main/Main.jpg',
+    href: buildRouteHref('instrument'),
+    route: 'instrument',
+    productName: 'Nebula Drums',
+    ctaLabel: 'Explore Instrument'
+  },
+  {
+    eyebrow: 'Sample Pack',
+    name: 'Glitch Drum Pack Vol. I',
+    description: 'Fractured percussion, digital grit, and ready-to-use motion for modern production.',
+    image: '/Main/Main_2.jpg',
+    href: buildRouteHref('sample-pack'),
+    route: 'sample-pack',
+    productName: 'Glitch Drum Pack Vol.1',
+    ctaLabel: 'Explore Pack'
+  },
+  {
+    eyebrow: 'Audio Plugin',
+    name: 'Nebula Crush',
+    description: 'Energy-driven harmonic pressure with animated contour and premium punch.',
+    image: '/Main/Main_3.jpg',
+    href: buildRouteHref('plugins', 'nebula-crush'),
+    route: 'plugins',
+    pluginSection: 'nebula-crush',
+    productName: 'Nebula Crush',
+    ctaLabel: 'Explore Plugin'
   }
 ];
 
@@ -701,6 +748,53 @@ export default function FarmVerbSite() {
                 Enter Audio Plugins
               </Link>
             </div>
+
+            <section className="home-showcase" aria-label="Featured FarmVerb products">
+              <div className="home-showcase-head">
+                <p className="section-overline">Featured Products</p>
+                <h2 className="home-showcase-title">Warm tools for modern sound.</h2>
+                <p className="home-showcase-copy">
+                  A small, curated set of instruments, plugins, and sample packs shaped around texture, movement,
+                  and depth.
+                </p>
+              </div>
+
+              <div className="home-product-grid">
+                {HOME_FEATURE_CARDS.map((card) => (
+                  <article key={card.name} className="home-product-card interactive-tilt">
+                    <figure className="home-product-media">
+                      <span className="home-product-badge">{card.eyebrow}</span>
+                      <img src={card.image} alt={card.name} />
+                    </figure>
+
+                    <div className="home-product-copy">
+                      <p className="home-product-eyebrow">{card.eyebrow}</p>
+                      <h3>{card.name}</h3>
+                      <p>{card.description}</p>
+                      <ProductPrice productName={card.productName} className="home-product-price" />
+                    </div>
+
+                    <div className="home-product-actions">
+                      <Link
+                        href={card.href}
+                        className="section-action-btn section-action-buy home-product-link"
+                        data-route={card.route}
+                        data-plugin-section={card.pluginSection}
+                      >
+                        {card.ctaLabel}
+                      </Link>
+                      <button
+                        type="button"
+                        className="section-action-btn section-action-cart"
+                        onClick={() => addToCart(card.productName)}
+                      >
+                        Add to Cart
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
 
             <div className="global-footer-host">
               <GlobalFooter />
