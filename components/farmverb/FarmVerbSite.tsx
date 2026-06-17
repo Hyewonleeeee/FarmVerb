@@ -35,7 +35,7 @@ type HomeFeatureCard = {
   ctaLabel: string;
 };
 
-type HomeEditorialCard = {
+type HomeStoryCard = {
   eyebrow: string;
   title: string;
   description: string;
@@ -225,11 +225,11 @@ const HOME_FEATURE_CARDS: HomeFeatureCard[] = [
   }
 ];
 
-const HOME_EDITORIAL_CARDS: HomeEditorialCard[] = [
+const HOME_STORY_CARDS: HomeStoryCard[] = [
   {
     eyebrow: 'FarmVerb Journal',
     title: 'In a field of noise, make music that matters.',
-    description: 'A warm editorial moment for the homepage, shaped like a brand story instead of a product listing.',
+    description: 'A warm editorial opening that keeps the page commercial and calm without becoming a gallery.',
     image: '/Main/Main.jpg',
     href: buildRouteHref('plugins'),
     ctaLabel: 'Explore Products'
@@ -785,33 +785,33 @@ export default function FarmVerbSite() {
               </Link>
             </div>
 
-            <section className="home-editorial" aria-label="FarmVerb editorial highlights">
-              <div className="home-editorial-grid">
-                <article className="home-editorial-feature interactive-tilt">
-                  <figure className="home-editorial-feature-media">
-                    <img src={HOME_EDITORIAL_CARDS[0].image} alt={HOME_EDITORIAL_CARDS[0].title} />
+            <section className="home-story" aria-label="FarmVerb studio visuals">
+              <div className="home-story-grid">
+                <article className="home-story-feature interactive-tilt">
+                  <figure className="home-story-feature-media">
+                    <img src={HOME_STORY_CARDS[0].image} alt={HOME_STORY_CARDS[0].title} />
                   </figure>
-                  <div className="home-editorial-feature-copy">
-                    <p className="section-overline">{HOME_EDITORIAL_CARDS[0].eyebrow}</p>
-                    <h2>{HOME_EDITORIAL_CARDS[0].title}</h2>
-                    <p>{HOME_EDITORIAL_CARDS[0].description}</p>
-                    <Link href={HOME_EDITORIAL_CARDS[0].href} className="home-editorial-link">
-                      {HOME_EDITORIAL_CARDS[0].ctaLabel}
+                  <div className="home-story-feature-copy">
+                    <p className="section-overline">{HOME_STORY_CARDS[0].eyebrow}</p>
+                    <h2>{HOME_STORY_CARDS[0].title}</h2>
+                    <p>{HOME_STORY_CARDS[0].description}</p>
+                    <Link href={HOME_STORY_CARDS[0].href} className="home-story-link">
+                      {HOME_STORY_CARDS[0].ctaLabel}
                     </Link>
                   </div>
                 </article>
 
-                <div className="home-editorial-stack" aria-label="Additional homepage visuals">
-                  {HOME_EDITORIAL_CARDS.slice(1).map((card) => (
-                    <article key={card.title} className="home-editorial-card interactive-tilt">
-                      <figure className="home-editorial-card-media">
+                <div className="home-story-stack" aria-label="Additional homepage visuals">
+                  {HOME_STORY_CARDS.slice(1).map((card) => (
+                    <article key={card.title} className="home-story-card interactive-tilt">
+                      <figure className="home-story-media">
                         <img src={card.image} alt={card.title} />
                       </figure>
-                      <div className="home-editorial-card-copy">
+                      <div className="home-story-copy">
                         <p className="section-overline">{card.eyebrow}</p>
                         <h3>{card.title}</h3>
                         <p>{card.description}</p>
-                        <Link href={card.href} className="home-editorial-link">
+                        <Link href={card.href} className="home-story-link">
                           {card.ctaLabel}
                         </Link>
                       </div>
