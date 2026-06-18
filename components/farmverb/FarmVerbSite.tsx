@@ -169,34 +169,87 @@ const NEBULA_PRODUCTS: PluginProduct[] = [
     section: 'nebula-crush',
     name: 'Nebula Crush',
     description: 'Energy-driven harmonic pressure with animated contour and modern punch.',
-    images: ['/Nebula%20Series/Crush/Nebula%20Crush.png', '/Nebula%20Series/Crush/Nebula%20Crush02.png']
+    images: [
+      '/Nebula%20Series/Main/1-Nebula%20Crush.png',
+      '/Nebula%20Series/Crush/Nebula%20Crush.png',
+      '/Nebula%20Series/Crush/Nebula%20Crush02.png'
+    ]
   },
   {
     section: 'nebula-space',
     name: 'Nebula Space',
     description: 'A deep atmospheric field for cinematic distance and blooming tails.',
-    images: ['/Nebula%20Series/Space/Nebula%20Space.png', '/Nebula%20Series/Space/Nebula%20Space02.png']
+    images: [
+      '/Nebula%20Series/Main/2-Nebula%20Space.png',
+      '/Nebula%20Series/Space/Nebula%20Space.png',
+      '/Nebula%20Series/Space/Nebula%20Space02.png'
+    ]
   },
   {
     section: 'nebula-drift',
     name: 'Nebula Drift',
     description: 'Soft-moving modulation and spectral motion for wide, floating spatial depth.',
+    images: ['/Nebula%20Series/Main/3-Nebula%20Drift.png'],
     unavailable: true
   },
   {
     section: 'nebula-rift',
     name: 'Nebula Rift',
     description: 'Sharper fractured motion with tension, contrast, and premium digital grit.',
+    images: ['/Nebula%20Series/Main/4-Nebula%20Rift.png'],
     unavailable: true
   }
 ];
 
 const HOME_FEATURE_CARDS: HomeFeatureCard[] = [
   {
+    eyebrow: 'Audio Plugins',
+    name: 'Nebula Series',
+    description: 'The Nebula overview, anchored by the main series artwork and the brand’s flagship atmosphere.',
+    image: '/Nebula%20Series/Main/Nebula%20Series.png',
+    href: buildRouteHref('plugins'),
+    route: 'plugins',
+    productName: 'Nebula Series',
+    ctaLabel: 'Explore Series'
+  },
+  {
+    eyebrow: 'Audio Plugin',
+    name: 'Nebula Crush',
+    description: 'Energy-driven harmonic pressure with animated contour and premium punch.',
+    image: '/Nebula%20Series/Main/1-Nebula%20Crush.png',
+    href: buildRouteHref('plugins', 'nebula-crush'),
+    route: 'plugins',
+    pluginSection: 'nebula-crush',
+    productName: 'Nebula Crush',
+    ctaLabel: 'Explore Plugin'
+  },
+  {
+    eyebrow: 'Audio Plugin',
+    name: 'Nebula Drift',
+    description: 'Soft-moving modulation and spectral motion for wide, floating spatial depth.',
+    image: '/Nebula%20Series/Main/3-Nebula%20Drift.png',
+    href: buildRouteHref('plugins', 'nebula-drift'),
+    route: 'plugins',
+    pluginSection: 'nebula-drift',
+    productName: 'Nebula Drift',
+    ctaLabel: 'Explore Plugin'
+  },
+  {
+    eyebrow: 'Audio Plugin',
+    name: 'Nebula Rift',
+    description: 'Sharper fractured motion with tension, contrast, and premium digital grit.',
+    image: '/Nebula%20Series/Main/4-Nebula%20Rift.png',
+    href: buildRouteHref('plugins', 'nebula-rift'),
+    route: 'plugins',
+    pluginSection: 'nebula-rift',
+    productName: 'Nebula Rift',
+    ctaLabel: 'Explore Plugin'
+  },
+  {
     eyebrow: 'Software Instrument',
     name: 'Nebula Drums',
     description: 'A tactile Decent Sampler instrument with physical impact and warm low-end movement.',
-    image: '/Nebula%20Series/Drums/Nebula%20Kinetic%20Drums_1.png',
+    image: '/Nebula%20Series/Main/5-Nebula%20Drums.png',
     href: buildRouteHref('instrument'),
     route: 'instrument',
     productName: 'Nebula Drums',
@@ -211,17 +264,6 @@ const HOME_FEATURE_CARDS: HomeFeatureCard[] = [
     route: 'sample-pack',
     productName: 'Glitch Drum Pack Vol.1',
     ctaLabel: 'Explore Pack'
-  },
-  {
-    eyebrow: 'Audio Plugin',
-    name: 'Nebula Crush',
-    description: 'Energy-driven harmonic pressure with animated contour and premium punch.',
-    image: '/Nebula%20Series/Crush/Nebula%20Crush.png',
-    href: buildRouteHref('plugins', 'nebula-crush'),
-    route: 'plugins',
-    pluginSection: 'nebula-crush',
-    productName: 'Nebula Crush',
-    ctaLabel: 'Explore Plugin'
   }
 ];
 
@@ -786,39 +828,19 @@ export default function FarmVerbSite() {
             </div>
 
             <section className="home-story" aria-label="FarmVerb studio visuals">
-              <div className="home-story-grid">
-                <article className="home-story-feature interactive-tilt">
-                  <figure className="home-story-feature-media">
-                    <img src={HOME_STORY_CARDS[0].image} alt={HOME_STORY_CARDS[0].title} />
-                  </figure>
-                  <div className="home-story-feature-copy">
-                    <p className="section-overline">{HOME_STORY_CARDS[0].eyebrow}</p>
-                    <h2>{HOME_STORY_CARDS[0].title}</h2>
-                    <p>{HOME_STORY_CARDS[0].description}</p>
-                    <Link href={HOME_STORY_CARDS[0].href} className="home-story-link">
-                      {HOME_STORY_CARDS[0].ctaLabel}
-                    </Link>
-                  </div>
-                </article>
-
-                <div className="home-story-stack" aria-label="Additional homepage visuals">
-                  {HOME_STORY_CARDS.slice(1).map((card) => (
-                    <article key={card.title} className="home-story-card interactive-tilt">
-                      <figure className="home-story-media">
-                        <img src={card.image} alt={card.title} />
-                      </figure>
-                      <div className="home-story-copy">
-                        <p className="section-overline">{card.eyebrow}</p>
-                        <h3>{card.title}</h3>
-                        <p>{card.description}</p>
-                        <Link href={card.href} className="home-story-link">
-                          {card.ctaLabel}
-                        </Link>
-                      </div>
-                    </article>
-                  ))}
+              <article className="home-story-feature">
+                <figure className="home-story-feature-media interactive-tilt">
+                  <img src={HOME_STORY_CARDS[0].image} alt={HOME_STORY_CARDS[0].title} />
+                </figure>
+                <div className="home-story-feature-copy">
+                  <p className="section-overline">{HOME_STORY_CARDS[0].eyebrow}</p>
+                  <h2>{HOME_STORY_CARDS[0].title}</h2>
+                  <p>{HOME_STORY_CARDS[0].description}</p>
+                  <Link href={HOME_STORY_CARDS[0].href} className="home-story-link">
+                    {HOME_STORY_CARDS[0].ctaLabel}
+                  </Link>
                 </div>
-              </div>
+              </article>
             </section>
 
             <section className="home-showcase" aria-label="Featured FarmVerb products">
@@ -866,6 +888,24 @@ export default function FarmVerbSite() {
                   </article>
                 ))}
               </div>
+            </section>
+
+            <section className="home-ending-gallery" aria-label="Additional homepage visuals">
+              {HOME_STORY_CARDS.slice(1).map((card) => (
+                <article key={card.title} className="home-ending-item">
+                  <figure className="home-ending-media interactive-tilt">
+                    <img src={card.image} alt={card.title} />
+                  </figure>
+                  <div className="home-ending-copy">
+                    <p className="section-overline">{card.eyebrow}</p>
+                    <h3>{card.title}</h3>
+                    <p>{card.description}</p>
+                    <Link href={card.href} className="home-story-link">
+                      {card.ctaLabel}
+                    </Link>
+                  </div>
+                </article>
+              ))}
             </section>
 
             <div className="global-footer-host">
