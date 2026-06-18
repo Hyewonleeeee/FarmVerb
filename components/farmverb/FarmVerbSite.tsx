@@ -225,6 +225,17 @@ const HOME_FEATURE_CARDS: HomeFeatureCard[] = [
   },
   {
     eyebrow: 'Audio Plugin',
+    name: 'Nebula Space',
+    description: 'A deep atmospheric field for cinematic distance and blooming tails.',
+    image: '/Nebula%20Series/Main/2-Nebula%20Space.png',
+    href: buildRouteHref('plugins', 'nebula-space'),
+    route: 'plugins',
+    pluginSection: 'nebula-space',
+    productName: 'Nebula Space',
+    ctaLabel: 'Explore Plugin'
+  },
+  {
+    eyebrow: 'Audio Plugin',
     name: 'Nebula Drift',
     description: 'Soft-moving modulation and spectral motion for wide, floating spatial depth.',
     image: '/Nebula%20Series/Main/3-Nebula%20Drift.png',
@@ -244,16 +255,6 @@ const HOME_FEATURE_CARDS: HomeFeatureCard[] = [
     pluginSection: 'nebula-rift',
     productName: 'Nebula Rift',
     ctaLabel: 'Explore Plugin'
-  },
-  {
-    eyebrow: 'Software Instrument',
-    name: 'Nebula Drums',
-    description: 'A tactile Decent Sampler instrument with physical impact and warm low-end movement.',
-    image: '/Nebula%20Series/Main/5-Nebula%20Drums.png',
-    href: buildRouteHref('instrument'),
-    route: 'instrument',
-    productName: 'Nebula Drums',
-    ctaLabel: 'Explore Instrument'
   },
   {
     eyebrow: 'Sample Pack',
@@ -857,7 +858,6 @@ export default function FarmVerbSite() {
                 {HOME_FEATURE_CARDS.map((card) => (
                   <article key={card.name} className="home-product-card interactive-tilt">
                     <figure className="home-product-media">
-                      <span className="home-product-badge">{card.eyebrow}</span>
                       <img src={card.image} alt={card.name} />
                     </figure>
 

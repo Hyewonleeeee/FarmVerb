@@ -10,6 +10,11 @@ export type ProductPricing = {
 const glitchSaleActive = process.env.NEXT_PUBLIC_GLITCH_SALE_ACTIVE === 'true';
 
 const PRICING_BY_PRODUCT_NAME: Record<string, ProductPricing> = {
+  'Nebula Series': {
+    currency: 'USD',
+    launchPrice: 189,
+    regularPrice: 255
+  },
   'Glitch Drum Pack Vol.1': {
     currency: 'USD',
     regularPrice: 99,
