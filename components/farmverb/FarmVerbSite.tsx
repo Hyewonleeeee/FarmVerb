@@ -480,6 +480,12 @@ export default function FarmVerbSite() {
   const showSeriesFeature = Boolean(selectedSeriesProduct) && activeNebulaSection !== DEFAULT_PLUGIN_SECTION && currentRoute === 'plugins';
 
   const activePluginMenuSection = currentRoute === 'plugins' ? activeNebulaSection : null;
+  const activePluginMenuName =
+    activeNebulaSection === DEFAULT_PLUGIN_SECTION ? 'Nebula Series' : selectedSeriesProduct?.name ?? 'Nebula Series';
+  const activePluginMenuCopy =
+    activeNebulaSection === DEFAULT_PLUGIN_SECTION
+      ? 'Choose the overview or explore a device.'
+      : `Choose the overview or jump straight into ${selectedSeriesProduct?.name ?? 'this device'}.`;
 
   const selectNebulaSection = (section: PluginSectionKey) => {
     setCurrentRoute('plugins');
@@ -928,9 +934,9 @@ export default function FarmVerbSite() {
 
             <section className="plugin-series-view">
               <div className="title-block">
-                <p className="section-overline">Nebula Series</p>
-                <h2>Nebula Series</h2>
-                <p>Choose the overview or jump straight into an individual device from the Audio Plugins menu.</p>
+                <p className="section-overline">{activePluginMenuName}</p>
+                <h2>{activePluginMenuName}</h2>
+                <p>{activePluginMenuCopy}</p>
               </div>
 
               {renderSeriesContent()}

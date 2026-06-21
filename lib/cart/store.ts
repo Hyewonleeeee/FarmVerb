@@ -95,6 +95,7 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
 ];
 
 const productByName = new Map(PRODUCT_CATALOG.map((product) => [product.name.toLowerCase(), product]));
+const productBySlug = new Map(PRODUCT_CATALOG.map((product) => [product.slug, product]));
 
 function slugify(text: string) {
   return text
@@ -128,6 +129,23 @@ function resolveProduct(productName: string): CatalogProduct {
   };
 }
 
+function resolveCatalogProduct(input: Partial<CartItem>) {
+  const slug = typeof input.slug === 'string' ? input.slug.trim() : '';
+  if (slug) {
+    const bySlug = productBySlug.get(slug);
+    if (bySlug) {
+      return bySlug;
+    }
+  }
+
+  const name = typeof input.name === 'string' ? input.name.trim().toLowerCase() : '';
+  if (name) {
+    return productByName.get(name) ?? null;
+  }
+
+  return null;
+}
+
 function normalizeCartItem(input: Partial<CartItem>): CartItem | null {
   const slug = typeof input.slug === 'string' ? input.slug.trim() : '';
   const name = typeof input.name === 'string' ? input.name.trim() : '';
@@ -136,10 +154,13 @@ function normalizeCartItem(input: Partial<CartItem>): CartItem | null {
     return null;
   }
 
+  const catalogProduct = resolveCatalogProduct(input);
   const price = typeof input.price === 'number' && Number.isFinite(input.price) ? input.price : 0;
   const currency = typeof input.currency === 'string' && input.currency.trim() ? input.currency.trim().toUpperCase() : 'USD';
-  const image = typeof input.image === 'string' && input.image.trim() ? input.image.trim() : null;
-  const description = typeof input.description === 'string' && input.description.trim() ? input.description.trim() : 'Digital audio product';
+  const image = catalogProduct?.image ?? (typeof input.image === 'string' && input.image.trim() ? input.image.trim() : null);
+  const description =
+    catalogProduct?.description ??
+    (typeof input.description === 'string' && input.description.trim() ? input.description.trim() : 'Digital audio product');
 
   return {
     slug,
@@ -248,6 +269,10 @@ export function getCartItemCount(items: CartItem[]) {
 
 export function getCartSubtotal(items: CartItem[]) {
   return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+}
+
+export function getCatalogProductBySlug(slug: string) {
+  return productBySlug.get(slug) ?? null;
 }
 
 export function subscribeToCart(listener: () => void) {

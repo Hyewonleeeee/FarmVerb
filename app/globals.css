@@ -1477,11 +1477,11 @@ img {
 }
 
 .plugin-grid-nebula .plugin-card-media {
-  aspect-ratio: 16 / 10.35;
+  aspect-ratio: 16 / 11;
 }
 
 .plugin-grid-nebula .plugin-card.is-unavailable .plugin-card-media {
-  aspect-ratio: 16 / 10.35;
+  aspect-ratio: 16 / 11;
 }
 
 .plugin-grid-organic {
@@ -3274,8 +3274,45 @@ img {
       rgba(255, 255, 255, 0.03) 1px,
       transparent 1px,
       transparent 34px
-    );
+  );
   opacity: 0.34;
+}
+
+.farmverb-root.theme-nebula .page-plugins::after,
+.farmverb-root.theme-nebula .page-instrument::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at calc(var(--nebula-cursor-x, 50%) + 10px) calc(var(--nebula-cursor-y, 42%) - 8px),
+      rgba(255, 255, 255, calc(var(--nebula-cursor-alpha-soft, 0) * 0.92)) 0 0.9px,
+      transparent 1.8px
+    ),
+    radial-gradient(
+      circle at calc(var(--nebula-cursor-x, 50%) - 16px) calc(var(--nebula-cursor-y, 42%) + 12px),
+      rgba(202, 170, 255, calc(var(--nebula-cursor-alpha-soft, 0) * 0.72)) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at calc(var(--nebula-cursor-x, 50%) + 24px) calc(var(--nebula-cursor-y, 42%) + 18px),
+      rgba(110, 220, 255, calc(var(--nebula-cursor-alpha-soft, 0) * 0.64)) 0 0.9px,
+      transparent 1.9px
+    ),
+    radial-gradient(
+      circle at calc(var(--nebula-cursor-x, 50%) - 30px) calc(var(--nebula-cursor-y, 42%) - 20px),
+      rgba(255, 255, 255, calc(var(--nebula-cursor-alpha-soft, 0) * 0.42)) 0 0.6px,
+      transparent 1.4px
+    ),
+    radial-gradient(
+      circle at calc(var(--nebula-cursor-x, 50%) + 38px) calc(var(--nebula-cursor-y, 42%) - 24px),
+      rgba(179, 126, 255, calc(var(--nebula-cursor-alpha-soft, 0) * 0.46)) 0 0.7px,
+      transparent 1.5px
+    );
+  opacity: 0.78;
+  mix-blend-mode: screen;
+  filter: blur(0.25px);
 }
 
 .farmverb-root.theme-nebula .plugins-hero .page-title,

@@ -7,6 +7,7 @@ import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import { getPaymentCopy, type PaymentLocale } from '@/lib/i18n/payment';
 import {
   clearCartItems,
+  getCatalogProductBySlug,
   getCartItemCount,
   getCartItems,
   getCartSubtotal,
@@ -143,11 +144,13 @@ export default function CartPage() {
                 <ul className="cart-page-line-list">
                   {cartItems.map((item) => {
                     const isSelected = selectedSlugs.includes(item.slug);
+                    const catalogImage = getCatalogProductBySlug(item.slug)?.image ?? null;
+                    const itemImage = catalogImage ?? item.image;
 
                     return (
                       <li key={item.slug} className={`cart-page-line-item ${isSelected ? 'is-selected' : ''}`}>
                         <figure className="cart-page-item-media" aria-hidden="true">
-                          {item.image ? <img src={item.image} alt="" /> : <span>{item.name.slice(0, 2)}</span>}
+                          {itemImage ? <img src={itemImage} alt="" /> : <span>{item.name.slice(0, 2)}</span>}
                         </figure>
 
                         <label className="cart-page-item-select">
