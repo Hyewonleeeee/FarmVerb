@@ -900,39 +900,6 @@ export default function FarmVerbSite() {
               </div>
             </section>
 
-            <section className="home-glitch-feature" aria-label="Glitch Drum Pack spotlight">
-              <article className="home-glitch-card interactive-tilt">
-                <figure className="home-glitch-media">
-                  <img src="/GlitchDrum/GlitchDrum.png" alt="Glitch Drum Pack artwork" />
-                </figure>
-
-                <div className="home-glitch-copy">
-                  <p className="section-overline">Sample Pack</p>
-                  <h2>Glitch Drum Pack Vol. I</h2>
-                  <p>
-                    Fractured percussion, digital grit, and ready-to-use motion for modern production.
-                  </p>
-                  <ProductPrice productName="Glitch Drum Pack Vol.1" className="home-product-price home-glitch-price" />
-                  <div className="home-product-actions home-glitch-actions">
-                    <Link
-                      href={buildRouteHref('sample-pack')}
-                      className="section-action-btn section-action-buy home-product-link"
-                      data-route="sample-pack"
-                    >
-                      Explore Pack
-                    </Link>
-                    <button
-                      type="button"
-                      className="section-action-btn section-action-cart"
-                      onClick={() => addToCart('Glitch Drum Pack Vol.1')}
-                    >
-                      Add to Cart
-                    </button>
-                  </div>
-                </div>
-              </article>
-            </section>
-
             <section className="home-ending-gallery" aria-label="Additional homepage visuals">
               {HOME_STORY_CARDS.slice(1).map((card) => (
                 <article key={card.title} className="home-ending-item">
