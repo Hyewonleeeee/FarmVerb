@@ -1476,6 +1476,14 @@ img {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.plugin-grid-nebula .plugin-card-media {
+  aspect-ratio: 16 / 10.35;
+}
+
+.plugin-grid-nebula .plugin-card.is-unavailable .plugin-card-media {
+  aspect-ratio: 16 / 10.35;
+}
+
 .plugin-grid-organic {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -3219,6 +3227,21 @@ img {
 .farmverb-root.theme-nebula .page-instrument {
   color: #f4edff;
   background:
+    radial-gradient(
+      circle at calc(var(--nebula-cursor-x, 50%) + 18px) calc(var(--nebula-cursor-y, 42%) - 14px),
+      rgba(255, 255, 255, calc(var(--nebula-cursor-alpha-soft, 0) * 0.72)) 0 1px,
+      transparent 1.9px
+    ),
+    radial-gradient(
+      circle at calc(var(--nebula-cursor-x, 50%) - 26px) calc(var(--nebula-cursor-y, 42%) + 16px),
+      rgba(181, 132, 255, calc(var(--nebula-cursor-alpha-soft, 0) * 0.6)) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at calc(var(--nebula-cursor-x, 50%) + 40px) calc(var(--nebula-cursor-y, 42%) + 28px),
+      rgba(78, 213, 255, calc(var(--nebula-cursor-alpha-soft, 0) * 0.5)) 0 1px,
+      transparent 2px
+    ),
     radial-gradient(
       circle at calc(var(--nebula-cursor-x, 50%) + var(--nebula-pan-x, 0px))
         calc(var(--nebula-cursor-y, 42%) + var(--nebula-pan-y, 0px)),

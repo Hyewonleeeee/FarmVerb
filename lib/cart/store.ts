@@ -50,7 +50,7 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
     description: 'Dynamic crush processor',
     price: priceOf('Nebula Crush', 39),
     currency: 'USD',
-    image: '/Nebula%20Series/Crush/Nebula%20Crush.png'
+    image: '/Nebula%20Series/Main/1-Nebula%20Crush.png'
   },
   {
     slug: 'nebula-space',
@@ -82,7 +82,7 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
     description: 'Decent Sampler instrument',
     price: priceOf('Nebula Drums', 49),
     currency: 'USD',
-    image: '/Nebula%20Series/Drums/Nebula%20Kinetic%20Drums_1.png'
+    image: '/Nebula%20Series/Main/5-Nebula%20Drums.png'
   },
   {
     slug: 'glitch-drum-pack-vol-1',

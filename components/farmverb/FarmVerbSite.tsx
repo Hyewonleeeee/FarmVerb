@@ -169,21 +169,13 @@ const NEBULA_PRODUCTS: PluginProduct[] = [
     section: 'nebula-crush',
     name: 'Nebula Crush',
     description: 'Energy-driven harmonic pressure with animated contour and modern punch.',
-    images: [
-      '/Nebula%20Series/Main/1-Nebula%20Crush.png',
-      '/Nebula%20Series/Crush/Nebula%20Crush.png',
-      '/Nebula%20Series/Crush/Nebula%20Crush02.png'
-    ]
+    images: ['/Nebula%20Series/Main/1-Nebula%20Crush.png']
   },
   {
     section: 'nebula-space',
     name: 'Nebula Space',
     description: 'A deep atmospheric field for cinematic distance and blooming tails.',
-    images: [
-      '/Nebula%20Series/Main/2-Nebula%20Space.png',
-      '/Nebula%20Series/Space/Nebula%20Space.png',
-      '/Nebula%20Series/Space/Nebula%20Space02.png'
-    ]
+    images: ['/Nebula%20Series/Main/2-Nebula%20Space.png']
   },
   {
     section: 'nebula-drift',
