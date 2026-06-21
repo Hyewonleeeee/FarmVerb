@@ -963,7 +963,7 @@ img {
 .home-story {
   position: relative;
   z-index: 6;
-  margin-top: clamp(4.8rem, 10vh, 7rem);
+  margin-top: clamp(7rem, 14vh, 10.5rem);
 }
 
 .home-story-feature {
