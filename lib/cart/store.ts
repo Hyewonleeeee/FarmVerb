@@ -29,6 +29,14 @@ function priceOf(productName: string, fallback = 0) {
 
 const PRODUCT_CATALOG: CatalogProduct[] = [
   {
+    slug: 'nebula-series',
+    name: 'Nebula Series',
+    description: 'Nebula plugin overview',
+    price: priceOf('Nebula Series', 189),
+    currency: 'USD',
+    image: '/Nebula%20Series/Main/Nebula%20Series.png'
+  },
+  {
     slug: 'germinate',
     name: 'Germinate',
     description: 'Organic delay processor',
@@ -50,7 +58,23 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
     description: 'Atmospheric space processor',
     price: priceOf('Nebula Space', 59),
     currency: 'USD',
-    image: null
+    image: '/Nebula%20Series/Main/2-Nebula%20Space.png'
+  },
+  {
+    slug: 'nebula-drift',
+    name: 'Nebula Drift',
+    description: 'Spectral motion processor',
+    price: priceOf('Nebula Drift', 49),
+    currency: 'USD',
+    image: '/Nebula%20Series/Main/3-Nebula%20Drift.png'
+  },
+  {
+    slug: 'nebula-rift',
+    name: 'Nebula Rift',
+    description: 'Fractured digital processor',
+    price: priceOf('Nebula Rift', 59),
+    currency: 'USD',
+    image: '/Nebula%20Series/Main/4-Nebula%20Rift.png'
   },
   {
     slug: 'nebula-drums',

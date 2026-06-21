@@ -257,6 +257,16 @@ const HOME_FEATURE_CARDS: HomeFeatureCard[] = [
     ctaLabel: 'Explore Plugin'
   },
   {
+    eyebrow: 'Software Instrument',
+    name: 'Nebula Drums',
+    description: 'A tactile Decent Sampler instrument with physical impact and warm low-end movement.',
+    image: '/Nebula%20Series/Main/5-Nebula%20Drums.png',
+    href: buildRouteHref('instrument'),
+    route: 'instrument',
+    productName: 'Nebula Drums',
+    ctaLabel: 'Explore Instrument'
+  },
+  {
     eyebrow: 'Sample Pack',
     name: 'Glitch Drum Pack Vol. I',
     description: 'Fractured percussion, digital grit, and ready-to-use motion for modern production.',
@@ -888,6 +898,39 @@ export default function FarmVerbSite() {
                   </article>
                 ))}
               </div>
+            </section>
+
+            <section className="home-glitch-feature" aria-label="Glitch Drum Pack spotlight">
+              <article className="home-glitch-card interactive-tilt">
+                <figure className="home-glitch-media">
+                  <img src="/GlitchDrum/GlitchDrum.png" alt="Glitch Drum Pack artwork" />
+                </figure>
+
+                <div className="home-glitch-copy">
+                  <p className="section-overline">Sample Pack</p>
+                  <h2>Glitch Drum Pack Vol. I</h2>
+                  <p>
+                    Fractured percussion, digital grit, and ready-to-use motion for modern production.
+                  </p>
+                  <ProductPrice productName="Glitch Drum Pack Vol.1" className="home-product-price home-glitch-price" />
+                  <div className="home-product-actions home-glitch-actions">
+                    <Link
+                      href={buildRouteHref('sample-pack')}
+                      className="section-action-btn section-action-buy home-product-link"
+                      data-route="sample-pack"
+                    >
+                      Explore Pack
+                    </Link>
+                    <button
+                      type="button"
+                      className="section-action-btn section-action-cart"
+                      onClick={() => addToCart('Glitch Drum Pack Vol.1')}
+                    >
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
+              </article>
             </section>
 
             <section className="home-ending-gallery" aria-label="Additional homepage visuals">

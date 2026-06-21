@@ -146,6 +146,10 @@ export default function CartPage() {
 
                     return (
                       <li key={item.slug} className={`cart-page-line-item ${isSelected ? 'is-selected' : ''}`}>
+                        <figure className="cart-page-item-media" aria-hidden="true">
+                          {item.image ? <img src={item.image} alt="" /> : <span>{item.name.slice(0, 2)}</span>}
+                        </figure>
+
                         <label className="cart-page-item-select">
                           <input
                             type="checkbox"
