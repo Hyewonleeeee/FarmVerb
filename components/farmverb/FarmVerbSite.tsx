@@ -20,7 +20,6 @@ type PluginProduct = {
   name: string;
   description: string;
   images?: string[];
-  unavailable?: boolean;
 };
 
 type HomeFeatureCard = {
@@ -181,15 +180,13 @@ const NEBULA_PRODUCTS: PluginProduct[] = [
     section: 'nebula-drift',
     name: 'Nebula Drift',
     description: 'Soft-moving modulation and spectral motion for wide, floating spatial depth.',
-    images: ['/Nebula%20Series/Main/3-Nebula%20Drift.png'],
-    unavailable: true
+    images: ['/Nebula%20Series/Main/3-Nebula%20Drift.png']
   },
   {
     section: 'nebula-rift',
     name: 'Nebula Rift',
     description: 'Sharper fractured motion with tension, contrast, and premium digital grit.',
-    images: ['/Nebula%20Series/Main/4-Nebula%20Rift.png'],
-    unavailable: true
+    images: ['/Nebula%20Series/Main/4-Nebula%20Rift.png']
   }
 ];
 
@@ -484,7 +481,7 @@ export default function FarmVerbSite() {
     activeNebulaSection === DEFAULT_PLUGIN_SECTION ? 'Nebula Series' : selectedSeriesProduct?.name ?? 'Nebula Series';
   const activePluginMenuCopy =
     activeNebulaSection === DEFAULT_PLUGIN_SECTION
-      ? 'Choose the overview or explore a device.'
+      ? 'Choose the overview or jump straight into an individual device from the Audio Plugins menu.'
       : `Choose the overview or jump straight into ${selectedSeriesProduct?.name ?? 'this device'}.`;
 
   const selectNebulaSection = (section: PluginSectionKey) => {
@@ -520,7 +517,7 @@ export default function FarmVerbSite() {
           </figure>
         ) : (
           <div className="plugin-feature-media is-empty">
-            <span>Image Coming Soon</span>
+            <span>Preview unavailable</span>
           </div>
         )}
 
@@ -528,12 +525,10 @@ export default function FarmVerbSite() {
           <h3>{selectedSeriesProduct.name}</h3>
           <p>{selectedSeriesProduct.description}</p>
           <ProductPrice productName={selectedSeriesProduct.name} />
-          {selectedSeriesProduct.unavailable ? <p className="plugin-card-status">Coming Soon</p> : null}
           <div className="plugin-feature-actions">
             <button
               type="button"
               className="plugin-action plugin-action-cart"
-              disabled={selectedSeriesProduct.unavailable}
               onClick={() => addToCart(selectedSeriesProduct.name)}
             >
               Add to Cart
@@ -541,10 +536,9 @@ export default function FarmVerbSite() {
             <button
               type="button"
               className="plugin-action plugin-action-buy"
-              disabled={selectedSeriesProduct.unavailable}
               onClick={() => onBuyNow(selectedSeriesProduct.name)}
             >
-              Buy Now
+              {getPlaceholderBuyLabel(selectedSeriesProduct.name)}
             </button>
           </div>
         </div>
@@ -557,7 +551,7 @@ export default function FarmVerbSite() {
       {visibleProducts.map((product) => (
         <article
           key={product.name}
-          className={`plugin-card plugin-card-nebula interactive-tilt ${product.unavailable ? 'is-unavailable' : ''}`}
+          className="plugin-card plugin-card-nebula interactive-tilt"
           role="listitem"
           tabIndex={0}
         >
@@ -567,7 +561,7 @@ export default function FarmVerbSite() {
             </figure>
           ) : (
             <div className="plugin-card-media is-empty">
-              <span>Image Coming Soon</span>
+              <span>Preview unavailable</span>
             </div>
           )}
 
@@ -586,14 +580,12 @@ export default function FarmVerbSite() {
             </h3>
             <p>{product.description}</p>
             <ProductPrice productName={product.name} />
-            {product.unavailable ? <p className="plugin-card-status">Coming Soon</p> : null}
           </div>
 
           <div className="plugin-card-actions">
             <button
               type="button"
               className="plugin-action plugin-action-cart"
-              disabled={product.unavailable}
               onClick={() => addToCart(product.name)}
             >
               Add to Cart
@@ -601,10 +593,9 @@ export default function FarmVerbSite() {
             <button
               type="button"
               className="plugin-action plugin-action-buy"
-              disabled={product.unavailable}
               onClick={() => onBuyNow(product.name)}
             >
-              Buy Now
+              {getPlaceholderBuyLabel(product.name)}
             </button>
           </div>
         </article>
@@ -628,7 +619,16 @@ export default function FarmVerbSite() {
   };
 
   const onBuyNow = (productName: string) => {
-    setBuyNowNotice(`${productName} checkout is coming soon.`);
+    // TODO: replace with a configured checkout URL when per-product links are available.
+    setBuyNowNotice('Checkout link not configured yet.');
+  };
+
+  const getPlaceholderBuyLabel = (productName: string) => {
+    if (productName === 'Nebula Series') {
+      return 'Buy Bundle';
+    }
+
+    return `Buy ${productName}`;
   };
 
   const toggleSampleFilm = async () => {
@@ -972,7 +972,7 @@ export default function FarmVerbSite() {
                     className="section-action-btn section-action-buy"
                     onClick={() => onBuyNow('Nebula Drums')}
                   >
-                    Buy Now
+                    {getPlaceholderBuyLabel('Nebula Drums')}
                   </button>
                 </div>
               </div>
@@ -1031,7 +1031,7 @@ export default function FarmVerbSite() {
                       className="section-action-btn section-action-buy"
                       onClick={() => onBuyNow('Glitch Drum Pack Vol.1')}
                     >
-                      Buy Now
+                      {getPlaceholderBuyLabel('Glitch Drum Pack Vol.1')}
                     </button>
                   </div>
                 </div>

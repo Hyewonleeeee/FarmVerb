@@ -130,7 +130,7 @@ function resolveProduct(productName: string): CatalogProduct {
 }
 
 function resolveCatalogProduct(input: Partial<CartItem>) {
-  const slug = typeof input.slug === 'string' ? input.slug.trim() : '';
+  const slug = typeof input.slug === 'string' ? slugify(input.slug) : '';
   if (slug) {
     const bySlug = productBySlug.get(slug);
     if (bySlug) {
@@ -155,12 +155,17 @@ function normalizeCartItem(input: Partial<CartItem>): CartItem | null {
   }
 
   const catalogProduct = resolveCatalogProduct(input);
-  const price = typeof input.price === 'number' && Number.isFinite(input.price) ? input.price : 0;
-  const currency = typeof input.currency === 'string' && input.currency.trim() ? input.currency.trim().toUpperCase() : 'USD';
-  const image = catalogProduct?.image ?? (typeof input.image === 'string' && input.image.trim() ? input.image.trim() : null);
-  const description =
-    catalogProduct?.description ??
-    (typeof input.description === 'string' && input.description.trim() ? input.description.trim() : 'Digital audio product');
+  if (!catalogProduct) {
+    return null;
+  }
+
+  const price = typeof input.price === 'number' && Number.isFinite(input.price) ? input.price : catalogProduct.price;
+  const currency =
+    typeof input.currency === 'string' && input.currency.trim()
+      ? input.currency.trim().toUpperCase()
+      : catalogProduct.currency;
+  const image = catalogProduct.image;
+  const description = catalogProduct.description;
 
   return {
     slug,
@@ -209,9 +214,15 @@ export function getCartItems(): CartItem[] {
       return [];
     }
 
-    return parsed
+    const normalized = parsed
       .map((item) => normalizeCartItem(item))
       .filter((item): item is CartItem => Boolean(item));
+
+    if (normalized.length !== parsed.length) {
+      writeCartItems(normalized);
+    }
+
+    return normalized;
   } catch {
     return [];
   }
@@ -237,7 +248,21 @@ export function addItemToCart(productName: string): CartItem[] {
     ]);
   }
 
-  return writeCartItems(currentItems);
+  return writeCartItems(
+    currentItems.map((item) =>
+      item.slug === product.slug
+        ? {
+            ...item,
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            currency: product.currency,
+            image: product.image,
+            quantity: 1
+          }
+        : item
+    )
+  );
 }
 
 export function updateCartItemQuantity(productSlug: string, nextQuantity: number): CartItem[] {
@@ -272,7 +297,11 @@ export function getCartSubtotal(items: CartItem[]) {
 }
 
 export function getCatalogProductBySlug(slug: string) {
-  return productBySlug.get(slug) ?? null;
+  return productBySlug.get(slugify(slug)) ?? null;
+}
+
+export function getCatalogProductByName(name: string) {
+  return productByName.get(name.toLowerCase().trim()) ?? null;
 }
 
 export function subscribeToCart(listener: () => void) {

@@ -1097,14 +1097,14 @@ export function initFarmVerbSite() {
       if (root?.classList.contains('theme-nebula')) {
         const nebulaPanX = Math.max(-16, Math.min(16, offsetX * 18));
         const nebulaPanY = Math.max(-12, Math.min(12, offsetY * 14));
-        const nebulaPulse = Math.min(0.22, 0.045 + moveSpeed / 155 + Math.hypot(offsetX, offsetY) * 0.055);
+        const nebulaPulse = Math.min(0.34, 0.08 + moveSpeed / 110 + Math.hypot(offsetX, offsetY) * 0.08);
 
         root.style.setProperty('--nebula-pan-x', `${nebulaPanX.toFixed(2)}px`);
         root.style.setProperty('--nebula-pan-y', `${nebulaPanY.toFixed(2)}px`);
         root.style.setProperty('--nebula-cursor-x', `${((event.clientX / window.innerWidth) * 100).toFixed(2)}%`);
         root.style.setProperty('--nebula-cursor-y', `${((event.clientY / window.innerHeight) * 100).toFixed(2)}%`);
         root.style.setProperty('--nebula-cursor-alpha', nebulaPulse.toFixed(3));
-        root.style.setProperty('--nebula-cursor-alpha-soft', Math.max(0, nebulaPulse * 0.78).toFixed(3));
+        root.style.setProperty('--nebula-cursor-alpha-soft', Math.max(0, nebulaPulse * 0.92).toFixed(3));
       }
     };
 

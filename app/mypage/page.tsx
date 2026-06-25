@@ -29,6 +29,9 @@ type OrderLine = {
   created_at: string;
 };
 
+// TODO: Replace the legacy order/license source with the FuturePurchaseRecord shape from Supabase purchases
+// once Lemon Squeezy webhook delivery is ready.
+
 type License = {
   id: string;
   order_id: string | null;
@@ -204,6 +207,7 @@ export default function MyPage() {
     };
 
     const loadOrders = async (currentUser: User) => {
+      // TODO: Migrate this query to the purchases table when Lemon Squeezy webhooks are enabled.
       const { data: orderRows, error: ordersError } = await supabase
         .from('orders')
         .select('id, order_id, product_name, amount, created_at')

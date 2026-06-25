@@ -13,25 +13,23 @@ export type PaymentApiErrorCode =
   | 'UNKNOWN_ERROR';
 
 type PaymentCopy = {
-  cart: {
-    overline: string;
-    title: string;
-    intro: string;
-    clearCart: string;
+    cart: {
+      overline: string;
+      title: string;
+      intro: string;
+      clearCart: string;
     emptyTitle: string;
     emptyDescription: string;
     browsePlugins: string;
     remove: string;
     orderSummary: string;
-    items: string;
-    subtotal: string;
-    total: string;
-    checkout: string;
-    emptyMessage: string;
-    checkoutSoon: string;
-    cartCleared: string;
-    selectAtLeastOneProductToCheckout: string;
-  };
+      items: string;
+      subtotal: string;
+      total: string;
+      emptyMessage: string;
+      checkoutSoon: string;
+      cartCleared: string;
+    };
   orders: {
     loadFailed: string;
     detailsPartial: string;
@@ -82,11 +80,9 @@ const PAYMENT_COPY: Record<PaymentLocale, PaymentCopy> = {
       items: 'Items',
       subtotal: 'Subtotal',
       total: 'Total',
-      checkout: 'Checkout',
       emptyMessage: 'Your cart is empty.',
-      checkoutSoon: 'Checkout is coming soon.',
+      checkoutSoon: 'Checkout link not configured yet.',
       cartCleared: 'Cart cleared.',
-      selectAtLeastOneProductToCheckout: 'Select at least one product to checkout.'
     },
     orders: {
       loadFailed: 'Could not load purchase history right now.',
@@ -147,11 +143,9 @@ const PAYMENT_COPY: Record<PaymentLocale, PaymentCopy> = {
       items: '상품 수',
       subtotal: '소계',
       total: '총액',
-      checkout: '결제하기',
       emptyMessage: '장바구니가 비어 있습니다.',
-      checkoutSoon: '결제 기능은 곧 제공됩니다.',
+      checkoutSoon: '결제 링크가 아직 연결되지 않았습니다.',
       cartCleared: '장바구니를 비웠습니다.',
-      selectAtLeastOneProductToCheckout: '결제할 상품을 하나 이상 선택해 주세요.'
     },
     orders: {
       loadFailed: '구매 내역을 불러오지 못했습니다.',
