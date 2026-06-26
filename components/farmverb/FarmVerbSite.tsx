@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import AuthNav from '@/components/auth/AuthNav';
 import GlobalFooter from '@/components/farmverb/GlobalFooter';
-import { addItemToCart, getCartItemCount, getCartItems, subscribeToCart, type CartItem } from '@/lib/cart/store';
+import { addItemToCart, clearCartItems, getCartItemCount, getCartItems, subscribeToCart, type CartItem } from '@/lib/cart/store';
 import { formatUsdPrice, getLimitedSalePrice, getMainProductPrice, getProductPricing } from '@/lib/pricing/products';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 import {
@@ -359,6 +359,30 @@ export default function FarmVerbSite() {
   }, []);
 
   useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        clearCartItems();
+        setCartItems([]);
+      }
+    });
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        clearCartItems();
+        setCartItems([]);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
     if (!buyNowNotice) {
       return;
     }
@@ -623,9 +647,11 @@ export default function FarmVerbSite() {
 
   const addToCart = async (productName: string) => {
     const supabase = createBrowserSupabaseClient();
-    const { data } = await supabase.auth.getSession();
+    const { data, error } = await supabase.auth.getSession();
 
-    if (!data.session) {
+    if (error || !data.session) {
+      clearCartItems();
+      setCartItems([]);
       const redirectTo = `${window.location.pathname}${window.location.search}`;
       window.location.href = `/login?redirect=${encodeURIComponent(redirectTo)}`;
       return;

@@ -37,6 +37,52 @@ type ValidationResponse =
       };
     };
 
+const localValidationRoute = '/api/signup/validate';
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  return '';
+}
+
+function getSignupConnectivityMessage(error: unknown) {
+  const message = getErrorMessage(error);
+
+  if (message.includes('Missing Supabase environment variables')) {
+    return 'Signup is not configured correctly: missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY.';
+  }
+
+  if (message.includes('Invalid NEXT_PUBLIC_SUPABASE_URL')) {
+    return 'Signup is not configured correctly: NEXT_PUBLIC_SUPABASE_URL is invalid.';
+  }
+
+  if (/redirect|not allowed|url/i.test(message)) {
+    return 'Signup redirect is not configured correctly. Please add farmverb.com and the deployed URL to Supabase Auth redirect URLs.';
+  }
+
+  if (/failed to fetch|fetch failed|networkerror|load failed|supabase unavailable/i.test(message)) {
+    return 'Could not reach Supabase Auth. Please check your network, Supabase project status, and production environment variables.';
+  }
+
+  return message || 'Signup failed. Please try again.';
+}
+
+function getSignupValidationRouteMessage(error: unknown) {
+  const message = getErrorMessage(error);
+
+  if (/failed to fetch|fetch failed|networkerror|load failed/i.test(message)) {
+    return 'Could not reach the FarmVerb signup validation API. Please check that /api/signup/validate is deployed correctly.';
+  }
+
+  return message || 'Signup validation failed. Please try again.';
+}
+
 function SignupPage() {
   const router = useRouter();
   const [firstName, setFirstName] = useState('');
@@ -74,14 +120,28 @@ function SignupPage() {
   const showPasswordFeedback = hasSubmitted || password.length > 0;
 
   useEffect(() => {
-    const supabase = createBrowserSupabaseClient();
+    let supabase;
+    try {
+      supabase = createBrowserSupabaseClient();
+    } catch (error) {
+      setMessage(getSignupConnectivityMessage(error));
+      return;
+    }
+
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (mounted && data.session) {
-        router.replace('/mypage');
-      }
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (mounted && data.session) {
+          router.replace('/mypage');
+        }
+      })
+      .catch((error) => {
+        if (mounted) {
+          setMessage(getSignupConnectivityMessage(error));
+        }
+      });
 
     const {
       data: { subscription }
@@ -99,8 +159,9 @@ function SignupPage() {
 
   const syncServerValidation = async () => {
     try {
-      const response = await fetch('/api/signup/validate', {
+      const response = await fetch(localValidationRoute, {
         method: 'POST',
+        cache: 'no-store',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -117,9 +178,20 @@ function SignupPage() {
       const payload = (await response.json().catch(() => null)) as ValidationResponse | null;
 
       if (!response.ok || !payload) {
+        if (response.status === 404) {
+          return {
+            ok: false,
+            message: 'Signup validation API route was not found. Please check that /api/signup/validate exists in production.',
+            normalized: null
+          };
+        }
+
         return {
           ok: false,
-          message: payload && 'message' in payload ? payload.message : 'Please enter your real name in English.',
+          message:
+            payload && 'message' in payload
+              ? payload.message
+              : `Signup validation failed with status ${response.status}. Please try again.`,
           normalized: null
         };
       }
@@ -149,10 +221,10 @@ function SignupPage() {
           country: payload.normalized?.country ?? sanitizedCountry
         }
       };
-    } catch {
+    } catch (error) {
       return {
         ok: false,
-        message: 'Please enter your real name in English.',
+        message: getSignupValidationRouteMessage(error),
         normalized: null
       };
     }
@@ -184,11 +256,20 @@ function SignupPage() {
         return;
       }
 
-      const supabase = createBrowserSupabaseClient();
+      let supabase;
+      try {
+        supabase = createBrowserSupabaseClient();
+      } catch (error) {
+        setMessage(getSignupConnectivityMessage(error));
+        setIsSubmitting(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: serverValidation.normalized.email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/login`,
           data: {
             name: serverValidation.normalized.name,
             first_name: serverValidation.normalized.firstName,
@@ -199,7 +280,7 @@ function SignupPage() {
       });
 
       if (error) {
-        setMessage(error.message);
+        setMessage(getSignupConnectivityMessage(error));
         setIsSubmitting(false);
         return;
       }
@@ -231,8 +312,8 @@ function SignupPage() {
       setVerificationEmail(data.user?.email ?? serverValidation.normalized.email);
       setShowEmailVerificationState(true);
       setIsSubmitting(false);
-    } catch {
-      setMessage('Please enter your real name in English.');
+    } catch (error) {
+      setMessage(getSignupConnectivityMessage(error));
       setIsSubmitting(false);
     }
   };
@@ -376,14 +457,13 @@ function SignupPage() {
                     Strength: {passwordValidation.strength}
                   </span>
                   <span className={`auth-password-pill ${passwordValidation.checklist.minLength ? 'is-met' : ''}`}>8+ chars</span>
-                  <span className={`auth-password-pill ${passwordValidation.checklist.uppercase ? 'is-met' : ''}`}>A-Z</span>
                   <span className={`auth-password-pill ${passwordValidation.checklist.lowercase ? 'is-met' : ''}`}>a-z</span>
                   <span className={`auth-password-pill ${passwordValidation.checklist.number ? 'is-met' : ''}`}>0-9</span>
                   <span className={`auth-password-pill ${passwordValidation.checklist.specialChar ? 'is-met' : ''}`}>special</span>
                 </div>
 
                 {showPasswordFeedback && !passwordValidation.valid ? (
-                  <p className="auth-field-message">Please complete the password requirements below.</p>
+                  <p className="auth-field-message">{passwordValidation.error}</p>
                 ) : null}
 
                 <button className="auth-submit" type="submit" disabled={!canSubmit}>

@@ -14,7 +14,6 @@ const KEYBOARD_SPAM_PATTERNS = new Set([
 
 export type PasswordChecklist = {
   minLength: boolean;
-  uppercase: boolean;
   lowercase: boolean;
   number: boolean;
   specialChar: boolean;
@@ -159,7 +158,6 @@ export function validateSignupEmail(rawEmail: string) {
 export function getPasswordChecklist(password: string): PasswordChecklist {
   return {
     minLength: password.length >= 8,
-    uppercase: /[A-Z]/.test(password),
     lowercase: /[a-z]/.test(password),
     number: /[0-9]/.test(password),
     specialChar: /[^A-Za-z0-9]/.test(password)
@@ -192,7 +190,7 @@ export function validateSignupPassword(password: string) {
     checklist,
     strength: getPasswordStrength(checklist),
     valid,
-    error: valid ? null : 'Please complete the password requirements below.'
+    error: valid ? null : 'Use 8+ characters with lowercase, number, and special character.'
   };
 }
 

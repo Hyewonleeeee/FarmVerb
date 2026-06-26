@@ -1932,6 +1932,25 @@ img {
   color: #345024;
 }
 
+.farmverb-root.theme-nebula .page-instrument .section-action-cart {
+  border-color: rgba(147, 171, 255, 0.36);
+  background: rgba(34, 28, 62, 0.92);
+  color: rgba(244, 240, 255, 0.94);
+  box-shadow: inset 0 0 0 1px rgba(198, 161, 255, 0.08);
+}
+
+.farmverb-root.theme-nebula .page-instrument .section-action-buy {
+  border-color: rgba(192, 129, 255, 0.56);
+  background: linear-gradient(145deg, rgba(150, 82, 255, 0.94), rgba(67, 196, 255, 0.7));
+  color: #fff8ff;
+  box-shadow: 0 12px 24px rgba(78, 43, 145, 0.34), 0 0 22px rgba(101, 197, 255, 0.14);
+}
+
+.farmverb-root.theme-nebula .page-instrument .section-action-cart:hover,
+.farmverb-root.theme-nebula .page-instrument .section-action-buy:hover {
+  box-shadow: 0 15px 28px rgba(94, 54, 166, 0.38), 0 0 26px rgba(126, 203, 255, 0.18);
+}
+
 .drum-sculpture {
   --lift: 0px;
   --scale: 1;
@@ -3968,7 +3987,8 @@ img {
 }
 
 .auth-field-message {
-  color: rgba(120, 76, 34, 0.9);
+  color: rgba(160, 39, 31, 0.96);
+  font-weight: 700;
 }
 
 .auth-field-note {
@@ -4253,11 +4273,21 @@ img {
 }
 
 .auth-message.is-error {
-  color: rgba(112, 71, 33, 0.94);
+  border: 1px solid rgba(183, 58, 47, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 238, 229, 0.94);
+  color: rgba(135, 31, 25, 0.98);
+  padding: 0.78rem 0.9rem;
+  font-weight: 700;
+  box-shadow: 0 10px 24px rgba(150, 48, 35, 0.08);
 }
 
 .auth-message.is-success {
-  color: rgba(49, 84, 27, 0.94);
+  border: 1px solid rgba(118, 163, 58, 0.28);
+  border-radius: 12px;
+  background: rgba(239, 249, 214, 0.9);
+  color: rgba(49, 84, 27, 0.96);
+  padding: 0.78rem 0.9rem;
 }
 
 .auth-helper {

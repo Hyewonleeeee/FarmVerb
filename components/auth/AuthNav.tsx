@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+import { clearCartItems } from '@/lib/cart/store';
 
 export default function AuthNav() {
   const [user, setUser] = useState<User | null>(null);
@@ -17,6 +18,11 @@ export default function AuthNav() {
       if (!mounted) {
         return;
       }
+
+      if (!data.user) {
+        clearCartItems();
+      }
+
       setUser(data.user ?? null);
       setIsReady(true);
     });
@@ -24,6 +30,10 @@ export default function AuthNav() {
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        clearCartItems();
+      }
+
       setUser(session?.user ?? null);
       setIsReady(true);
     });
@@ -37,8 +47,10 @@ export default function AuthNav() {
   const handleLogout = async () => {
     const supabase = createBrowserSupabaseClient();
     try {
+      clearCartItems();
       await supabase.auth.signOut();
     } finally {
+      clearCartItems();
       window.location.assign('/');
     }
   };

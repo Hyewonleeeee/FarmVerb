@@ -289,7 +289,13 @@ export function removeCartItem(productSlug: string): CartItem[] {
 }
 
 export function clearCartItems(): CartItem[] {
-  return writeCartItems([]);
+  const storage = getStorage();
+  if (storage) {
+    storage.removeItem(CART_STORAGE_KEY);
+    emitCartUpdated();
+  }
+
+  return [];
 }
 
 export function getCartItemCount(items: CartItem[]) {

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import { getPaymentCopy, type PaymentLocale } from '@/lib/i18n/payment';
+import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 import {
   clearCartItems,
   getCatalogProductByName,
@@ -39,15 +40,68 @@ export default function CartPage() {
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartMessage, setCartMessage] = useState('');
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const syncCart = () => {
+    const supabase = createBrowserSupabaseClient();
+    let mounted = true;
+
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!mounted) {
+          return;
+        }
+
+        if (!data.session) {
+          clearCartItems();
+          setCartItems([]);
+          window.location.assign('/login?redirect=%2Fcart');
+          return;
+        }
+
+        setIsLoggedIn(true);
+        setIsAuthReady(true);
+        setCartItems(getCartItems());
+      })
+      .catch(() => {
+        clearCartItems();
+        setCartItems([]);
+        window.location.assign('/login?redirect=%2Fcart');
+      });
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        clearCartItems();
+        setCartItems([]);
+        setIsLoggedIn(false);
+        setIsAuthReady(true);
+        window.location.assign('/login?redirect=%2Fcart');
+        return;
+      }
+
+      setIsLoggedIn(true);
+      setIsAuthReady(true);
       setCartItems(getCartItems());
+    });
+
+    const syncCart = () => {
+      if (isLoggedIn) {
+        setCartItems(getCartItems());
+      }
     };
 
-    syncCart();
-    return subscribeToCart(syncCart);
-  }, []);
+    const unsubscribeCart = subscribeToCart(syncCart);
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+      unsubscribeCart();
+    };
+  }, [isLoggedIn]);
 
   const summary = useMemo(() => {
     const itemCount = getCartItemCount(cartItems);
@@ -97,7 +151,18 @@ export default function CartPage() {
             ) : null}
           </header>
 
-          {cartItems.length === 0 ? (
+          {!isAuthReady ? (
+            <section className="cart-page-empty" aria-label="Checking cart access">
+              <p>Checking your account...</p>
+            </section>
+          ) : !isLoggedIn ? (
+            <section className="cart-page-empty" aria-label="Login required">
+              <p>Please log in to view your cart.</p>
+              <Link href="/login?redirect=%2Fcart" className="auth-submit cart-page-empty-link">
+                Login
+              </Link>
+            </section>
+          ) : cartItems.length === 0 ? (
             <section className="cart-page-empty" aria-label="Empty cart">
               <p>{paymentCopy.cart.emptyTitle}</p>
               <p>{paymentCopy.cart.emptyDescription}</p>

@@ -16,6 +16,15 @@ export function createBrowserSupabaseClient(): SupabaseClient {
     );
   }
 
+  try {
+    const parsedUrl = new URL(supabaseUrl);
+    if (!parsedUrl.protocol.startsWith('http')) {
+      throw new Error('Supabase URL must use http or https.');
+    }
+  } catch {
+    throw new Error('Invalid NEXT_PUBLIC_SUPABASE_URL. Please check the Supabase project URL.');
+  }
+
   supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
   return supabaseClient;
 }

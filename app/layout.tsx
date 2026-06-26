@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'FarmVerb | Grow Your Sound',
     description: 'Organic tools for producers and sound designers.',
-    images: ['/Germinate/Germinate.png']
+    images: ['/Main/Main.jpg']
   }
 };
 

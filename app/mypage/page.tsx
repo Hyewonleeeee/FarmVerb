@@ -8,6 +8,7 @@ import { getPaymentCopy, type PaymentApiErrorCode, type PaymentLocale } from '@/
 import CountrySelect from '@/components/ui/CountrySelect';
 import { DEFAULT_COUNTRY_NAME, normalizeCountryName } from '@/lib/ui/country';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+import { clearCartItems } from '@/lib/cart/store';
 
 const MY_PAGE_LOGIN_REDIRECT = '/login?redirect=%2Fmypage';
 
@@ -145,6 +146,7 @@ export default function MyPage() {
   const [nameInput, setNameInput] = useState('');
   const [countryInput, setCountryInput] = useState(DEFAULT_COUNTRY_NAME);
   const [accountMessage, setAccountMessage] = useState('');
+  const [accountMessageType, setAccountMessageType] = useState<'error' | 'success' | ''>('');
   const [isSavingAccount, setIsSavingAccount] = useState(false);
 
   const [downloadMessage, setDownloadMessage] = useState('');
@@ -155,6 +157,7 @@ export default function MyPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [securityMessage, setSecurityMessage] = useState('');
+  const [securityMessageType, setSecurityMessageType] = useState<'error' | 'success' | ''>('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [isResendingVerification, setIsResendingVerification] = useState(false);
@@ -325,14 +328,17 @@ export default function MyPage() {
     const supabase = createBrowserSupabaseClient();
     isLoggingOutRef.current = true;
     try {
+      clearCartItems();
       await supabase.auth.signOut();
     } finally {
+      clearCartItems();
       window.location.assign('/');
     }
   };
 
   const handleStartEdit = () => {
     setAccountMessage('');
+    setAccountMessageType('');
     setIsAccountEditMode(true);
   };
 
@@ -340,6 +346,7 @@ export default function MyPage() {
     setNameInput(profile?.name ?? '');
     setCountryInput(normalizeCountryName(profile?.country));
     setAccountMessage('');
+    setAccountMessageType('');
     setIsAccountEditMode(false);
   };
 
@@ -350,6 +357,7 @@ export default function MyPage() {
 
     setIsSavingAccount(true);
     setAccountMessage('');
+    setAccountMessageType('');
 
     const supabase = createBrowserSupabaseClient();
     const trimmedName = nameInput.trim();
@@ -366,6 +374,7 @@ export default function MyPage() {
 
     if (error) {
       setAccountMessage(`Failed to save profile: ${error.message}`);
+      setAccountMessageType('error');
       setIsSavingAccount(false);
       return;
     }
@@ -381,6 +390,7 @@ export default function MyPage() {
     setNameInput(nextProfile.name ?? '');
     setCountryInput(nextProfile.country ?? DEFAULT_COUNTRY_NAME);
     setAccountMessage('Account information updated.');
+    setAccountMessageType('success');
     setIsAccountEditMode(false);
     setIsSavingAccount(false);
   };
@@ -388,28 +398,33 @@ export default function MyPage() {
   const handleSendResetEmail = async () => {
     if (!user?.email) {
       setSecurityMessage('Email address not found for this account.');
+      setSecurityMessageType('error');
       return;
     }
 
     setIsSendingResetEmail(true);
     setSecurityMessage('');
+    setSecurityMessageType('');
 
     const supabase = createBrowserSupabaseClient();
     const { error } = await supabase.auth.resetPasswordForEmail(user.email);
 
     if (error) {
       setSecurityMessage(error.message);
+      setSecurityMessageType('error');
       setIsSendingResetEmail(false);
       return;
     }
 
     setSecurityMessage('Password reset email sent. Please check your inbox.');
+    setSecurityMessageType('success');
     setIsSendingResetEmail(false);
   };
 
   const handleChangePassword = async () => {
     if (!user?.email) {
       setSecurityMessage('Email address not found for this account.');
+      setSecurityMessageType('error');
       return;
     }
 
@@ -419,26 +434,31 @@ export default function MyPage() {
 
     if (!currentPasswordValue) {
       setSecurityMessage('Please enter your current password.');
+      setSecurityMessageType('error');
       return;
     }
 
     if (newPasswordValue.length < 6) {
       setSecurityMessage('New password must be at least 6 characters.');
+      setSecurityMessageType('error');
       return;
     }
 
     if (newPasswordValue !== confirmPasswordValue) {
       setSecurityMessage('New password and confirmation do not match.');
+      setSecurityMessageType('error');
       return;
     }
 
     if (currentPasswordValue === newPasswordValue) {
       setSecurityMessage('New password must be different from your current password.');
+      setSecurityMessageType('error');
       return;
     }
 
     setIsChangingPassword(true);
     setSecurityMessage('');
+    setSecurityMessageType('');
 
     const supabase = createBrowserSupabaseClient();
     const { data: verifyData, error: verifyError } = await supabase.auth.signInWithPassword({
@@ -448,6 +468,7 @@ export default function MyPage() {
 
     if (verifyError || !verifyData.user || verifyData.user.id !== user.id) {
       setSecurityMessage('Current password is incorrect.');
+      setSecurityMessageType('error');
       setIsChangingPassword(false);
       return;
     }
@@ -456,6 +477,7 @@ export default function MyPage() {
 
     if (error) {
       setSecurityMessage(error.message);
+      setSecurityMessageType('error');
       setIsChangingPassword(false);
       return;
     }
@@ -464,17 +486,20 @@ export default function MyPage() {
     setNewPassword('');
     setConfirmNewPassword('');
     setSecurityMessage('Password updated successfully.');
+    setSecurityMessageType('success');
     setIsChangingPassword(false);
   };
 
   const handleResendVerification = async () => {
     if (!user?.email) {
       setSecurityMessage('Email address not found for this account.');
+      setSecurityMessageType('error');
       return;
     }
 
     setIsResendingVerification(true);
     setSecurityMessage('');
+    setSecurityMessageType('');
 
     const supabase = createBrowserSupabaseClient();
     const { error } = await supabase.auth.resend({
@@ -484,11 +509,13 @@ export default function MyPage() {
 
     if (error) {
       setSecurityMessage(error.message);
+      setSecurityMessageType('error');
       setIsResendingVerification(false);
       return;
     }
 
     setSecurityMessage('Verification email sent again. Please check your inbox.');
+    setSecurityMessageType('success');
     setIsResendingVerification(false);
   };
 
@@ -728,7 +755,11 @@ export default function MyPage() {
                     </form>
                   )}
 
-                  {accountMessage ? <p className="auth-message">{accountMessage}</p> : null}
+                  {accountMessage ? (
+                    <p className={`auth-message ${accountMessageType === 'error' ? 'is-error' : 'is-success'}`}>
+                      {accountMessage}
+                    </p>
+                  ) : null}
                 </>
               ) : null}
 
@@ -896,7 +927,11 @@ export default function MyPage() {
                     </div>
                   </div>
 
-                  {securityMessage ? <p className="auth-message">{securityMessage}</p> : null}
+                  {securityMessage ? (
+                    <p className={`auth-message ${securityMessageType === 'error' ? 'is-error' : 'is-success'}`}>
+                      {securityMessage}
+                    </p>
+                  ) : null}
                 </>
               ) : null}
             </section>

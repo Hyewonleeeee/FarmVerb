@@ -23,6 +23,7 @@ function LoginPageContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'error' | 'success' | ''>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const redirectPath = getSafeRedirectPath(searchParams.get('redirect'));
@@ -55,17 +56,20 @@ function LoginPageContent() {
     event.preventDefault();
     setIsSubmitting(true);
     setMessage('');
+    setMessageType('');
 
     const supabase = createBrowserSupabaseClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       setMessage(error.message);
+      setMessageType('error');
       setIsSubmitting(false);
       return;
     }
 
     setMessage('');
+    setMessageType('');
     window.location.assign(redirectPath);
   };
 
@@ -73,22 +77,26 @@ function LoginPageContent() {
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail) {
       setMessage('Please enter your email first.');
+      setMessageType('error');
       return;
     }
 
     setIsResetting(true);
     setMessage('');
+    setMessageType('');
 
     const supabase = createBrowserSupabaseClient();
     const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail);
 
     if (error) {
       setMessage(error.message);
+      setMessageType('error');
       setIsResetting(false);
       return;
     }
 
     setMessage('Check your email to reset your password');
+    setMessageType('success');
     setIsResetting(false);
   };
 
@@ -155,7 +163,7 @@ function LoginPageContent() {
             </button>
           </form>
 
-          {message ? <p className="auth-message">{message}</p> : null}
+          {message ? <p className={`auth-message ${messageType === 'error' ? 'is-error' : 'is-success'}`}>{message}</p> : null}
 
           <p className="auth-helper">
             Don&apos;t have an account? <Link href="/signup">Create one on the Sign Up page</Link>.
