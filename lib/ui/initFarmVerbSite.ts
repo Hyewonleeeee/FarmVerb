@@ -1080,10 +1080,10 @@ export function initFarmVerbSite() {
       updateFloatingFollow(event.clientX, event.clientY);
 
       if (root?.classList.contains('theme-glitch')) {
-        const glitchPanX = Math.max(-10, Math.min(10, offsetX * 12));
-        const glitchPanY = Math.max(-8, Math.min(8, offsetY * 10));
-        const glitchWarp = Math.min(1, Math.hypot(offsetX, offsetY) * 0.7);
-        const glitchCursorAlpha = Math.min(0.28, 0.06 + moveSpeed / 90 + Math.hypot(offsetX, offsetY) * 0.1);
+        const glitchPanX = Math.max(-5, Math.min(5, offsetX * 6));
+        const glitchPanY = Math.max(-4, Math.min(4, offsetY * 5));
+        const glitchWarp = Math.min(0.42, Math.hypot(offsetX, offsetY) * 0.34);
+        const glitchCursorAlpha = Math.min(0.14, 0.03 + moveSpeed / 190 + Math.hypot(offsetX, offsetY) * 0.045);
 
         root.style.setProperty('--glitch-pan-x', `${glitchPanX.toFixed(2)}px`);
         root.style.setProperty('--glitch-pan-y', `${glitchPanY.toFixed(2)}px`);

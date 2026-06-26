@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import { getPaymentCopy, type PaymentLocale } from '@/lib/i18n/payment';
-import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+import { getLemonBuyButtonLabel, getLemonCheckoutUrl, getLemonMyOrdersUrl } from '@/lib/checkout/lemonLinks';
 import {
   clearCartItems,
   getCatalogProductByName,
@@ -40,68 +40,19 @@ export default function CartPage() {
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartMessage, setCartMessage] = useState('');
-  const [isAuthReady, setIsAuthReady] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const supabase = createBrowserSupabaseClient();
-    let mounted = true;
-
-    supabase.auth
-      .getSession()
-      .then(({ data }) => {
-        if (!mounted) {
-          return;
-        }
-
-        if (!data.session) {
-          clearCartItems();
-          setCartItems([]);
-          window.location.assign('/login?redirect=%2Fcart');
-          return;
-        }
-
-        setIsLoggedIn(true);
-        setIsAuthReady(true);
-        setCartItems(getCartItems());
-      })
-      .catch(() => {
-        clearCartItems();
-        setCartItems([]);
-        window.location.assign('/login?redirect=%2Fcart');
-      });
-
-    const {
-      data: { subscription }
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        clearCartItems();
-        setCartItems([]);
-        setIsLoggedIn(false);
-        setIsAuthReady(true);
-        window.location.assign('/login?redirect=%2Fcart');
-        return;
-      }
-
-      setIsLoggedIn(true);
-      setIsAuthReady(true);
-      setCartItems(getCartItems());
-    });
-
     const syncCart = () => {
-      if (isLoggedIn) {
-        setCartItems(getCartItems());
-      }
+      setCartItems(getCartItems());
     };
 
+    syncCart();
     const unsubscribeCart = subscribeToCart(syncCart);
 
     return () => {
-      mounted = false;
-      subscription.unsubscribe();
       unsubscribeCart();
     };
-  }, [isLoggedIn]);
+  }, []);
 
   const summary = useMemo(() => {
     const itemCount = getCartItemCount(cartItems);
@@ -121,8 +72,15 @@ export default function CartPage() {
     setCartMessage('');
   };
 
-  const handleBuyItem = (_productName: string) => {
-    setCartMessage(paymentCopy.cart.checkoutSoon);
+  const handleBuyItem = (item: CartItem) => {
+    const checkoutUrl = getLemonCheckoutUrl(item.slug);
+
+    if (!checkoutUrl) {
+      setCartMessage('Checkout link coming soon.');
+      return;
+    }
+
+    window.location.assign(checkoutUrl);
   };
 
   const handleClearCart = () => {
@@ -130,6 +88,8 @@ export default function CartPage() {
     setCartItems([]);
     setCartMessage(paymentCopy.cart.cartCleared);
   };
+
+  const lemonMyOrdersUrl = getLemonMyOrdersUrl();
 
   return (
     <div className="auth-page-shell">
@@ -151,18 +111,7 @@ export default function CartPage() {
             ) : null}
           </header>
 
-          {!isAuthReady ? (
-            <section className="cart-page-empty" aria-label="Checking cart access">
-              <p>Checking your account...</p>
-            </section>
-          ) : !isLoggedIn ? (
-            <section className="cart-page-empty" aria-label="Login required">
-              <p>Please log in to view your cart.</p>
-              <Link href="/login?redirect=%2Fcart" className="auth-submit cart-page-empty-link">
-                Login
-              </Link>
-            </section>
-          ) : cartItems.length === 0 ? (
+          {cartItems.length === 0 ? (
             <section className="cart-page-empty" aria-label="Empty cart">
               <p>{paymentCopy.cart.emptyTitle}</p>
               <p>{paymentCopy.cart.emptyDescription}</p>
@@ -177,6 +126,7 @@ export default function CartPage() {
                   {cartItems.map((item) => {
                     const catalogImage = getCatalogProductBySlug(item.slug)?.image ?? getCatalogProductByName(item.name)?.image ?? null;
                     const itemImage = catalogImage ?? item.image;
+                    const checkoutUrl = getLemonCheckoutUrl(item.slug);
 
                     return (
                       <li key={item.slug} className="cart-page-line-item">
@@ -190,10 +140,12 @@ export default function CartPage() {
                           <button
                             type="button"
                             className="auth-submit auth-submit-secondary cart-page-buy"
-                            onClick={() => handleBuyItem(item.name)}
+                            onClick={() => handleBuyItem(item)}
+                            disabled={!checkoutUrl}
                           >
-                            Buy {item.name}
+                            {getLemonBuyButtonLabel(item.name)}
                           </button>
+                          {!checkoutUrl ? <p className="cart-page-checkout-note">Checkout link coming soon</p> : null}
                         </div>
 
                         <div className="cart-page-item-price">{formatCurrency(item.price, item.currency, paymentLocale)}</div>
@@ -221,7 +173,19 @@ export default function CartPage() {
                   <span>{paymentCopy.cart.total}</span>
                   <strong>{formatCurrency(summary.subtotal, summary.currency, paymentLocale)}</strong>
                 </div>
-                <p className="cart-page-inline-message">Each item has its own placeholder Buy button.</p>
+                <p className="cart-page-inline-message">
+                  Each product opens its own Lemon Squeezy checkout when configured.
+                </p>
+                <div className="cart-page-lemon-panel">
+                  <p>Lemon Squeezy manages v1.0 orders, license keys, and downloads.</p>
+                  {lemonMyOrdersUrl ? (
+                    <a href={lemonMyOrdersUrl} target="_blank" rel="noopener noreferrer">
+                      View Orders & License Keys
+                    </a>
+                  ) : (
+                    <span>My Orders link coming soon</span>
+                  )}
+                </div>
               </aside>
             </div>
           )}

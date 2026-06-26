@@ -16,7 +16,7 @@ export default function CheckoutPage() {
           <header className="cart-page-head">
             <div>
               <p className="auth-overline">Checkout</p>
-              <h1 className="auth-title">Checkout link not configured yet.</h1>
+              <h1 className="auth-title">Checkout link coming soon.</h1>
               <p className="auth-copy">{paymentCopy.cart.checkoutSoon}</p>
             </div>
 

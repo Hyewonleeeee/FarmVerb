@@ -70,7 +70,7 @@ const PAYMENT_COPY: Record<PaymentLocale, PaymentCopy> = {
     cart: {
       overline: 'Shopping',
       title: 'Cart',
-      intro: 'Review your selected products before checkout.',
+      intro: 'Review your saved products and open individual checkout links when ready.',
       clearCart: 'Clear Cart',
       emptyTitle: 'No items in your cart yet.',
       emptyDescription: 'Your selected products will appear here.',
@@ -81,7 +81,7 @@ const PAYMENT_COPY: Record<PaymentLocale, PaymentCopy> = {
       subtotal: 'Subtotal',
       total: 'Total',
       emptyMessage: 'Your cart is empty.',
-      checkoutSoon: 'Checkout link not configured yet.',
+      checkoutSoon: 'Checkout link coming soon.',
       cartCleared: 'Cart cleared.',
     },
     orders: {
@@ -133,7 +133,7 @@ const PAYMENT_COPY: Record<PaymentLocale, PaymentCopy> = {
     cart: {
       overline: '쇼핑',
       title: '장바구니',
-      intro: '결제 전에 선택한 상품을 확인해 주세요.',
+      intro: '담아둔 상품을 확인하고 상품별 결제 링크를 열 수 있습니다.',
       clearCart: '장바구니 비우기',
       emptyTitle: '장바구니가 비어 있습니다.',
       emptyDescription: '선택한 상품이 여기에 표시됩니다.',
@@ -144,7 +144,7 @@ const PAYMENT_COPY: Record<PaymentLocale, PaymentCopy> = {
       subtotal: '소계',
       total: '총액',
       emptyMessage: '장바구니가 비어 있습니다.',
-      checkoutSoon: '결제 링크가 아직 연결되지 않았습니다.',
+      checkoutSoon: '결제 링크가 곧 연결됩니다.',
       cartCleared: '장바구니를 비웠습니다.',
     },
     orders: {

@@ -4,23 +4,25 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
-import { clearCartItems } from '@/lib/cart/store';
+
+const ACCOUNT_UI_ENABLED = process.env.NEXT_PUBLIC_ENABLE_ACCOUNT_UI === 'true';
 
 export default function AuthNav() {
   const [user, setUser] = useState<User | null>(null);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    if (!ACCOUNT_UI_ENABLED) {
+      setIsReady(true);
+      return;
+    }
+
     const supabase = createBrowserSupabaseClient();
     let mounted = true;
 
     supabase.auth.getUser().then(({ data }) => {
       if (!mounted) {
         return;
-      }
-
-      if (!data.user) {
-        clearCartItems();
       }
 
       setUser(data.user ?? null);
@@ -30,10 +32,6 @@ export default function AuthNav() {
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        clearCartItems();
-      }
-
       setUser(session?.user ?? null);
       setIsReady(true);
     });
@@ -47,13 +45,15 @@ export default function AuthNav() {
   const handleLogout = async () => {
     const supabase = createBrowserSupabaseClient();
     try {
-      clearCartItems();
       await supabase.auth.signOut();
     } finally {
-      clearCartItems();
       window.location.assign('/');
     }
   };
+
+  if (!ACCOUNT_UI_ENABLED) {
+    return null;
+  }
 
   if (!isReady) {
     return <div className="auth-nav auth-nav-loading" aria-hidden="true" />;

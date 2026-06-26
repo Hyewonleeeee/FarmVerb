@@ -2,11 +2,17 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
-import AuthNav from '@/components/auth/AuthNav';
 import GlobalFooter from '@/components/farmverb/GlobalFooter';
-import { addItemToCart, clearCartItems, getCartItemCount, getCartItems, subscribeToCart, type CartItem } from '@/lib/cart/store';
+import {
+  addItemToCart,
+  getCatalogProductByName,
+  getCartItemCount,
+  getCartItems,
+  subscribeToCart,
+  type CartItem
+} from '@/lib/cart/store';
+import { getLemonBuyButtonLabel, getLemonCheckoutUrlByProductName, getLemonMyOrdersUrl } from '@/lib/checkout/lemonLinks';
 import { formatUsdPrice, getLimitedSalePrice, getMainProductPrice, getProductPricing } from '@/lib/pricing/products';
-import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 import {
   DEFAULT_PLUGIN_SECTION,
   type PluginSectionKey,
@@ -307,8 +313,11 @@ export default function FarmVerbSite() {
   const [activeNebulaSection, setActiveNebulaSection] = useState<PluginSectionKey>(DEFAULT_PLUGIN_SECTION);
   const [pluginMenuOpen, setPluginMenuOpen] = useState(false);
   const audioPluginsMenuRef = useRef<HTMLDivElement | null>(null);
+  const cartPreviewRef = useRef<HTMLDivElement | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [buyNowNotice, setBuyNowNotice] = useState<string | null>(null);
+  const [cartPreviewOpen, setCartPreviewOpen] = useState(false);
+  const [cartFeedback, setCartFeedback] = useState<{ message: string; item: CartItem | null } | null>(null);
   const sampleFilmRef = useRef<HTMLVideoElement | null>(null);
   const sampleFilmContainerRef = useRef<HTMLDivElement | null>(null);
   const [sampleFilmPlaying, setSampleFilmPlaying] = useState(false);
@@ -359,30 +368,6 @@ export default function FarmVerbSite() {
   }, []);
 
   useEffect(() => {
-    const supabase = createBrowserSupabaseClient();
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        clearCartItems();
-        setCartItems([]);
-      }
-    });
-
-    const {
-      data: { subscription }
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        clearCartItems();
-        setCartItems([]);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  useEffect(() => {
     if (!buyNowNotice) {
       return;
     }
@@ -393,6 +378,19 @@ export default function FarmVerbSite() {
 
     return () => window.clearTimeout(timeoutId);
   }, [buyNowNotice]);
+
+  useEffect(() => {
+    if (!cartFeedback) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setCartFeedback(null);
+      setCartPreviewOpen(false);
+    }, 3200);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [cartFeedback]);
 
   useEffect(() => {
     if (!pluginMenuOpen) {
@@ -418,6 +416,31 @@ export default function FarmVerbSite() {
       document.removeEventListener('pointerdown', onPointerDown);
     };
   }, [pluginMenuOpen]);
+
+  useEffect(() => {
+    if (!cartPreviewOpen) {
+      return;
+    }
+
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (cartPreviewRef.current?.contains(target)) {
+        return;
+      }
+
+      setCartPreviewOpen(false);
+    };
+
+    document.addEventListener('pointerdown', onPointerDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+    };
+  }, [cartPreviewOpen]);
 
   useEffect(() => {
     const video = sampleFilmRef.current;
@@ -526,10 +549,14 @@ export default function FarmVerbSite() {
     selectNebulaSection(section);
   };
 
+  const hasCheckoutUrl = (productName: string) => Boolean(getLemonCheckoutUrlByProductName(productName));
+
   const renderSeriesFeature = () => {
     if (!showSeriesFeature || !selectedSeriesProduct) {
       return null;
     }
+
+    const checkoutReady = hasCheckoutUrl(selectedSeriesProduct.name);
 
     return (
       <section className="plugin-feature-stage plugin-feature-nebula interactive-tilt" aria-label={`${selectedSeriesProduct.name} detail`}>
@@ -569,9 +596,12 @@ export default function FarmVerbSite() {
               type="button"
               className="plugin-action plugin-action-buy"
               onClick={() => onBuyNow(selectedSeriesProduct.name)}
+              disabled={!checkoutReady}
+              title={checkoutReady ? undefined : 'Checkout link coming soon'}
             >
               {getPlaceholderBuyLabel(selectedSeriesProduct.name)}
             </button>
+            {!checkoutReady ? <span className="checkout-coming-soon">Checkout link coming soon</span> : null}
           </div>
         </div>
       </section>
@@ -580,58 +610,65 @@ export default function FarmVerbSite() {
 
   const renderSeriesGrid = () => (
     <div className="plugin-grid plugin-grid-nebula" role="list" aria-label="Nebula Series products">
-      {visibleProducts.map((product) => (
-        <article
-          key={product.name}
-          className="plugin-card plugin-card-nebula interactive-tilt"
-          role="listitem"
-          tabIndex={0}
-        >
-          {product.images && product.images.length > 0 ? (
-            <figure className="plugin-card-media">
-              <img src={product.images[0]} alt={`${product.name} interface`} />
-            </figure>
-          ) : (
-            <div className="plugin-card-media is-empty">
-              <span>Preview unavailable</span>
-            </div>
-          )}
+      {visibleProducts.map((product) => {
+        const checkoutReady = hasCheckoutUrl(product.name);
 
-          <div className="plugin-card-copy">
-            <h3>
+        return (
+          <article
+            key={product.name}
+            className="plugin-card plugin-card-nebula interactive-tilt"
+            role="listitem"
+            tabIndex={0}
+          >
+            {product.images && product.images.length > 0 ? (
+              <figure className="plugin-card-media">
+                <img src={product.images[0]} alt={`${product.name} interface`} />
+              </figure>
+            ) : (
+              <div className="plugin-card-media is-empty">
+                <span>Preview unavailable</span>
+              </div>
+            )}
+
+            <div className="plugin-card-copy">
+              <h3>
+                <button
+                  type="button"
+                  className="plugin-card-name-link"
+                  onClick={() => onProductNameClick(product.section)}
+                  data-route="plugins"
+                  data-plugin-section={product.section}
+                  aria-label={`Open ${product.name} section`}
+                >
+                  {product.name}
+                </button>
+              </h3>
+              <p>{product.description}</p>
+              <ProductPrice productName={product.name} />
+            </div>
+
+            <div className="plugin-card-actions">
               <button
                 type="button"
-                className="plugin-card-name-link"
-                onClick={() => onProductNameClick(product.section)}
-                data-route="plugins"
-                data-plugin-section={product.section}
-                aria-label={`Open ${product.name} section`}
+                className="plugin-action plugin-action-cart"
+                onClick={() => void addToCart(product.name)}
               >
-                {product.name}
+                Add to Cart
               </button>
-            </h3>
-            <p>{product.description}</p>
-            <ProductPrice productName={product.name} />
-          </div>
-
-          <div className="plugin-card-actions">
-            <button
-              type="button"
-              className="plugin-action plugin-action-cart"
-              onClick={() => void addToCart(product.name)}
-            >
-              Add to Cart
-            </button>
-            <button
-              type="button"
-              className="plugin-action plugin-action-buy"
-              onClick={() => onBuyNow(product.name)}
-            >
-              {getPlaceholderBuyLabel(product.name)}
-            </button>
-          </div>
-        </article>
-      ))}
+              <button
+                type="button"
+                className="plugin-action plugin-action-buy"
+                onClick={() => onBuyNow(product.name)}
+                disabled={!checkoutReady}
+                title={checkoutReady ? undefined : 'Checkout link coming soon'}
+              >
+                {getPlaceholderBuyLabel(product.name)}
+              </button>
+              {!checkoutReady ? <span className="checkout-coming-soon">Checkout link coming soon</span> : null}
+            </div>
+          </article>
+        );
+      })}
     </div>
   );
 
@@ -644,35 +681,37 @@ export default function FarmVerbSite() {
   };
 
   const cartItemCount = useMemo(() => getCartItemCount(cartItems), [cartItems]);
+  const lemonMyOrdersUrl = getLemonMyOrdersUrl();
 
-  const addToCart = async (productName: string) => {
-    const supabase = createBrowserSupabaseClient();
-    const { data, error } = await supabase.auth.getSession();
-
-    if (error || !data.session) {
-      clearCartItems();
-      setCartItems([]);
-      const redirectTo = `${window.location.pathname}${window.location.search}`;
-      window.location.href = `/login?redirect=${encodeURIComponent(redirectTo)}`;
-      return;
-    }
-
+  const addToCart = (productName: string) => {
+    const catalogProduct = getCatalogProductByName(productName);
+    const normalizedName = productName.trim().toLowerCase();
+    const existing = getCartItems().some((item) =>
+      catalogProduct ? item.slug === catalogProduct.slug : item.name.trim().toLowerCase() === normalizedName
+    );
     const nextCart = addItemToCart(productName);
+    const addedItem =
+      nextCart.find((item) =>
+        catalogProduct ? item.slug === catalogProduct.slug : item.name.trim().toLowerCase() === normalizedName
+      ) ?? null;
+
     setCartItems(nextCart);
+    setCartFeedback({ message: existing ? 'Already in cart' : 'Added to cart', item: addedItem });
+    setCartPreviewOpen(true);
   };
 
   const onBuyNow = (productName: string) => {
-    // TODO: replace with a configured checkout URL when per-product links are available.
-    setBuyNowNotice('Checkout link not configured yet.');
-  };
+    const checkoutUrl = getLemonCheckoutUrlByProductName(productName);
 
-  const getPlaceholderBuyLabel = (productName: string) => {
-    if (productName === 'Nebula Series') {
-      return 'Buy Bundle';
+    if (!checkoutUrl) {
+      setBuyNowNotice('Checkout link coming soon.');
+      return;
     }
 
-    return `Buy ${productName}`;
+    window.location.assign(checkoutUrl);
   };
+
+  const getPlaceholderBuyLabel = (productName: string) => getLemonBuyButtonLabel(productName);
 
   const toggleSampleFilm = async () => {
     const video = sampleFilmRef.current;
@@ -791,22 +830,41 @@ export default function FarmVerbSite() {
             <Link href="/support" className="nav-link nav-link-support" data-route="support">
               Support
             </Link>
-            <Link
-              href="/cart"
-              className="cart-trigger"
-              aria-label={`Shopping cart, ${cartItemCount} item${cartItemCount === 1 ? '' : 's'}`}
-            >
-              <span className="cart-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                  <path d="M3 4h2l1.4 8.2a2 2 0 0 0 2 1.8h7.9a2 2 0 0 0 2-1.6L20 7H7.2" />
-                  <circle cx="10" cy="19" r="1.7" />
-                  <circle cx="17" cy="19" r="1.7" />
-                </svg>
-              </span>
-              <span className="cart-label">Cart</span>
-              <span className="cart-badge">{cartItemCount}</span>
-            </Link>
-            <AuthNav />
+            <div className={`cart-nav-wrap ${cartPreviewOpen ? 'is-open' : ''}`} ref={cartPreviewRef}>
+              <Link
+                href="/cart"
+                className="cart-trigger"
+                aria-label={`Shopping cart, ${cartItemCount} item${cartItemCount === 1 ? '' : 's'}`}
+              >
+                <span className="cart-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                    <path d="M3 4h2l1.4 8.2a2 2 0 0 0 2 1.8h7.9a2 2 0 0 0 2-1.6L20 7H7.2" />
+                    <circle cx="10" cy="19" r="1.7" />
+                    <circle cx="17" cy="19" r="1.7" />
+                  </svg>
+                </span>
+                <span className="cart-label">Cart</span>
+                <span className="cart-badge">{cartItemCount}</span>
+              </Link>
+
+              {cartPreviewOpen && cartFeedback ? (
+                <div className="mini-cart-popover" role="status" aria-live="polite">
+                  <p className="mini-cart-status">{cartFeedback.message}</p>
+                  {cartFeedback.item ? (
+                    <div className="mini-cart-line">
+                      {cartFeedback.item.image ? <img src={cartFeedback.item.image} alt="" /> : null}
+                      <div>
+                        <strong>{cartFeedback.item.name}</strong>
+                        <span>{cartFeedback.item.description}</span>
+                      </div>
+                    </div>
+                  ) : null}
+                  <Link href="/cart" className="mini-cart-link">
+                    View Cart
+                  </Link>
+                </div>
+              ) : null}
+            </div>
           </div>
         </nav>
       </header>
@@ -1014,9 +1072,12 @@ export default function FarmVerbSite() {
                     type="button"
                     className="section-action-btn section-action-buy"
                     onClick={() => onBuyNow('Nebula Drums')}
+                    disabled={!hasCheckoutUrl('Nebula Drums')}
+                    title={hasCheckoutUrl('Nebula Drums') ? undefined : 'Checkout link coming soon'}
                   >
                     {getPlaceholderBuyLabel('Nebula Drums')}
                   </button>
+                  {!hasCheckoutUrl('Nebula Drums') ? <span className="checkout-coming-soon">Checkout link coming soon</span> : null}
                 </div>
               </div>
 
@@ -1073,9 +1134,14 @@ export default function FarmVerbSite() {
                       type="button"
                       className="section-action-btn section-action-buy"
                       onClick={() => onBuyNow('Glitch Drum Pack Vol.1')}
+                      disabled={!hasCheckoutUrl('Glitch Drum Pack Vol.1')}
+                      title={hasCheckoutUrl('Glitch Drum Pack Vol.1') ? undefined : 'Checkout link coming soon'}
                     >
                       {getPlaceholderBuyLabel('Glitch Drum Pack Vol.1')}
                     </button>
+                    {!hasCheckoutUrl('Glitch Drum Pack Vol.1') ? (
+                      <span className="checkout-coming-soon">Checkout link coming soon</span>
+                    ) : null}
                   </div>
                 </div>
 
@@ -1310,6 +1376,17 @@ export default function FarmVerbSite() {
             <a className="support-mail" href="mailto:support@farmverb.com">
               support@farmverb.com
             </a>
+
+            <div className="support-orders-panel">
+              <p>Lemon Squeezy manages v1.0 orders, license keys, and downloads.</p>
+              {lemonMyOrdersUrl ? (
+                <a href={lemonMyOrdersUrl} target="_blank" rel="noopener noreferrer">
+                  View Orders & License Keys
+                </a>
+              ) : (
+                <span>My Orders link coming soon</span>
+              )}
+            </div>
 
             <div className="support-links">
               <a href="https://www.instagram.com/farmverb/" target="_blank" rel="noopener noreferrer">
