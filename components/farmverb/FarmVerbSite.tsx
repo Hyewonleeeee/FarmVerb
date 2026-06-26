@@ -6,6 +6,7 @@ import AuthNav from '@/components/auth/AuthNav';
 import GlobalFooter from '@/components/farmverb/GlobalFooter';
 import { addItemToCart, getCartItemCount, getCartItems, subscribeToCart, type CartItem } from '@/lib/cart/store';
 import { formatUsdPrice, getLimitedSalePrice, getMainProductPrice, getProductPricing } from '@/lib/pricing/products';
+import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 import {
   DEFAULT_PLUGIN_SECTION,
   type PluginSectionKey,
@@ -16,7 +17,7 @@ import {
 import { initFarmVerbSite } from '@/lib/ui/initFarmVerbSite';
 
 type PluginProduct = {
-  section: Exclude<PluginSectionKey, 'series'>;
+  section: PluginSectionKey;
   name: string;
   description: string;
   images?: string[];
@@ -162,6 +163,13 @@ function ProductPrice({
     </div>
   );
 }
+
+const NEBULA_BUNDLE_PRODUCT: PluginProduct = {
+  section: 'series',
+  name: 'Nebula Series',
+  description: 'The complete Nebula bundle: Crush, Space, Drift, and Rift in one polished plugin collection.',
+  images: ['/Nebula%20Series/Main/Nebula%20Series.png']
+};
 
 const NEBULA_PRODUCTS: PluginProduct[] = [
   {
@@ -456,7 +464,7 @@ export default function FarmVerbSite() {
 
   const selectedSeriesProduct = useMemo(() => {
     if (activeNebulaSection === DEFAULT_PLUGIN_SECTION) {
-      return null;
+      return NEBULA_BUNDLE_PRODUCT;
     }
 
     return NEBULA_PRODUCTS.find((product) => product.section === activeNebulaSection) ?? null;
@@ -464,7 +472,7 @@ export default function FarmVerbSite() {
 
   const visibleProducts = useMemo(() => {
     if (activeNebulaSection === DEFAULT_PLUGIN_SECTION) {
-      return NEBULA_PRODUCTS;
+      return [NEBULA_BUNDLE_PRODUCT];
     }
 
     return selectedSeriesProduct ? [selectedSeriesProduct] : NEBULA_PRODUCTS;
@@ -474,14 +482,14 @@ export default function FarmVerbSite() {
   const glitchPackPrice = glitchPackPricing ? getMainProductPrice(glitchPackPricing) : 49;
   const glitchPackRegularPrice = glitchPackPricing?.regularPrice ?? 99;
 
-  const showSeriesFeature = Boolean(selectedSeriesProduct) && activeNebulaSection !== DEFAULT_PLUGIN_SECTION && currentRoute === 'plugins';
+  const showSeriesFeature = Boolean(selectedSeriesProduct) && currentRoute === 'plugins';
 
   const activePluginMenuSection = currentRoute === 'plugins' ? activeNebulaSection : null;
   const activePluginMenuName =
     activeNebulaSection === DEFAULT_PLUGIN_SECTION ? 'Nebula Series' : selectedSeriesProduct?.name ?? 'Nebula Series';
   const activePluginMenuCopy =
     activeNebulaSection === DEFAULT_PLUGIN_SECTION
-      ? 'Choose the overview or jump straight into an individual device from the Audio Plugins menu.'
+      ? 'The complete Nebula bundle, prepared as a single product.'
       : `Choose the overview or jump straight into ${selectedSeriesProduct?.name ?? 'this device'}.`;
 
   const selectNebulaSection = (section: PluginSectionKey) => {
@@ -490,7 +498,7 @@ export default function FarmVerbSite() {
     setPluginMenuOpen(false);
   };
 
-  const onProductNameClick = (section: Exclude<PluginSectionKey, 'series'>) => {
+  const onProductNameClick = (section: PluginSectionKey) => {
     selectNebulaSection(section);
   };
 
@@ -529,7 +537,7 @@ export default function FarmVerbSite() {
             <button
               type="button"
               className="plugin-action plugin-action-cart"
-              onClick={() => addToCart(selectedSeriesProduct.name)}
+              onClick={() => void addToCart(selectedSeriesProduct.name)}
             >
               Add to Cart
             </button>
@@ -586,7 +594,7 @@ export default function FarmVerbSite() {
             <button
               type="button"
               className="plugin-action plugin-action-cart"
-              onClick={() => addToCart(product.name)}
+              onClick={() => void addToCart(product.name)}
             >
               Add to Cart
             </button>
@@ -613,7 +621,16 @@ export default function FarmVerbSite() {
 
   const cartItemCount = useMemo(() => getCartItemCount(cartItems), [cartItems]);
 
-  const addToCart = (productName: string) => {
+  const addToCart = async (productName: string) => {
+    const supabase = createBrowserSupabaseClient();
+    const { data } = await supabase.auth.getSession();
+
+    if (!data.session) {
+      const redirectTo = `${window.location.pathname}${window.location.search}`;
+      window.location.href = `/login?redirect=${encodeURIComponent(redirectTo)}`;
+      return;
+    }
+
     const nextCart = addItemToCart(productName);
     setCartItems(nextCart);
   };
@@ -888,7 +905,7 @@ export default function FarmVerbSite() {
                       <button
                         type="button"
                         className="section-action-btn section-action-cart"
-                        onClick={() => addToCart(card.productName)}
+                        onClick={() => void addToCart(card.productName)}
                       >
                         Add to Cart
                       </button>
@@ -963,7 +980,7 @@ export default function FarmVerbSite() {
                   <button
                     type="button"
                     className="section-action-btn section-action-cart"
-                    onClick={() => addToCart('Nebula Drums')}
+                    onClick={() => void addToCart('Nebula Drums')}
                   >
                     Add to Cart
                   </button>
@@ -1022,7 +1039,7 @@ export default function FarmVerbSite() {
                     <button
                       type="button"
                       className="section-action-btn section-action-cart"
-                      onClick={() => addToCart('Glitch Drum Pack Vol.1')}
+                      onClick={() => void addToCart('Glitch Drum Pack Vol.1')}
                     >
                       Add to Cart
                     </button>

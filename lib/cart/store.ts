@@ -31,18 +31,10 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
   {
     slug: 'nebula-series',
     name: 'Nebula Series',
-    description: 'Nebula plugin overview',
+    description: 'Nebula Series bundle',
     price: priceOf('Nebula Series', 189),
     currency: 'USD',
     image: '/Nebula%20Series/Main/Nebula%20Series.png'
-  },
-  {
-    slug: 'germinate',
-    name: 'Germinate',
-    description: 'Organic delay processor',
-    price: priceOf('Germinate', 49),
-    currency: 'USD',
-    image: '/Germinate/Germinate.png'
   },
   {
     slug: 'nebula-crush',
@@ -96,6 +88,12 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
 
 const productByName = new Map(PRODUCT_CATALOG.map((product) => [product.name.toLowerCase(), product]));
 const productBySlug = new Map(PRODUCT_CATALOG.map((product) => [product.slug, product]));
+const legacyProductAliases = new Map<string, CatalogProduct>([
+  ['nebula-drum', productBySlug.get('nebula-drums') as CatalogProduct],
+  ['nebula-drums', productBySlug.get('nebula-drums') as CatalogProduct],
+  ['glitch-drum-pack-vol-i', productBySlug.get('glitch-drum-pack-vol-1') as CatalogProduct],
+  ['glitch-drum-pack-vol-1', productBySlug.get('glitch-drum-pack-vol-1') as CatalogProduct]
+].filter((entry): entry is [string, CatalogProduct] => Boolean(entry[1])));
 
 function slugify(text: string) {
   return text
@@ -132,7 +130,7 @@ function resolveProduct(productName: string): CatalogProduct {
 function resolveCatalogProduct(input: Partial<CartItem>) {
   const slug = typeof input.slug === 'string' ? slugify(input.slug) : '';
   if (slug) {
-    const bySlug = productBySlug.get(slug);
+    const bySlug = productBySlug.get(slug) ?? legacyProductAliases.get(slug);
     if (bySlug) {
       return bySlug;
     }
@@ -140,10 +138,22 @@ function resolveCatalogProduct(input: Partial<CartItem>) {
 
   const name = typeof input.name === 'string' ? input.name.trim().toLowerCase() : '';
   if (name) {
-    return productByName.get(name) ?? null;
+    return productByName.get(name) ?? legacyProductAliases.get(slugify(name)) ?? null;
   }
 
   return null;
+}
+
+function isSameCartItem(left: CartItem, right: Partial<CartItem>) {
+  return (
+    left.slug === right.slug &&
+    left.name === right.name &&
+    left.description === right.description &&
+    left.price === right.price &&
+    left.currency === right.currency &&
+    left.quantity === right.quantity &&
+    left.image === right.image
+  );
 }
 
 function normalizeCartItem(input: Partial<CartItem>): CartItem | null {
@@ -159,22 +169,14 @@ function normalizeCartItem(input: Partial<CartItem>): CartItem | null {
     return null;
   }
 
-  const price = typeof input.price === 'number' && Number.isFinite(input.price) ? input.price : catalogProduct.price;
-  const currency =
-    typeof input.currency === 'string' && input.currency.trim()
-      ? input.currency.trim().toUpperCase()
-      : catalogProduct.currency;
-  const image = catalogProduct.image;
-  const description = catalogProduct.description;
-
   return {
-    slug,
-    name,
-    description,
+    slug: catalogProduct.slug,
+    name: catalogProduct.name,
+    description: catalogProduct.description,
     quantity: 1,
-    price: price >= 0 ? price : 0,
-    currency,
-    image
+    price: catalogProduct.price,
+    currency: catalogProduct.currency,
+    image: catalogProduct.image
   };
 }
 
@@ -218,7 +220,9 @@ export function getCartItems(): CartItem[] {
       .map((item) => normalizeCartItem(item))
       .filter((item): item is CartItem => Boolean(item));
 
-    if (normalized.length !== parsed.length) {
+    const shouldRewrite = normalized.length !== parsed.length || normalized.some((item, index) => !isSameCartItem(item, parsed[index] ?? {}));
+
+    if (shouldRewrite) {
       writeCartItems(normalized);
     }
 
