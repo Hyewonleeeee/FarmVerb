@@ -73,7 +73,7 @@ export default function CartPage() {
   };
 
   const handleBuyItem = (item: CartItem) => {
-    const checkoutUrl = getLemonCheckoutUrl(item.slug);
+    const checkoutUrl = item.checkoutUrl ?? getLemonCheckoutUrl(item.slug);
 
     if (!checkoutUrl) {
       setCartMessage('Checkout link coming soon.');
@@ -126,7 +126,7 @@ export default function CartPage() {
                   {cartItems.map((item) => {
                     const catalogImage = getCatalogProductBySlug(item.slug)?.image ?? getCatalogProductByName(item.name)?.image ?? null;
                     const itemImage = catalogImage ?? item.image;
-                    const checkoutUrl = getLemonCheckoutUrl(item.slug);
+                    const checkoutUrl = item.checkoutUrl ?? getLemonCheckoutUrl(item.slug);
 
                     return (
                       <li key={item.slug} className="cart-page-line-item">

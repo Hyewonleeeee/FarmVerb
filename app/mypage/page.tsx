@@ -8,7 +8,6 @@ import { getPaymentCopy, type PaymentApiErrorCode, type PaymentLocale } from '@/
 import CountrySelect from '@/components/ui/CountrySelect';
 import { DEFAULT_COUNTRY_NAME, normalizeCountryName } from '@/lib/ui/country';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
-import { clearCartItems } from '@/lib/cart/store';
 
 const MY_PAGE_LOGIN_REDIRECT = '/login?redirect=%2Fmypage';
 
@@ -328,10 +327,8 @@ export default function MyPage() {
     const supabase = createBrowserSupabaseClient();
     isLoggingOutRef.current = true;
     try {
-      clearCartItems();
       await supabase.auth.signOut();
     } finally {
-      clearCartItems();
       window.location.assign('/');
     }
   };

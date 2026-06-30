@@ -1,4 +1,5 @@
 import { getMainProductPrice, getProductPricing } from '@/lib/pricing/products';
+import { getLemonCheckoutUrl } from '@/lib/checkout/lemonLinks';
 
 export type CartItem = {
   slug: string;
@@ -8,6 +9,7 @@ export type CartItem = {
   currency: string;
   quantity: number;
   image: string | null;
+  checkoutUrl: string | null;
 };
 
 type CatalogProduct = {
@@ -17,6 +19,7 @@ type CatalogProduct = {
   price: number;
   currency: string;
   image: string | null;
+  checkoutUrl: string | null;
 };
 
 const CART_STORAGE_KEY = 'farmverb_cart_v1';
@@ -34,7 +37,8 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
     description: 'Nebula Series bundle',
     price: priceOf('Nebula Series', 189),
     currency: 'USD',
-    image: '/Nebula%20Series/Main/Nebula%20Series.png'
+    image: '/Nebula%20Series/Main/Nebula%20Series.png',
+    checkoutUrl: getLemonCheckoutUrl('nebula-series')
   },
   {
     slug: 'nebula-crush',
@@ -42,7 +46,8 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
     description: 'Dynamic crush processor',
     price: priceOf('Nebula Crush', 39),
     currency: 'USD',
-    image: '/Nebula%20Series/Main/1-Nebula%20Crush.png'
+    image: '/Nebula%20Series/Main/1-Nebula%20Crush.png',
+    checkoutUrl: getLemonCheckoutUrl('nebula-crush')
   },
   {
     slug: 'nebula-space',
@@ -50,7 +55,8 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
     description: 'Atmospheric space processor',
     price: priceOf('Nebula Space', 59),
     currency: 'USD',
-    image: '/Nebula%20Series/Main/2-Nebula%20Space.png'
+    image: '/Nebula%20Series/Main/2-Nebula%20Space.png',
+    checkoutUrl: getLemonCheckoutUrl('nebula-space')
   },
   {
     slug: 'nebula-drift',
@@ -58,7 +64,8 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
     description: 'Spectral motion processor',
     price: priceOf('Nebula Drift', 49),
     currency: 'USD',
-    image: '/Nebula%20Series/Main/3-Nebula%20Drift.png'
+    image: '/Nebula%20Series/Main/3-Nebula%20Drift.png',
+    checkoutUrl: getLemonCheckoutUrl('nebula-drift')
   },
   {
     slug: 'nebula-rift',
@@ -66,7 +73,8 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
     description: 'Fractured digital processor',
     price: priceOf('Nebula Rift', 59),
     currency: 'USD',
-    image: '/Nebula%20Series/Main/4-Nebula%20Rift.png'
+    image: '/Nebula%20Series/Main/4-Nebula%20Rift.png',
+    checkoutUrl: getLemonCheckoutUrl('nebula-rift')
   },
   {
     slug: 'nebula-drums',
@@ -74,7 +82,8 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
     description: 'Decent Sampler instrument',
     price: priceOf('Nebula Drums', 49),
     currency: 'USD',
-    image: '/Nebula%20Series/Main/5-Nebula%20Drums.png'
+    image: '/Nebula%20Series/Main/5-Nebula%20Drums.png',
+    checkoutUrl: getLemonCheckoutUrl('nebula-drums')
   },
   {
     slug: 'glitch-drum-pack-vol-1',
@@ -82,7 +91,8 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
     description: 'Digital glitch drum sample pack',
     price: priceOf('Glitch Drum Pack Vol.1', 49),
     currency: 'USD',
-    image: '/GlitchDrum/GlitchDrum.png'
+    image: '/GlitchDrum/GlitchDrum.png',
+    checkoutUrl: getLemonCheckoutUrl('glitch-drum-pack-vol-1')
   }
 ];
 
@@ -123,7 +133,8 @@ function resolveProduct(productName: string): CatalogProduct {
     description: 'Digital audio product',
     price: 0,
     currency: 'USD',
-    image: null
+    image: null,
+    checkoutUrl: null
   };
 }
 
@@ -152,7 +163,8 @@ function isSameCartItem(left: CartItem, right: Partial<CartItem>) {
     left.price === right.price &&
     left.currency === right.currency &&
     left.quantity === right.quantity &&
-    left.image === right.image
+    left.image === right.image &&
+    left.checkoutUrl === right.checkoutUrl
   );
 }
 
@@ -176,7 +188,8 @@ function normalizeCartItem(input: Partial<CartItem>): CartItem | null {
     quantity: 1,
     price: catalogProduct.price,
     currency: catalogProduct.currency,
-    image: catalogProduct.image
+    image: catalogProduct.image,
+    checkoutUrl: catalogProduct.checkoutUrl
   };
 }
 
@@ -247,7 +260,8 @@ export function addItemToCart(productName: string): CartItem[] {
         price: product.price,
         currency: product.currency,
         quantity: 1,
-        image: product.image
+        image: product.image,
+        checkoutUrl: product.checkoutUrl
       }
     ]);
   }
@@ -262,6 +276,7 @@ export function addItemToCart(productName: string): CartItem[] {
             price: product.price,
             currency: product.currency,
             image: product.image,
+            checkoutUrl: product.checkoutUrl,
             quantity: 1
           }
         : item
