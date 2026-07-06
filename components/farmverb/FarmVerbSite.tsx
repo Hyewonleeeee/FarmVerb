@@ -106,6 +106,24 @@ type ProductSupportDetails = {
   relatedProducts: string[];
 };
 
+type ProductFeatureItem = {
+  title: string;
+  body: string;
+};
+
+type ProductCommercialDetails = {
+  eyebrow: string;
+  headline: string;
+  subhead: string;
+  body: string;
+  image: string;
+  imageAlt: string;
+  valueItems: string[];
+  features: ProductFeatureItem[];
+  workflow: ProductFeatureItem[];
+  relatedProducts: string[];
+};
+
 const GLITCH_SPEC_ITEMS: SampleSpecItem[] = [
   { label: 'Format', value: 'WAV 24-bit / 48 kHz' },
   { label: 'Files', value: '100 Samples' },
@@ -340,6 +358,14 @@ const NEBULA_MANUALS = {
   drums: '/Manual/Nebula_Drums_User_Manual.pdf'
 } as const;
 
+const NEBULA_REAL_IMAGES = {
+  crush: '/Real/Crush.png',
+  space: '/Real/Space.png',
+  drift: '/Real/Drift.png',
+  rift: '/Real/Rift.png',
+  drums: '/Real/Drums.png'
+} as const;
+
 const STANDARD_NEBULA_PLUGIN_REQUIREMENTS: SupportRequirementGroup[] = [
   {
     label: 'macOS',
@@ -396,6 +422,281 @@ const DRUMS_REQUIREMENTS: SupportRequirementGroup[] = [
     items: ['C1 Glitch & Industrial', 'C2 Organic Lo-Fi', 'C3 Cybernetic Trap', 'C4 Experimental Cinematic']
   }
 ];
+
+const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
+  'Nebula Series': {
+    eyebrow: 'Nebula Series Bundle',
+    headline: 'A complete Nebula palette for motion, depth, saturation, and fracture.',
+    subhead: 'Four effect devices plus Nebula Drums as a bonus instrument.',
+    body: 'Nebula Series brings the core Nebula processors together as one expandable collection: Crush for harmonic pressure, Space for cinematic ambience, Drift for fluid modulation, and Rift for granular fracture.',
+    image: '/Nebula%20Series/Main/Nebula%20Series.png',
+    imageAlt: 'Nebula Series bundle artwork',
+    valueItems: ['Crush', 'Space', 'Drift', 'Rift', 'Nebula Drums bonus'],
+    features: [
+      {
+        title: 'Harmonic color',
+        body: 'Nebula Crush moves from subtle harmonic color to aggressive modern grit.'
+      },
+      {
+        title: 'Cinematic depth',
+        body: 'Nebula Space is built for width, depth, and smooth cinematic tails.'
+      },
+      {
+        title: 'Spatial motion',
+        body: 'Nebula Drift adds flowing, phase-like movement with SILK, TIDE, and FRAC modes.'
+      },
+      {
+        title: 'Granular fracture',
+        body: 'Nebula Rift captures small fragments and rebuilds them as animated rift fields.'
+      }
+    ],
+    workflow: [
+      {
+        title: 'Choose a world',
+        body: 'Start with the device that matches the movement or texture you need.'
+      },
+      {
+        title: 'Shape the source',
+        body: 'Use the core controls from each device to set tone, depth, motion, or fracture.'
+      },
+      {
+        title: 'Blend into the track',
+        body: 'Use Mix, Blend, or output-level controls where available to keep the source musical.'
+      }
+    ],
+    relatedProducts: ['Glitch Drum Pack Vol.1']
+  },
+  'Nebula Crush': {
+    eyebrow: 'Creative saturation',
+    headline: 'Shape character without losing musicality.',
+    subhead: 'From subtle harmonic color to aggressive modern grit.',
+    body: 'Nebula Crush is an energetic distortion plugin with a cinematic edge, designed for drums, synths, buses, and creative tone shaping.',
+    image: NEBULA_REAL_IMAGES.crush,
+    imageAlt: 'Nebula Crush product photograph',
+    valueItems: ['Drive', 'Tone', 'Blend', 'Output'],
+    features: [
+      {
+        title: 'SAFE / PUNCHY',
+        body: 'Switch the response character to fit controlled saturation or more forward punch.'
+      },
+      {
+        title: 'Character Matrix',
+        body: 'Select the distortion flavor before dialing the intensity and tone.'
+      },
+      {
+        title: 'Blend control',
+        body: 'Mix dry and processed sound to keep the original signal present.'
+      },
+      {
+        title: 'Output trim',
+        body: 'Level match the final signal after shaping the harmonic pressure.'
+      }
+    ],
+    workflow: [
+      {
+        title: 'Choose character',
+        body: 'Start with the distortion flavor that fits the source.'
+      },
+      {
+        title: 'Set Drive',
+        body: 'Increase distortion intensity until the texture lands.'
+      },
+      {
+        title: 'Balance Tone and Blend',
+        body: 'Shape brightness and mix the processed signal to taste.'
+      },
+      {
+        title: 'Match Output',
+        body: 'Finish by setting the final output level in context.'
+      }
+    ],
+    relatedProducts: ['Nebula Space', 'Nebula Rift', 'Nebula Series']
+  },
+  'Nebula Space': {
+    eyebrow: 'Atmospheric reverb',
+    headline: 'Build depth, width, and smooth cinematic tails.',
+    subhead: 'A spatial field designed to stay clear while adding dimension.',
+    body: 'Nebula Space is an atmospheric reverb plugin for width, depth, smooth cinematic tails, floating dimension, and ambient motion.',
+    image: NEBULA_REAL_IMAGES.space,
+    imageAlt: 'Nebula Space product photograph',
+    valueItems: ['Size', 'Early', 'Decay', 'Freeze'],
+    features: [
+      {
+        title: 'Space Field',
+        body: 'Shape a wide atmospheric field around the source.'
+      },
+      {
+        title: 'Freeze',
+        body: 'Hold the current ambience bed for infinite pads and transition-ready texture beds.'
+      },
+      {
+        title: 'Warp and Mass',
+        body: 'Add rear-space motion and body density to the reverb field.'
+      },
+      {
+        title: 'Color and Decay',
+        body: 'Tune brightness and tail length for the space around the sound.'
+      }
+    ],
+    workflow: [
+      {
+        title: 'Set Size',
+        body: 'Choose the apparent room scale and tail spread.'
+      },
+      {
+        title: 'Place Early',
+        body: 'Adjust early reflection arrival for placement.'
+      },
+      {
+        title: 'Tune Decay and Color',
+        body: 'Shape the length and brightness of the tail.'
+      },
+      {
+        title: 'Finish with Warp and Mass',
+        body: 'Add movement and low-mid body where the mix needs it.'
+      }
+    ],
+    relatedProducts: ['Nebula Drift', 'Nebula Crush', 'Nebula Series']
+  },
+  'Nebula Drift': {
+    eyebrow: 'Fluid modulation',
+    headline: 'Move sound with soft, phase-like spatial motion.',
+    subhead: 'Subtle drift or expressive cinematic movement.',
+    body: 'Nebula Drift is a flowing modulation plugin with atmospheric, phase-like movement for spatial drift, width, and cinematic motion.',
+    image: NEBULA_REAL_IMAGES.drift,
+    imageAlt: 'Nebula Drift product photograph',
+    valueItems: ['SILK', 'TIDE', 'FRAC', 'Motion'],
+    features: [
+      {
+        title: 'Three modes',
+        body: 'SILK, TIDE, and FRAC provide distinct movement profiles.'
+      },
+      {
+        title: 'Motion',
+        body: 'Set the speed and internal movement rate of the modulation.'
+      },
+      {
+        title: 'Width and Drift',
+        body: 'Shape stereo spread and phase-like drift intensity.'
+      },
+      {
+        title: 'Blur and Mix',
+        body: 'Soften modulation edges and blend the processed signal.'
+      }
+    ],
+    workflow: [
+      {
+        title: 'Set Mix',
+        body: 'Start by deciding how much movement the source needs.'
+      },
+      {
+        title: 'Shape Width and Drift',
+        body: 'Place the motion across the stereo image.'
+      },
+      {
+        title: 'Add Motion and Blur',
+        body: 'Control speed and soften the contour.'
+      },
+      {
+        title: 'Finalize Mode',
+        body: 'Choose SILK, TIDE, or FRAC for the final movement profile.'
+      }
+    ],
+    relatedProducts: ['Nebula Space', 'Nebula Rift', 'Nebula Series']
+  },
+  'Nebula Rift': {
+    eyebrow: 'Granular fracture',
+    headline: 'Break sound into animated rift fields.',
+    subhead: 'Destructive texture with source identity still in reach.',
+    body: 'Nebula Rift is a creative granular fracture effect that captures small fragments of incoming audio and rebuilds them as animated rift fields.',
+    image: NEBULA_REAL_IMAGES.rift,
+    imageAlt: 'Nebula Rift product photograph',
+    valueItems: ['Soft Rift', 'Glass Crack', 'Deep Tear', 'Fold'],
+    features: [
+      {
+        title: 'Mode Engine',
+        body: 'Move between soft fog, glass-like shards, and dark gravity rupture.'
+      },
+      {
+        title: 'Rift Size and Density',
+        body: 'Control the grain window, overlap, event pressure, and cloud thickness.'
+      },
+      {
+        title: 'Motion and Fold',
+        body: 'Shape read position, stereo drift, nonlinear tearing, and instability.'
+      },
+      {
+        title: 'Preset Vault',
+        body: 'Fifteen curated presets are grouped by mode, while Mix stays manual.'
+      }
+    ],
+    workflow: [
+      {
+        title: 'Choose a mode',
+        body: 'Start with Soft Rift, Glass Crack, or Deep Tear.'
+      },
+      {
+        title: 'Set Rift Size',
+        body: 'Define the time and spatial scale of the fracture.'
+      },
+      {
+        title: 'Shape Density and Color',
+        body: 'Tune event pressure, spectral material, and body-to-edge balance.'
+      },
+      {
+        title: 'Animate with Motion and Fold',
+        body: 'Add drift, rupture, and nonlinear tearing.'
+      }
+    ],
+    relatedProducts: ['Nebula Crush', 'Nebula Drift', 'Nebula Series']
+  },
+  'Nebula Drums': {
+    eyebrow: 'Creative drum instrument',
+    headline: 'Four drum worlds inside Decent Sampler.',
+    subhead: 'A playable instrument for electronic, cinematic, and experimental rhythm work.',
+    body: 'Nebula Drums combines four themed drum worlds with custom layered drum sounds created from royalty-free source recordings and original sound design processing.',
+    image: NEBULA_REAL_IMAGES.drums,
+    imageAlt: 'Nebula Drums product photograph',
+    valueItems: ['Glitch & Industrial', 'Organic Lo-Fi', 'Cybernetic Trap', 'Experimental Cinematic'],
+    features: [
+      {
+        title: 'Four themes',
+        body: 'The keyboard maps themed worlds across C1, C2, C3, and C4.'
+      },
+      {
+        title: 'XY Pad',
+        body: 'Control multiple effects across wavefolder, phaser, delay, and reverb behavior.'
+      },
+      {
+        title: 'Pattern presets',
+        body: 'Pattern-based presets generate rhythmic sequences synchronized to host tempo.'
+      },
+      {
+        title: 'Layered sound design',
+        body: 'Body, texture, and top layers combine into playable drum material.'
+      }
+    ],
+    workflow: [
+      {
+        title: 'Install Decent Sampler',
+        body: 'Nebula Drums requires Decent Sampler before loading the instrument.'
+      },
+      {
+        title: 'Load a preset',
+        body: 'Open the Nebula Drums library inside Decent Sampler.'
+      },
+      {
+        title: 'Play a theme',
+        body: 'Use the mapped keyboard zones to move between drum worlds.'
+      },
+      {
+        title: 'Shape with XY',
+        body: 'Use the XY Pad and front-panel controls for movement and space.'
+      }
+    ],
+    relatedProducts: ['Nebula Series', 'Nebula Crush', 'Glitch Drum Pack Vol.1']
+  }
+};
 
 const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
   'Nebula Series': {
@@ -673,7 +974,7 @@ function FaqAccordion({ items }: { items: FaqItem[] }) {
   );
 }
 
-function ProductSupportSections({
+function ProductCommercialSections({
   details,
   relatedCards,
   onAddToCart,
@@ -681,7 +982,7 @@ function ProductSupportSections({
   hasCheckoutUrl,
   getBuyLabel
 }: {
-  details: ProductSupportDetails;
+  details: ProductCommercialDetails;
   relatedCards: HomeFeatureCard[];
   onAddToCart: (productName: string) => void;
   onBuyNow: (productName: string) => void;
@@ -689,73 +990,68 @@ function ProductSupportSections({
   getBuyLabel: (productName: string) => string;
 }) {
   return (
-    <section className="product-support-stack" aria-label={`${details.title} launch information`}>
-      <div className="product-support-head">
-        <p className="section-overline">Product Support</p>
-        <h2>{details.title}</h2>
-        <p>{details.description}</p>
-      </div>
-
-      <section className="product-support-panel">
-        <div className="product-support-panel-head">
-          <p className="section-overline">System Requirements</p>
-          <h3>Compatibility and formats</h3>
+    <section className="product-commercial-stack" aria-label={`${details.eyebrow} product story`}>
+      <section className="product-story-stage">
+        <div className="product-story-copy">
+          <p className="section-overline">{details.eyebrow}</p>
+          <h2>{details.headline}</h2>
+          <p className="product-story-subhead">{details.subhead}</p>
+          <p className="product-story-body">{details.body}</p>
         </div>
-        <dl className="product-requirement-grid">
-          {details.requirements.map((group) => (
-            <div key={group.label} className="product-requirement-item">
-              <dt>{group.label}</dt>
-              <dd>
-                {group.items.map((item) => (
-                  <span key={item}>{item}</span>
-                ))}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <figure className="product-story-media interactive-tilt">
+          <img src={details.image} alt={details.imageAlt} />
+        </figure>
       </section>
 
-      <section className="product-support-panel product-demo-panel">
+      <div className="product-value-row" aria-label="Product highlights">
+        {details.valueItems.map((item) => (
+          <span key={item}>{item}</span>
+        ))}
+      </div>
+
+      <section className="product-feature-section">
+        <div className="product-section-kicker">
+          <p className="section-overline">Sound Design</p>
+          <h3>Built around the controls that shape the sound.</h3>
+        </div>
+        <div className="product-feature-grid">
+          {details.features.map((feature) => (
+            <article key={feature.title} className="product-feature-card">
+              <h4>{feature.title}</h4>
+              <p>{feature.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="product-workflow-panel">
+        <div className="product-section-kicker">
+          <p className="section-overline">Workflow</p>
+          <h3>Create. Shape. Finish.</h3>
+        </div>
+        <div className="product-workflow-grid">
+          {details.workflow.map((step, index) => (
+            <article key={step.title} className="product-workflow-step">
+              <span>{String(index + 1).padStart(2, '0')}</span>
+              <h4>{step.title}</h4>
+              <p>{step.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="product-demo-teaser">
         <div>
           <p className="section-overline">Demo Video</p>
-          <h3>Video placeholder</h3>
+          <h3>Demo film placeholder</h3>
           <p>Future YouTube demo embeds will appear here.</p>
         </div>
         <span aria-hidden="true">▶</span>
       </section>
 
-      <section className="product-support-panel">
-        <div className="product-support-panel-head">
-          <p className="section-overline">Manual Download</p>
-          <h3>Read the full guide</h3>
-        </div>
-        <div className="manual-download-list">
-          {details.manuals.map((manual) => (
-            <a key={manual.href} href={manual.href} className="manual-download-link" target="_blank" rel="noopener noreferrer">
-              {manual.label}
-            </a>
-          ))}
-        </div>
-      </section>
-
-      <section className="product-support-panel">
-        <div className="product-support-panel-head">
-          <p className="section-overline">FAQ</p>
-          <h3>Quick answers</h3>
-        </div>
-        <FaqAccordion items={details.faqs} />
-        <div className="product-faq-contact">
-          <p>Still have questions?</p>
-          <a href="mailto:support@farmverb.com">support@farmverb.com</a>
-          <a href="mailto:support@farmverb.com" className="manual-download-link">
-            Contact Support
-          </a>
-        </div>
-      </section>
-
       {relatedCards.length > 0 ? (
-        <section className="product-support-panel">
-          <div className="product-support-panel-head">
+        <section className="product-related-section">
+          <div className="product-section-kicker">
             <p className="section-overline">Related Products</p>
             <h3>More from FarmVerb</h3>
           </div>
@@ -806,6 +1102,70 @@ function ProductSupportSections({
           </div>
         </section>
       ) : null}
+    </section>
+  );
+}
+
+function ProductSupportSections({
+  details
+}: {
+  details: ProductSupportDetails;
+}) {
+  return (
+    <section className="product-support-stack" aria-label={`${details.title} technical information`}>
+      <div className="product-support-head">
+        <p className="section-overline">Technical Details</p>
+        <h2>Manuals, compatibility, and quick answers.</h2>
+        <p>{details.description}</p>
+      </div>
+
+      <section className="product-support-panel">
+        <div className="product-support-panel-head">
+          <p className="section-overline">System Requirements</p>
+          <h3>Compatibility and formats</h3>
+        </div>
+        <dl className="product-requirement-grid">
+          {details.requirements.map((group) => (
+            <div key={group.label} className="product-requirement-item">
+              <dt>{group.label}</dt>
+              <dd>
+                {group.items.map((item) => (
+                  <span key={item}>{item}</span>
+                ))}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <section className="product-support-panel">
+        <div className="product-support-panel-head">
+          <p className="section-overline">Manual Download</p>
+          <h3>Read the full guide</h3>
+        </div>
+        <div className="manual-download-list">
+          {details.manuals.map((manual) => (
+            <a key={manual.href} href={manual.href} className="manual-download-link" target="_blank" rel="noopener noreferrer">
+              {manual.label}
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <section className="product-support-panel">
+        <div className="product-support-panel-head">
+          <p className="section-overline">FAQ</p>
+          <h3>Quick answers</h3>
+        </div>
+        <FaqAccordion items={details.faqs} />
+        <div className="product-faq-contact">
+          <p>Still have questions?</p>
+          <a href="mailto:support@farmverb.com">support@farmverb.com</a>
+          <a href="mailto:support@farmverb.com" className="manual-download-link">
+            Contact Support
+          </a>
+        </div>
+      </section>
     </section>
   );
 }
@@ -1242,6 +1602,25 @@ export default function FarmVerbSite() {
 
   const getPlaceholderBuyLabel = (productName: string) => getLemonBuyButtonLabel(productName);
 
+  const renderProductCommercial = (productName: string) => {
+    const details = PRODUCT_COMMERCIAL_DETAILS[productName];
+
+    if (!details) {
+      return null;
+    }
+
+    return (
+      <ProductCommercialSections
+        details={details}
+        relatedCards={getRelatedProductCards(details.relatedProducts)}
+        onAddToCart={addToCart}
+        onBuyNow={onBuyNow}
+        hasCheckoutUrl={hasCheckoutUrl}
+        getBuyLabel={getPlaceholderBuyLabel}
+      />
+    );
+  };
+
   const renderProductSupport = (productName: string) => {
     const details = PRODUCT_SUPPORT_DETAILS[productName];
 
@@ -1250,14 +1629,7 @@ export default function FarmVerbSite() {
     }
 
     return (
-      <ProductSupportSections
-        details={details}
-        relatedCards={getRelatedProductCards(details.relatedProducts)}
-        onAddToCart={addToCart}
-        onBuyNow={onBuyNow}
-        hasCheckoutUrl={hasCheckoutUrl}
-        getBuyLabel={getPlaceholderBuyLabel}
-      />
+      <ProductSupportSections details={details} />
     );
   };
 
@@ -1589,6 +1961,7 @@ export default function FarmVerbSite() {
               </div>
 
               {renderSeriesContent()}
+              {renderProductCommercial(activePluginMenuName)}
               {activeNebulaSection === DEFAULT_PLUGIN_SECTION ? <BundleIncludesSection /> : null}
               {renderProductSupport(activePluginMenuName)}
             </section>
@@ -1640,6 +2013,7 @@ export default function FarmVerbSite() {
               </figure>
             </div>
 
+            {renderProductCommercial('Nebula Drums')}
             {renderProductSupport('Nebula Drums')}
 
             <div className="global-footer-host">
