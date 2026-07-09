@@ -756,7 +756,7 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
       },
       {
         question: 'Where are the individual manuals?',
-        answer: 'Each included product has its own downloadable manual in the Manual Download section below.'
+        answer: 'Use the manual download control near the purchase buttons to access the included product manuals.'
       },
       {
         question: 'Can I use the products commercially?',
@@ -995,7 +995,6 @@ function FaqAccordion({ items }: { items: FaqItem[] }) {
 function ProductCommercialSections({
   details,
   manuals,
-  supportId,
   relatedCards,
   onAddToCart,
   onBuyNow,
@@ -1004,7 +1003,6 @@ function ProductCommercialSections({
 }: {
   details: ProductCommercialDetails;
   manuals: ManualDownloadItem[];
-  supportId: string;
   relatedCards: HomeFeatureCard[];
   onAddToCart: (productName: string) => void;
   onBuyNow: (productName: string) => void;
@@ -1041,17 +1039,33 @@ function ProductCommercialSections({
               >
                 {getBuyLabel(details.productName)}
               </button>
-              {primaryManual ? (
-                <a
-                  href={manuals.length === 1 ? primaryManual.href : `#${supportId}`}
-                  className="product-story-manual-link"
-                  target={manuals.length === 1 ? '_blank' : undefined}
-                  rel={manuals.length === 1 ? 'noopener noreferrer' : undefined}
-                >
-                  {manuals.length === 1 ? 'Manual' : 'Manuals'}
-                </a>
-              ) : null}
             </div>
+            {manuals.length === 1 && primaryManual ? (
+              <a
+                href={primaryManual.href}
+                className="product-story-manual-action"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span aria-hidden="true">📖</span>
+                Download User Manual (PDF)
+              </a>
+            ) : null}
+            {manuals.length > 1 ? (
+              <details className="product-story-manual-group">
+                <summary>
+                  <span aria-hidden="true">📖</span>
+                  Download User Manuals (PDF)
+                </summary>
+                <div className="product-story-manual-list">
+                  {manuals.map((manual) => (
+                    <a key={manual.href} href={manual.href} target="_blank" rel="noopener noreferrer">
+                      {manual.label}
+                    </a>
+                  ))}
+                </div>
+              </details>
+            ) : null}
             {!checkoutReady ? <span className="checkout-coming-soon">Checkout link coming soon</span> : null}
           </div>
         </div>
@@ -1175,7 +1189,7 @@ function ProductSupportSections({
       <div className="product-support-head">
         <p className="section-overline">Technical Details</p>
         <h2>Support resources</h2>
-        <p>Compatibility, manuals, and FAQ are collected here for setup and reference.</p>
+        <p>Compatibility notes and FAQ are collected here for setup and reference.</p>
       </div>
 
       <section className="product-support-panel">
@@ -1195,20 +1209,6 @@ function ProductSupportSections({
             </div>
           ))}
         </dl>
-      </section>
-
-      <section className="product-support-panel">
-        <div className="product-support-panel-head">
-          <p className="section-overline">Manual Download</p>
-          <h3>Read the full guide</h3>
-        </div>
-        <div className="manual-download-list">
-          {details.manuals.map((manual) => (
-            <a key={manual.href} href={manual.href} className="manual-download-link" target="_blank" rel="noopener noreferrer">
-              {manual.label}
-            </a>
-          ))}
-        </div>
       </section>
 
       <section className="product-support-panel">
@@ -1673,7 +1673,6 @@ export default function FarmVerbSite() {
       <ProductCommercialSections
         details={details}
         manuals={supportDetails?.manuals ?? []}
-        supportId={getProductSupportId(productName)}
         relatedCards={getRelatedProductCards(details.relatedProducts)}
         onAddToCart={addToCart}
         onBuyNow={onBuyNow}
