@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import AuthNav from '@/components/auth/AuthNav';
 import GlobalFooter from '@/components/farmverb/GlobalFooter';
 import {
   addItemToCart,
@@ -1846,6 +1847,7 @@ export default function FarmVerbSite() {
                 </div>
               ) : null}
             </div>
+            <AuthNav />
           </div>
         </nav>
       </header>

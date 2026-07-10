@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
-const ACCOUNT_UI_ENABLED = process.env.NEXT_PUBLIC_ENABLE_ACCOUNT_UI === 'true';
+const ACCOUNT_UI_ENABLED = process.env.NEXT_PUBLIC_ENABLE_ACCOUNT_UI !== 'false';
 
 export default function AuthNav() {
   const [user, setUser] = useState<User | null>(null);

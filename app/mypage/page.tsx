@@ -6,6 +6,7 @@ import type { User } from '@supabase/supabase-js';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import { getPaymentCopy, type PaymentApiErrorCode, type PaymentLocale } from '@/lib/i18n/payment';
 import CountrySelect from '@/components/ui/CountrySelect';
+import { getMagicLinkErrorMessage, getMagicLinkRedirectUrl } from '@/lib/auth/magic-link';
 import { DEFAULT_COUNTRY_NAME, normalizeCountryName } from '@/lib/ui/country';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
@@ -49,7 +50,7 @@ const dashboardTabs: { key: DashboardTabKey; label: string }[] = [
 const dashboardSectionCopy: Record<DashboardTabKey, string> = {
   account: 'Personal details and account profile settings.',
   orders: 'Purchase records with license keys and secure download actions.',
-  security: 'Verification and password management for account safety.'
+  security: 'Email verification and passwordless Magic Link access.'
 };
 
 const formatDate = (dateText: string | null | undefined) => {
@@ -152,14 +153,9 @@ export default function MyPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [copiedLicenseId, setCopiedLicenseId] = useState<string | null>(null);
 
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [securityMessage, setSecurityMessage] = useState('');
   const [securityMessageType, setSecurityMessageType] = useState<'error' | 'success' | ''>('');
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
-  const [isResendingVerification, setIsResendingVerification] = useState(false);
+  const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
 
   const emailVerified = Boolean(user?.email_confirmed_at);
 
@@ -392,128 +388,42 @@ export default function MyPage() {
     setIsSavingAccount(false);
   };
 
-  const handleSendResetEmail = async () => {
+  const handleSendMagicLink = async () => {
     if (!user?.email) {
       setSecurityMessage('Email address not found for this account.');
       setSecurityMessageType('error');
       return;
     }
 
-    setIsSendingResetEmail(true);
+    setIsSendingMagicLink(true);
     setSecurityMessage('');
     setSecurityMessageType('');
 
-    const supabase = createBrowserSupabaseClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(user.email);
+    try {
+      const supabase = createBrowserSupabaseClient();
+      const { error } = await supabase.auth.signInWithOtp({
+        email: user.email,
+        options: {
+          emailRedirectTo: getMagicLinkRedirectUrl(),
+          shouldCreateUser: false
+        }
+      });
 
-    if (error) {
-      setSecurityMessage(error.message);
+      if (error) {
+        setSecurityMessage(getMagicLinkErrorMessage(error));
+        setSecurityMessageType('error');
+        setIsSendingMagicLink(false);
+        return;
+      }
+
+      setSecurityMessage('A new Magic Link was sent. Please check your inbox.');
+      setSecurityMessageType('success');
+      setIsSendingMagicLink(false);
+    } catch (error) {
+      setSecurityMessage(getMagicLinkErrorMessage(error));
       setSecurityMessageType('error');
-      setIsSendingResetEmail(false);
-      return;
+      setIsSendingMagicLink(false);
     }
-
-    setSecurityMessage('Password reset email sent. Please check your inbox.');
-    setSecurityMessageType('success');
-    setIsSendingResetEmail(false);
-  };
-
-  const handleChangePassword = async () => {
-    if (!user?.email) {
-      setSecurityMessage('Email address not found for this account.');
-      setSecurityMessageType('error');
-      return;
-    }
-
-    const currentPasswordValue = currentPassword.trim();
-    const newPasswordValue = newPassword.trim();
-    const confirmPasswordValue = confirmNewPassword.trim();
-
-    if (!currentPasswordValue) {
-      setSecurityMessage('Please enter your current password.');
-      setSecurityMessageType('error');
-      return;
-    }
-
-    if (newPasswordValue.length < 6) {
-      setSecurityMessage('New password must be at least 6 characters.');
-      setSecurityMessageType('error');
-      return;
-    }
-
-    if (newPasswordValue !== confirmPasswordValue) {
-      setSecurityMessage('New password and confirmation do not match.');
-      setSecurityMessageType('error');
-      return;
-    }
-
-    if (currentPasswordValue === newPasswordValue) {
-      setSecurityMessage('New password must be different from your current password.');
-      setSecurityMessageType('error');
-      return;
-    }
-
-    setIsChangingPassword(true);
-    setSecurityMessage('');
-    setSecurityMessageType('');
-
-    const supabase = createBrowserSupabaseClient();
-    const { data: verifyData, error: verifyError } = await supabase.auth.signInWithPassword({
-      email: user.email,
-      password: currentPasswordValue
-    });
-
-    if (verifyError || !verifyData.user || verifyData.user.id !== user.id) {
-      setSecurityMessage('Current password is incorrect.');
-      setSecurityMessageType('error');
-      setIsChangingPassword(false);
-      return;
-    }
-
-    const { error } = await supabase.auth.updateUser({ password: newPasswordValue });
-
-    if (error) {
-      setSecurityMessage(error.message);
-      setSecurityMessageType('error');
-      setIsChangingPassword(false);
-      return;
-    }
-
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmNewPassword('');
-    setSecurityMessage('Password updated successfully.');
-    setSecurityMessageType('success');
-    setIsChangingPassword(false);
-  };
-
-  const handleResendVerification = async () => {
-    if (!user?.email) {
-      setSecurityMessage('Email address not found for this account.');
-      setSecurityMessageType('error');
-      return;
-    }
-
-    setIsResendingVerification(true);
-    setSecurityMessage('');
-    setSecurityMessageType('');
-
-    const supabase = createBrowserSupabaseClient();
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: user.email
-    });
-
-    if (error) {
-      setSecurityMessage(error.message);
-      setSecurityMessageType('error');
-      setIsResendingVerification(false);
-      return;
-    }
-
-    setSecurityMessage('Verification email sent again. Please check your inbox.');
-    setSecurityMessageType('success');
-    setIsResendingVerification(false);
   };
 
   const handleDownload = async (productSlug: string) => {
@@ -838,89 +748,21 @@ export default function MyPage() {
                         </strong>
                       </div>
 
-                      {!emailVerified ? (
-                        <button
-                          type="button"
-                          className="auth-submit auth-submit-secondary mypage-small-button"
-                          onClick={() => void handleResendVerification()}
-                          disabled={isResendingVerification}
-                        >
-                          {isResendingVerification ? 'Sending...' : 'Send Verification Email Again'}
-                        </button>
-                      ) : null}
                     </div>
 
                     <div className="mypage-security-block">
-                      <div className="mypage-item-head">Change Password</div>
-
-                      <div className="mypage-security-fields">
-                        <div className="mypage-security-field">
-                          <label className="auth-label" htmlFor="current-password-input">
-                            Current Password
-                          </label>
-                          <input
-                            id="current-password-input"
-                            className="auth-input"
-                            type="password"
-                            autoComplete="current-password"
-                            value={currentPassword}
-                            onChange={(event) => setCurrentPassword(event.target.value)}
-                            placeholder="Enter current password"
-                          />
-                        </div>
-
-                        <div className="mypage-security-field">
-                          <label className="auth-label" htmlFor="new-password-input">
-                            New Password
-                          </label>
-                          <input
-                            id="new-password-input"
-                            className="auth-input"
-                            type="password"
-                            autoComplete="new-password"
-                            value={newPassword}
-                            onChange={(event) => setNewPassword(event.target.value)}
-                            minLength={6}
-                            placeholder="At least 6 characters"
-                          />
-                        </div>
-
-                        <div className="mypage-security-field">
-                          <label className="auth-label" htmlFor="confirm-new-password-input">
-                            Confirm New Password
-                          </label>
-                          <input
-                            id="confirm-new-password-input"
-                            className="auth-input"
-                            type="password"
-                            autoComplete="new-password"
-                            value={confirmNewPassword}
-                            onChange={(event) => setConfirmNewPassword(event.target.value)}
-                            minLength={6}
-                            placeholder="Re-enter new password"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mypage-form-actions mypage-security-actions">
-                        <button
-                          type="button"
-                          className="auth-submit"
-                          onClick={() => void handleChangePassword()}
-                          disabled={isChangingPassword}
-                        >
-                          {isChangingPassword ? 'Updating...' : 'Change Password'}
-                        </button>
-
-                        <button
-                          type="button"
-                          className="auth-submit auth-submit-secondary"
-                          onClick={() => void handleSendResetEmail()}
-                          disabled={isSendingResetEmail}
-                        >
-                          {isSendingResetEmail ? 'Sending...' : 'Send Reset Password Email'}
-                        </button>
-                      </div>
+                      <div className="mypage-item-head">Passwordless Sign-In</div>
+                      <p className="mypage-meta-row">
+                        FarmVerb uses secure Magic Links instead of passwords. Request a new link whenever you need to sign in again.
+                      </p>
+                      <button
+                        type="button"
+                        className="auth-submit mypage-small-button"
+                        onClick={() => void handleSendMagicLink()}
+                        disabled={isSendingMagicLink}
+                      >
+                        {isSendingMagicLink ? 'Sending...' : 'Send New Magic Link'}
+                      </button>
                     </div>
                   </div>
 
