@@ -5332,6 +5332,26 @@ img {
   gap: 0.62rem;
 }
 
+.mypage-purchase-section + .mypage-purchase-section {
+  margin-top: 1.35rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid rgba(157, 188, 90, 0.24);
+}
+
+.mypage-subsection-title {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: -0.015em;
+  color: rgba(43, 65, 25, 0.96);
+}
+
+.mypage-subsection-copy {
+  margin: 0.3rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: rgba(61, 84, 39, 0.8);
+}
+
 .mypage-list-item {
   border-radius: 16px;
   border: 1px solid rgba(153, 183, 86, 0.3);

@@ -7,6 +7,7 @@ import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import { getPaymentCopy, type PaymentApiErrorCode, type PaymentLocale } from '@/lib/i18n/payment';
 import CountrySelect from '@/components/ui/CountrySelect';
 import { getMagicLinkErrorMessage, getMagicLinkRedirectUrl } from '@/lib/auth/magic-link';
+import type { PurchaseRecord } from '@/lib/payments/purchases';
 import { normalizeCountryName } from '@/lib/ui/country';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
@@ -30,9 +31,6 @@ type OrderLine = {
   created_at: string;
 };
 
-// TODO: Replace the legacy order/license source with the FuturePurchaseRecord shape from Supabase purchases
-// once Lemon Squeezy webhook delivery is ready.
-
 type License = {
   id: string;
   order_id: string | null;
@@ -49,7 +47,7 @@ const dashboardTabs: { key: DashboardTabKey; label: string }[] = [
 
 const dashboardSectionCopy: Record<DashboardTabKey, string> = {
   account: 'Personal details and account profile settings.',
-  orders: 'Purchase records with license keys and secure download actions.',
+  orders: 'Lemon Squeezy purchases plus existing FarmVerb order and license records.',
   security: 'Email verification and passwordless Magic Link access.'
 };
 
@@ -144,6 +142,9 @@ export default function MyPage() {
   const [orders, setOrders] = useState<OrderLine[]>([]);
   const [ordersMessage, setOrdersMessage] = useState('');
 
+  const [purchases, setPurchases] = useState<PurchaseRecord[]>([]);
+  const [purchasesMessage, setPurchasesMessage] = useState('');
+
   const [licenses, setLicenses] = useState<License[]>([]);
   const [licensesMessage, setLicensesMessage] = useState('');
 
@@ -210,7 +211,6 @@ export default function MyPage() {
     };
 
     const loadOrders = async (currentUser: User) => {
-      // TODO: Migrate this query to the purchases table when Lemon Squeezy webhooks are enabled.
       const { data: orderRows, error: ordersError } = await supabase
         .from('orders')
         .select('id, order_id, product_name, amount, created_at')
@@ -242,6 +242,40 @@ export default function MyPage() {
       setOrdersMessage('');
     };
 
+    const loadPurchases = async (accessToken: string) => {
+      try {
+        const response = await fetch('/api/account/purchases', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          },
+          cache: 'no-store'
+        });
+
+        const payload = (await response.json().catch(() => null)) as
+          | { purchases?: PurchaseRecord[]; error?: string }
+          | null;
+
+        if (!mounted) {
+          return;
+        }
+
+        if (!response.ok) {
+          setPurchases([]);
+          setPurchasesMessage(payload?.error ?? 'Failed to load Lemon Squeezy purchases.');
+          return;
+        }
+
+        setPurchases(payload?.purchases ?? []);
+        setPurchasesMessage('');
+      } catch {
+        if (mounted) {
+          setPurchases([]);
+          setPurchasesMessage('Failed to load Lemon Squeezy purchases.');
+        }
+      }
+    };
+
     const loadLicenses = async (currentUser: User) => {
       const { data, error } = await supabase
         .from('licenses')
@@ -271,8 +305,13 @@ export default function MyPage() {
       setLicensesMessage('');
     };
 
-    const loadDashboardData = async (currentUser: User) => {
-      await Promise.all([loadProfile(currentUser), loadOrders(currentUser), loadLicenses(currentUser)]);
+    const loadDashboardData = async (currentUser: User, accessToken: string) => {
+      await Promise.all([
+        loadProfile(currentUser),
+        loadPurchases(accessToken),
+        loadOrders(currentUser),
+        loadLicenses(currentUser)
+      ]);
 
       if (mounted) {
         setIsLoading(false);
@@ -295,7 +334,7 @@ export default function MyPage() {
 
       isLoggingOutRef.current = false;
       setUser(session.user);
-      await loadDashboardData(session.user);
+      await loadDashboardData(session.user, session.access_token);
     };
 
     void checkSession();
@@ -306,6 +345,7 @@ export default function MyPage() {
       if (!session) {
         setUser(null);
         setProfile(null);
+        setPurchases([]);
         setOrders([]);
         setLicenses([]);
         setIsAccountEditMode(false);
@@ -315,7 +355,7 @@ export default function MyPage() {
 
       isLoggingOutRef.current = false;
       setUser(session.user);
-      void loadDashboardData(session.user);
+      void loadDashboardData(session.user, session.access_token);
     });
 
     return () => {
@@ -677,64 +717,103 @@ export default function MyPage() {
 
               {activeTab === 'orders' ? (
                 <>
-                  {ordersMessage ? <p>{ordersMessage}</p> : null}
-                  {!ordersMessage && licensesMessage ? <p>{licensesMessage}</p> : null}
+                  <section className="mypage-purchase-section" aria-labelledby="lemon-purchases-title">
+                    <h3 id="lemon-purchases-title" className="mypage-subsection-title">My Purchases</h3>
+                    <p className="mypage-subsection-copy">Purchases verified through Lemon Squeezy.</p>
 
-                  {!ordersMessage && orders.length === 0 ? (
-                    <p>No purchases yet</p>
-                  ) : null}
+                    {purchasesMessage ? <p className="auth-message is-error">{purchasesMessage}</p> : null}
 
-                  {orders.length > 0 ? (
-                    <ul className="mypage-list">
-                      {orders.map((order) => {
-                        const byOrder = order.order_id ? licensesByOrderId.get(order.order_id) : undefined;
-                        const byProduct = licensesByProductName.get((order.product_name ?? '').trim().toLowerCase());
-                        const license = byOrder ?? byProduct ?? null;
-                        const productSlug = toProductSlug(order.product_name);
+                    {!purchasesMessage && purchases.length === 0 ? (
+                      <p>No Lemon Squeezy purchases linked yet.</p>
+                    ) : null}
 
-                        return (
-                          <li key={order.id} className="mypage-list-item">
-                            <div className="mypage-item-head">{order.product_name ?? paymentCopy.orders.unknownProduct}</div>
+                    {purchases.length > 0 ? (
+                      <ul className="mypage-list">
+                        {purchases.map((purchase) => (
+                          <li key={purchase.id} className="mypage-list-item">
+                            <div className="mypage-item-head">{purchase.product_name}</div>
                             <div className="mypage-meta-row">
-                              Amount: {formatOrderAmount(order.amount)}
+                              Amount: {formatCurrency(purchase.total_cents / 100, purchase.currency, paymentLocale)}
                             </div>
                             <div className="mypage-meta-row">
-                              Purchased: {formatDate(order.created_at)}
+                              Purchased: {formatDate(purchase.purchased_at)}
                             </div>
                             <div className="mypage-meta-row">
-                              Order ID: {order.order_id ?? '-'}
+                              Order ID: {purchase.lemon_order_id}
                             </div>
-
-                            {license ? (
-                              <div className="mypage-license-row">
-                                <span className="mypage-meta-label">{paymentCopy.licenses.label}</span>
-                                <code className="mypage-license-key">{license.license_key}</code>
-                                <button
-                                  type="button"
-                                  className="auth-submit auth-submit-secondary mypage-small-button"
-                                  onClick={() => void handleCopyLicense(license.id, license.license_key)}
-                                >
-                                  {copiedLicenseId === license.id ? paymentCopy.licenses.copied : paymentCopy.licenses.copy}
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="mypage-meta-row">License will be issued soon.</div>
-                            )}
-
-                            {productSlug ? (
-                              <button
-                                type="button"
-                                className="auth-submit mypage-small-button"
-                                onClick={() => void handleDownload(productSlug)}
-                                disabled={isDownloading}
-                              >
-                                {isDownloading ? paymentCopy.licenses.preparing : paymentCopy.licenses.download}
-                              </button>
+                            <div className="mypage-meta-row">
+                              Status: {normalizePaymentStatus(purchase.status)}
+                            </div>
+                            {!purchase.product_slug ? (
+                              <div className="mypage-meta-row">Product mapping is pending.</div>
                             ) : null}
                           </li>
-                        );
-                      })}
-                    </ul>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </section>
+
+                  {orders.length > 0 || ordersMessage || licensesMessage ? (
+                    <section className="mypage-purchase-section" aria-labelledby="legacy-orders-title">
+                      <h3 id="legacy-orders-title" className="mypage-subsection-title">Legacy Orders / Licenses</h3>
+                      <p className="mypage-subsection-copy">Existing FarmVerb records are preserved during migration.</p>
+
+                      {ordersMessage ? <p>{ordersMessage}</p> : null}
+                      {!ordersMessage && licensesMessage ? <p>{licensesMessage}</p> : null}
+
+                      {orders.length > 0 ? (
+                        <ul className="mypage-list">
+                          {orders.map((order) => {
+                            const byOrder = order.order_id ? licensesByOrderId.get(order.order_id) : undefined;
+                            const byProduct = licensesByProductName.get((order.product_name ?? '').trim().toLowerCase());
+                            const license = byOrder ?? byProduct ?? null;
+                            const productSlug = toProductSlug(order.product_name);
+
+                            return (
+                              <li key={order.id} className="mypage-list-item">
+                                <div className="mypage-item-head">{order.product_name ?? paymentCopy.orders.unknownProduct}</div>
+                                <div className="mypage-meta-row">
+                                  Amount: {formatOrderAmount(order.amount)}
+                                </div>
+                                <div className="mypage-meta-row">
+                                  Purchased: {formatDate(order.created_at)}
+                                </div>
+                                <div className="mypage-meta-row">
+                                  Order ID: {order.order_id ?? '-'}
+                                </div>
+
+                                {license ? (
+                                  <div className="mypage-license-row">
+                                    <span className="mypage-meta-label">{paymentCopy.licenses.label}</span>
+                                    <code className="mypage-license-key">{license.license_key}</code>
+                                    <button
+                                      type="button"
+                                      className="auth-submit auth-submit-secondary mypage-small-button"
+                                      onClick={() => void handleCopyLicense(license.id, license.license_key)}
+                                    >
+                                      {copiedLicenseId === license.id ? paymentCopy.licenses.copied : paymentCopy.licenses.copy}
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="mypage-meta-row">License will be issued soon.</div>
+                                )}
+
+                                {productSlug ? (
+                                  <button
+                                    type="button"
+                                    className="auth-submit mypage-small-button"
+                                    onClick={() => void handleDownload(productSlug)}
+                                    disabled={isDownloading}
+                                  >
+                                    {isDownloading ? paymentCopy.licenses.preparing : paymentCopy.licenses.download}
+                                  </button>
+                                ) : null}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : null}
+                    </section>
                   ) : null}
 
                   {downloadMessage ? <p className="mypage-inline-message">{downloadMessage}</p> : null}
