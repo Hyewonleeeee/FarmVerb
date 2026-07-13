@@ -1,5 +1,5 @@
-import MagicLinkAuthPage from '@/components/auth/MagicLinkAuthPage';
+import { redirect } from 'next/navigation';
 
 export default function SignupPage() {
-  return <MagicLinkAuthPage mode="signup" />;
+  redirect('/login');
 }

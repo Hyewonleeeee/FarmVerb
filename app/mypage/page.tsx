@@ -7,7 +7,7 @@ import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import { getPaymentCopy, type PaymentApiErrorCode, type PaymentLocale } from '@/lib/i18n/payment';
 import CountrySelect from '@/components/ui/CountrySelect';
 import { getMagicLinkErrorMessage, getMagicLinkRedirectUrl } from '@/lib/auth/magic-link';
-import { DEFAULT_COUNTRY_NAME, normalizeCountryName } from '@/lib/ui/country';
+import { normalizeCountryName } from '@/lib/ui/country';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 const MY_PAGE_LOGIN_REDIRECT = '/login?redirect=%2Fmypage';
@@ -67,6 +67,11 @@ const formatDate = (dateText: string | null | undefined) => {
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const dd = String(date.getDate()).padStart(2, '0');
   return `${yyyy}.${mm}.${dd}`;
+};
+
+const normalizeOptionalCountryName = (country: string | null | undefined) => {
+  const trimmedCountry = (country ?? '').trim();
+  return trimmedCountry ? normalizeCountryName(trimmedCountry) : '';
 };
 
 const formatOrderAmount = (value: number | null | undefined) => {
@@ -144,7 +149,7 @@ export default function MyPage() {
 
   const [isAccountEditMode, setIsAccountEditMode] = useState(false);
   const [nameInput, setNameInput] = useState('');
-  const [countryInput, setCountryInput] = useState(DEFAULT_COUNTRY_NAME);
+  const [countryInput, setCountryInput] = useState('');
   const [accountMessage, setAccountMessage] = useState('');
   const [accountMessageType, setAccountMessageType] = useState<'error' | 'success' | ''>('');
   const [isSavingAccount, setIsSavingAccount] = useState(false);
@@ -181,13 +186,13 @@ export default function MyPage() {
           id: currentUser.id,
           name: metadata.name ?? null,
           email: currentUser.email ?? null,
-          country: metadata.country ?? DEFAULT_COUNTRY_NAME,
+          country: metadata.country ?? null,
           created_at: currentUser.created_at ?? null
         };
 
         setProfile(fallbackProfile);
         setNameInput(fallbackProfile.name ?? '');
-        setCountryInput(normalizeCountryName(fallbackProfile.country));
+        setCountryInput(normalizeOptionalCountryName(fallbackProfile.country));
         return;
       }
 
@@ -201,7 +206,7 @@ export default function MyPage() {
 
       setProfile(loadedProfile);
       setNameInput(loadedProfile.name ?? '');
-      setCountryInput(normalizeCountryName(loadedProfile.country));
+      setCountryInput(normalizeOptionalCountryName(loadedProfile.country));
     };
 
     const loadOrders = async (currentUser: User) => {
@@ -337,7 +342,7 @@ export default function MyPage() {
 
   const handleCancelEdit = () => {
     setNameInput(profile?.name ?? '');
-    setCountryInput(normalizeCountryName(profile?.country));
+    setCountryInput(normalizeOptionalCountryName(profile?.country));
     setAccountMessage('');
     setAccountMessageType('');
     setIsAccountEditMode(false);
@@ -354,7 +359,7 @@ export default function MyPage() {
 
     const supabase = createBrowserSupabaseClient();
     const trimmedName = nameInput.trim();
-    const trimmedCountry = normalizeCountryName(countryInput).trim();
+    const trimmedCountry = normalizeOptionalCountryName(countryInput);
 
     const nextProfile = {
       id: user.id,
@@ -381,7 +386,7 @@ export default function MyPage() {
     }));
 
     setNameInput(nextProfile.name ?? '');
-    setCountryInput(nextProfile.country ?? DEFAULT_COUNTRY_NAME);
+    setCountryInput(nextProfile.country ?? '');
     setAccountMessage('Account information updated.');
     setAccountMessageType('success');
     setIsAccountEditMode(false);

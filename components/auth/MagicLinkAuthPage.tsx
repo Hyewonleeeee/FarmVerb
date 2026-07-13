@@ -6,37 +6,7 @@ import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import { getMagicLinkErrorMessage, getMagicLinkRedirectUrl, normalizeMagicLinkEmail } from '@/lib/auth/magic-link';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
-type MagicLinkAuthPageProps = {
-  mode: 'login' | 'signup';
-};
-
-const copyByMode = {
-  login: {
-    overline: 'Welcome Back',
-    title: 'Login',
-    intro: 'Enter your email and we will send you a secure sign-in link. No password required.',
-    submit: 'Send Magic Link',
-    submitting: 'Sending link...',
-    success: 'If an account exists for this email, we sent a secure sign-in link.',
-    helperPrefix: 'New to FarmVerb?',
-    helperHref: '/signup',
-    helperLabel: 'Create an account with Magic Link'
-  },
-  signup: {
-    overline: 'Start Your Account',
-    title: 'Sign Up',
-    intro: 'Create your FarmVerb account with a secure email link. No password required.',
-    submit: 'Send Sign Up Link',
-    submitting: 'Sending link...',
-    success: 'We sent a secure account link to your email.',
-    helperPrefix: 'Already have an account?',
-    helperHref: '/login',
-    helperLabel: 'Go to Login'
-  }
-} as const;
-
-export default function MagicLinkAuthPage({ mode }: MagicLinkAuthPageProps) {
-  const pageCopy = copyByMode[mode];
+export default function MagicLinkAuthPage() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'error' | 'success' | ''>('');
@@ -96,8 +66,8 @@ export default function MagicLinkAuthPage({ mode }: MagicLinkAuthPageProps) {
         email: normalizedEmail,
         options: {
           emailRedirectTo: getMagicLinkRedirectUrl(),
-          shouldCreateUser: mode === 'signup',
-          data: mode === 'signup' ? { signup_method: 'magic_link' } : undefined
+          shouldCreateUser: true,
+          data: { signup_method: 'magic_link' }
         }
       });
 
@@ -110,7 +80,7 @@ export default function MagicLinkAuthPage({ mode }: MagicLinkAuthPageProps) {
 
       setEmail(normalizedEmail);
       setLinkSent(true);
-      setMessage(pageCopy.success);
+      setMessage('We sent a secure sign-in link to your email.');
       setMessageType('success');
       setIsSubmitting(false);
     } catch (error) {
@@ -136,21 +106,23 @@ export default function MagicLinkAuthPage({ mode }: MagicLinkAuthPageProps) {
         }}
       >
         <section className="auth-card" aria-labelledby="magic-link-title">
-          <p className="auth-overline">{linkSent ? 'Check Your Inbox' : pageCopy.overline}</p>
+          <p className="auth-overline">{linkSent ? 'Check Your Inbox' : 'Passwordless Sign In'}</p>
           <h1 id="magic-link-title" className="auth-title">
-            {linkSent ? 'Check your email' : pageCopy.title}
+            {linkSent ? 'Check your inbox' : 'Sign In'}
           </h1>
           <p className="auth-copy">
-            {linkSent ? `Open the link sent to ${email} to continue to My Page.` : pageCopy.intro}
+            {linkSent
+              ? `Open the link sent to ${email} to continue to My Page.`
+              : 'Enter your email to sign in or create an account. No password required.'}
           </p>
 
           {!linkSent ? (
             <form className="auth-form" onSubmit={handleSubmit}>
-              <label className="auth-label" htmlFor={`${mode}-email`}>
+              <label className="auth-label" htmlFor="sign-in-email">
                 Email
               </label>
               <input
-                id={`${mode}-email`}
+                id="sign-in-email"
                 className="auth-input"
                 type="email"
                 autoComplete="email"
@@ -160,7 +132,7 @@ export default function MagicLinkAuthPage({ mode }: MagicLinkAuthPageProps) {
               />
 
               <button className="auth-submit" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? pageCopy.submitting : pageCopy.submit}
+                {isSubmitting ? 'Sending link...' : 'Send sign-in link'}
               </button>
             </form>
           ) : (
@@ -183,10 +155,6 @@ export default function MagicLinkAuthPage({ mode }: MagicLinkAuthPageProps) {
           )}
 
           {message ? <p className={`auth-message ${messageType === 'error' ? 'is-error' : 'is-success'}`}>{message}</p> : null}
-
-          <p className="auth-helper">
-            {pageCopy.helperPrefix} <Link href={pageCopy.helperHref}>{pageCopy.helperLabel}</Link>.
-          </p>
         </section>
       </main>
     </div>

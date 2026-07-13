@@ -63,10 +63,7 @@ export default function AuthNav() {
     return (
       <div className="auth-nav" aria-label="Authentication links">
         <Link href="/login" className="auth-nav-link">
-          Login
-        </Link>
-        <Link href="/signup" className="auth-nav-link auth-nav-signup">
-          Sign Up
+          Sign In
         </Link>
       </div>
     );
