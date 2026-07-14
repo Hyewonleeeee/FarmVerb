@@ -1,5 +1,5 @@
-import MagicLinkAuthPage from '@/components/auth/MagicLinkAuthPage';
+import EmailOtpAuthPage from '@/components/auth/EmailOtpAuthPage';
 
 export default function LoginPage() {
-  return <MagicLinkAuthPage />;
+  return <EmailOtpAuthPage />;
 }

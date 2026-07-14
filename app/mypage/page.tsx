@@ -6,7 +6,6 @@ import type { User } from '@supabase/supabase-js';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import { getPaymentCopy, type PaymentApiErrorCode, type PaymentLocale } from '@/lib/i18n/payment';
 import CountrySelect from '@/components/ui/CountrySelect';
-import { getMagicLinkErrorMessage, getMagicLinkRedirectUrl } from '@/lib/auth/magic-link';
 import type { PurchaseRecord } from '@/lib/payments/purchases';
 import { normalizeCountryName } from '@/lib/ui/country';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -48,7 +47,7 @@ const dashboardTabs: { key: DashboardTabKey; label: string }[] = [
 const dashboardSectionCopy: Record<DashboardTabKey, string> = {
   account: 'Personal details and account profile settings.',
   orders: 'Lemon Squeezy purchases plus existing FarmVerb order and license records.',
-  security: 'Email verification and passwordless Magic Link access.'
+  security: 'Email verification and passwordless one-time code access.'
 };
 
 const formatDate = (dateText: string | null | undefined) => {
@@ -158,10 +157,6 @@ export default function MyPage() {
   const [downloadMessage, setDownloadMessage] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
   const [copiedLicenseId, setCopiedLicenseId] = useState<string | null>(null);
-
-  const [securityMessage, setSecurityMessage] = useState('');
-  const [securityMessageType, setSecurityMessageType] = useState<'error' | 'success' | ''>('');
-  const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
 
   const emailVerified = Boolean(user?.email_confirmed_at);
 
@@ -431,44 +426,6 @@ export default function MyPage() {
     setAccountMessageType('success');
     setIsAccountEditMode(false);
     setIsSavingAccount(false);
-  };
-
-  const handleSendMagicLink = async () => {
-    if (!user?.email) {
-      setSecurityMessage('Email address not found for this account.');
-      setSecurityMessageType('error');
-      return;
-    }
-
-    setIsSendingMagicLink(true);
-    setSecurityMessage('');
-    setSecurityMessageType('');
-
-    try {
-      const supabase = createBrowserSupabaseClient();
-      const { error } = await supabase.auth.signInWithOtp({
-        email: user.email,
-        options: {
-          emailRedirectTo: getMagicLinkRedirectUrl(),
-          shouldCreateUser: false
-        }
-      });
-
-      if (error) {
-        setSecurityMessage(getMagicLinkErrorMessage(error));
-        setSecurityMessageType('error');
-        setIsSendingMagicLink(false);
-        return;
-      }
-
-      setSecurityMessage('A new Magic Link was sent. Please check your inbox.');
-      setSecurityMessageType('success');
-      setIsSendingMagicLink(false);
-    } catch (error) {
-      setSecurityMessage(getMagicLinkErrorMessage(error));
-      setSecurityMessageType('error');
-      setIsSendingMagicLink(false);
-    }
   };
 
   const handleDownload = async (productSlug: string) => {
@@ -837,24 +794,10 @@ export default function MyPage() {
                     <div className="mypage-security-block">
                       <div className="mypage-item-head">Passwordless Sign-In</div>
                       <p className="mypage-meta-row">
-                        FarmVerb uses secure Magic Links instead of passwords. Request a new link whenever you need to sign in again.
+                        You sign in securely using a one-time code sent to your email.
                       </p>
-                      <button
-                        type="button"
-                        className="auth-submit mypage-small-button"
-                        onClick={() => void handleSendMagicLink()}
-                        disabled={isSendingMagicLink}
-                      >
-                        {isSendingMagicLink ? 'Sending...' : 'Send New Magic Link'}
-                      </button>
                     </div>
                   </div>
-
-                  {securityMessage ? (
-                    <p className={`auth-message ${securityMessageType === 'error' ? 'is-error' : 'is-success'}`}>
-                      {securityMessage}
-                    </p>
-                  ) : null}
                 </>
               ) : null}
             </section>
