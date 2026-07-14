@@ -8,6 +8,7 @@ import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 type AuthStep = 'email' | 'otp' | 'success';
 
 const RESEND_COOLDOWN_SECONDS = 60;
+const EMAIL_OTP_LENGTH = 8;
 
 export default function EmailOtpAuthPage() {
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -100,7 +101,7 @@ export default function EmailOtpAuthPage() {
       setOtp('');
       setStep('otp');
       setResendSeconds(RESEND_COOLDOWN_SECONDS);
-      setMessage('We sent a 6-digit sign-in code to your email.');
+      setMessage(`We sent an ${EMAIL_OTP_LENGTH}-digit sign-in code to your email.`);
       setMessageType('success');
     } catch (error) {
       setMessage(getEmailOtpErrorMessage(error));
@@ -115,13 +116,13 @@ export default function EmailOtpAuthPage() {
 
     const normalizedOtp = otp.replace(/\D/g, '');
     if (!normalizedOtp) {
-      setMessage('Please enter the 6-digit code from your email.');
+      setMessage(`Please enter the ${EMAIL_OTP_LENGTH}-digit code from your email.`);
       setMessageType('error');
       return;
     }
 
-    if (normalizedOtp.length !== 6) {
-      setMessage('The sign-in code must be 6 digits.');
+    if (normalizedOtp.length !== EMAIL_OTP_LENGTH) {
+      setMessage(`The sign-in code must be ${EMAIL_OTP_LENGTH} digits.`);
       setMessageType('error');
       return;
     }
@@ -189,7 +190,7 @@ export default function EmailOtpAuthPage() {
 
       setOtp('');
       setResendSeconds(RESEND_COOLDOWN_SECONDS);
-      setMessage('A new 6-digit code was sent to your email.');
+      setMessage(`A new ${EMAIL_OTP_LENGTH}-digit code was sent to your email.`);
       setMessageType('success');
     } catch (error) {
       setMessage(getEmailOtpErrorMessage(error));
@@ -244,7 +245,7 @@ export default function EmailOtpAuthPage() {
               </h1>
               <p className="auth-copy">
                 {step === 'otp'
-                  ? 'Enter the 6-digit code sent to your email.'
+                  ? `Enter the ${EMAIL_OTP_LENGTH}-digit code sent to your email.`
                   : 'Enter your email to sign in or create an account. No password required.'}
               </p>
 
@@ -275,7 +276,7 @@ export default function EmailOtpAuthPage() {
                   </div>
 
                   <label className="auth-label" htmlFor="sign-in-otp">
-                    6-digit code
+                    {EMAIL_OTP_LENGTH}-digit code
                   </label>
                   <input
                     id="sign-in-otp"
@@ -283,10 +284,12 @@ export default function EmailOtpAuthPage() {
                     type="text"
                     inputMode="numeric"
                     autoComplete="one-time-code"
-                    maxLength={6}
+                    maxLength={EMAIL_OTP_LENGTH}
                     value={otp}
-                    onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="000000"
+                    onChange={(event) =>
+                      setOtp(event.target.value.replace(/\D/g, '').slice(0, EMAIL_OTP_LENGTH))
+                    }
+                    placeholder={'0'.repeat(EMAIL_OTP_LENGTH)}
                     autoFocus
                     required
                   />
