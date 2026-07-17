@@ -53,7 +53,7 @@ type HomeStoryCard = {
 };
 
 const AUDIO_PLUGIN_MENU_ITEMS: Array<{ label: string; section: PluginSectionKey }> = [
-  { label: 'Nebula Series', section: 'series' },
+  { label: 'Nebula Series Bundle', section: 'series' },
   { label: 'Nebula Crush', section: 'nebula-crush' },
   { label: 'Nebula Space', section: 'nebula-space' },
   { label: 'Nebula Drift', section: 'nebula-drift' },
@@ -220,7 +220,7 @@ function ProductPrice({
 
 const NEBULA_BUNDLE_PRODUCT: PluginProduct = {
   section: 'series',
-  name: 'Nebula Series',
+  name: 'Nebula Series Bundle',
   description: 'The complete Nebula bundle: Crush, Space, Drift, and Rift in one polished plugin collection.',
   images: ['/Nebula%20Series/Main/Nebula%20Series.png']
 };
@@ -255,12 +255,12 @@ const NEBULA_PRODUCTS: PluginProduct[] = [
 const HOME_FEATURE_CARDS: HomeFeatureCard[] = [
   {
     eyebrow: 'Audio Plugins',
-    name: 'Nebula Series',
+    name: 'Nebula Series Bundle',
     description: 'The Nebula overview, anchored by the main series artwork and the brand’s flagship atmosphere.',
     image: '/Nebula%20Series/Main/Nebula%20Series.png',
     href: buildRouteHref('plugins'),
     route: 'plugins',
-    productName: 'Nebula Series',
+    productName: 'Nebula Series Bundle',
     ctaLabel: 'Explore Series'
   },
   {
@@ -430,12 +430,12 @@ const DRUMS_REQUIREMENTS: SupportRequirementGroup[] = [
 ];
 
 const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
-  'Nebula Series': {
-    productName: 'Nebula Series',
+  'Nebula Series Bundle': {
+    productName: 'Nebula Series Bundle',
     eyebrow: 'Nebula Series Bundle',
     headline: 'The Complete Nebula Collection',
     subhead: 'Four effects for saturation, space, motion, and fracture. Nebula Drums included as a bonus.',
-    body: 'Nebula Series brings the core Nebula processors together as one expandable collection: Crush for harmonic pressure, Space for cinematic ambience, Drift for fluid modulation, and Rift for granular fracture.',
+    body: 'Nebula Series Bundle brings the core Nebula processors together as one expandable collection: Crush for harmonic pressure, Space for cinematic ambience, Drift for fluid modulation, and Rift for granular fracture.',
     image: '/Nebula%20Series/Main/Nebula%20Series.png',
     imageAlt: 'Nebula Series bundle artwork',
     imageLayout: 'wide',
@@ -520,7 +520,7 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
         body: 'Finish by setting the final output level in context.'
       }
     ],
-    relatedProducts: ['Nebula Space', 'Nebula Rift', 'Nebula Series']
+    relatedProducts: ['Nebula Space', 'Nebula Rift', 'Nebula Series Bundle']
   },
   'Nebula Space': {
     productName: 'Nebula Space',
@@ -568,7 +568,7 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
         body: 'Add movement and low-mid body where the mix needs it.'
       }
     ],
-    relatedProducts: ['Nebula Drift', 'Nebula Crush', 'Nebula Series']
+    relatedProducts: ['Nebula Drift', 'Nebula Crush', 'Nebula Series Bundle']
   },
   'Nebula Drift': {
     productName: 'Nebula Drift',
@@ -616,7 +616,7 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
         body: 'Choose SILK, TIDE, or FRAC for the final movement profile.'
       }
     ],
-    relatedProducts: ['Nebula Space', 'Nebula Rift', 'Nebula Series']
+    relatedProducts: ['Nebula Space', 'Nebula Rift', 'Nebula Series Bundle']
   },
   'Nebula Rift': {
     productName: 'Nebula Rift',
@@ -664,7 +664,7 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
         body: 'Add drift, rupture, and nonlinear tearing.'
       }
     ],
-    relatedProducts: ['Nebula Crush', 'Nebula Drift', 'Nebula Series']
+    relatedProducts: ['Nebula Crush', 'Nebula Drift', 'Nebula Series Bundle']
   },
   'Nebula Drums': {
     productName: 'Nebula Drums',
@@ -712,12 +712,12 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
         body: 'Use the XY Pad and front-panel controls for movement and space.'
       }
     ],
-    relatedProducts: ['Nebula Series', 'Nebula Crush', 'Glitch Drum Pack Vol.1']
+    relatedProducts: ['Nebula Series Bundle', 'Nebula Crush', 'Glitch Drum Pack Vol.1']
   }
 };
 
 const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
-  'Nebula Series': {
+  'Nebula Series Bundle': {
     title: 'Nebula Series Bundle Support',
     description: 'Manuals, system notes, and launch information for the Nebula bundle.',
     requirements: [
@@ -800,7 +800,7 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
         answer: 'The legal page in the manual allows personal and commercial music productions, but redistribution, resale, sharing of installers, license keys, sample content, or product files is not permitted.'
       }
     ],
-    relatedProducts: ['Nebula Series', 'Nebula Space', 'Nebula Rift']
+    relatedProducts: ['Nebula Series Bundle', 'Nebula Space', 'Nebula Rift']
   },
   'Nebula Space': {
     title: 'Nebula Space Support',
@@ -833,7 +833,7 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
         answer: 'The manual suggests setting Size, placing Early, tuning Decay and Color, blending with Mix, then finishing with Warp and Mass.'
       }
     ],
-    relatedProducts: ['Nebula Series', 'Nebula Drift', 'Nebula Crush']
+    relatedProducts: ['Nebula Series Bundle', 'Nebula Drift', 'Nebula Crush']
   },
   'Nebula Drift': {
     title: 'Nebula Drift Support',
@@ -866,7 +866,7 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
         answer: 'The manual suggests setting Mix, shaping Width and Drift, adding Motion and Blur, then finalizing Mode.'
       }
     ],
-    relatedProducts: ['Nebula Series', 'Nebula Space', 'Nebula Rift']
+    relatedProducts: ['Nebula Series Bundle', 'Nebula Space', 'Nebula Rift']
   },
   'Nebula Rift': {
     title: 'Nebula Rift Support',
@@ -899,7 +899,7 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
         answer: 'The manual says Nebula Rift includes 15 curated presets grouped by mode. Preset selection recalls several controls, while Mix intentionally stays where you set it.'
       }
     ],
-    relatedProducts: ['Nebula Series', 'Nebula Crush', 'Nebula Drift']
+    relatedProducts: ['Nebula Series Bundle', 'Nebula Crush', 'Nebula Drift']
   },
   'Nebula Drums': {
     title: 'Nebula Drums Support',
@@ -932,7 +932,7 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
         answer: 'The legal page in the manual allows personal and commercial music productions, but redistribution, resale, extraction, sharing, or repackaging of the included sample content or instrument files is not permitted.'
       }
     ],
-    relatedProducts: ['Nebula Series', 'Nebula Crush', 'Glitch Drum Pack Vol.1']
+    relatedProducts: ['Nebula Series Bundle', 'Nebula Crush', 'Glitch Drum Pack Vol.1']
   }
 };
 
@@ -1237,11 +1237,11 @@ function BundleIncludesSection() {
   const includedCards = getRelatedProductCards([...BUNDLE_INCLUDED_PRODUCT_NAMES]);
 
   return (
-    <section className="bundle-includes-section" aria-label="Nebula Series bundle contents">
+    <section className="bundle-includes-section" aria-label="Nebula Series Bundle contents">
       <div className="product-support-head">
         <p className="section-overline">Bundle Includes</p>
         <h2>Four Nebula effects plus Nebula Drums as a bonus.</h2>
-        <p>Nebula Series is prepared as a complete bundle with the core effect devices and the Decent Sampler drum instrument included as a bonus.</p>
+        <p>Nebula Series Bundle includes the core effect devices and the Decent Sampler drum instrument as a bonus.</p>
       </div>
       <div className="bundle-includes-grid">
         {includedCards.map((card) => (
@@ -1541,7 +1541,9 @@ export default function FarmVerbSite() {
 
   const activePluginMenuSection = currentRoute === 'plugins' ? activeNebulaSection : null;
   const activePluginMenuName =
-    activeNebulaSection === DEFAULT_PLUGIN_SECTION ? 'Nebula Series' : selectedSeriesProduct?.name ?? 'Nebula Series';
+    activeNebulaSection === DEFAULT_PLUGIN_SECTION
+      ? 'Nebula Series Bundle'
+      : selectedSeriesProduct?.name ?? 'Nebula Series Bundle';
   const activePluginMenuCopy =
     activeNebulaSection === DEFAULT_PLUGIN_SECTION
       ? 'The complete Nebula bundle, prepared as a single product.'

@@ -33,9 +33,9 @@ function priceOf(productName: string, fallback = 0) {
 const PRODUCT_CATALOG: CatalogProduct[] = [
   {
     slug: 'nebula-series',
-    name: 'Nebula Series',
-    description: 'Nebula Series bundle',
-    price: priceOf('Nebula Series', 189),
+    name: 'Nebula Series Bundle',
+    description: 'Complete Nebula effects bundle',
+    price: priceOf('Nebula Series Bundle', 189),
     currency: 'USD',
     image: '/Nebula%20Series/Main/Nebula%20Series.png',
     checkoutUrl: getLemonCheckoutUrl('nebula-series')
@@ -99,6 +99,8 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
 const productByName = new Map(PRODUCT_CATALOG.map((product) => [product.name.toLowerCase(), product]));
 const productBySlug = new Map(PRODUCT_CATALOG.map((product) => [product.slug, product]));
 const legacyProductAliases = new Map<string, CatalogProduct>([
+  ['nebula-series', productBySlug.get('nebula-series') as CatalogProduct],
+  ['nebula-series-bundle', productBySlug.get('nebula-series') as CatalogProduct],
   ['nebula-drum', productBySlug.get('nebula-drums') as CatalogProduct],
   ['nebula-drums', productBySlug.get('nebula-drums') as CatalogProduct],
   ['glitch-drum-pack-vol-i', productBySlug.get('glitch-drum-pack-vol-1') as CatalogProduct],
@@ -127,7 +129,8 @@ function getCartStorageKey(userId: string) {
 }
 
 function resolveProduct(productName: string): CatalogProduct {
-  const fromCatalog = productByName.get(productName.toLowerCase().trim());
+  const normalizedName = productName.toLowerCase().trim();
+  const fromCatalog = productByName.get(normalizedName) ?? legacyProductAliases.get(slugify(normalizedName));
   if (fromCatalog) {
     return fromCatalog;
   }

@@ -21,6 +21,7 @@ const checkoutUrlBySlug: Record<LemonCheckoutSlug, string | undefined> = {
 
 const slugByProductName = new Map<string, LemonCheckoutSlug>([
   ['nebula series', 'nebula-series'],
+  ['nebula series bundle', 'nebula-series'],
   ['nebula crush', 'nebula-crush'],
   ['nebula space', 'nebula-space'],
   ['nebula drift', 'nebula-drift'],
@@ -62,8 +63,8 @@ export function getLemonMyOrdersUrl() {
   return normalizeUrl(process.env.NEXT_PUBLIC_LEMON_MY_ORDERS_URL);
 }
 
-export function getLemonBuyButtonLabel(productName: string) {
-  return productName.trim().toLowerCase() === 'nebula series' ? 'Buy Bundle' : 'Buy Now';
+export function getLemonBuyButtonLabel(_productName: string) {
+  return 'Buy Now';
 }
 
 // TODO: Future Supabase + Lemon webhook integration for account purchase history.

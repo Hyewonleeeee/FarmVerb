@@ -9,8 +9,12 @@ export type ProductPricing = {
 
 const glitchSaleActive = process.env.NEXT_PUBLIC_GLITCH_SALE_ACTIVE === 'true';
 
+const PRODUCT_NAME_ALIASES: Record<string, string> = {
+  'Nebula Series': 'Nebula Series Bundle'
+};
+
 const PRICING_BY_PRODUCT_NAME: Record<string, ProductPricing> = {
-  'Nebula Series': {
+  'Nebula Series Bundle': {
     currency: 'USD',
     launchPrice: 189,
     regularPrice: 255
@@ -65,7 +69,8 @@ const PRICING_BY_PRODUCT_NAME: Record<string, ProductPricing> = {
 };
 
 export function getProductPricing(productName: string): ProductPricing | null {
-  return PRICING_BY_PRODUCT_NAME[productName] ?? null;
+  const canonicalName = PRODUCT_NAME_ALIASES[productName] ?? productName;
+  return PRICING_BY_PRODUCT_NAME[canonicalName] ?? null;
 }
 
 export function getMainProductPrice(pricing: ProductPricing): number {
