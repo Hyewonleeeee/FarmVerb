@@ -14,6 +14,7 @@ import {
 } from '@/lib/cart/store';
 import { getLemonBuyButtonLabel, getLemonCheckoutUrlByProductName, getLemonMyOrdersUrl } from '@/lib/checkout/lemonLinks';
 import { formatUsdPrice, getLimitedSalePrice, getMainProductPrice, getProductPricing } from '@/lib/pricing/products';
+import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 import {
   DEFAULT_PLUGIN_SECTION,
   type PluginSectionKey,
@@ -58,6 +59,8 @@ const AUDIO_PLUGIN_MENU_ITEMS: Array<{ label: string; section: PluginSectionKey 
   { label: 'Nebula Drift', section: 'nebula-drift' },
   { label: 'Nebula Rift', section: 'nebula-rift' }
 ];
+
+const ACCOUNT_UI_ENABLED = process.env.NEXT_PUBLIC_ENABLE_ACCOUNT_UI !== 'false';
 
 const GLITCH_FEATURES = [
   {
@@ -1264,6 +1267,8 @@ export default function FarmVerbSite() {
   const audioPluginsMenuRef = useRef<HTMLDivElement | null>(null);
   const cartPreviewRef = useRef<HTMLDivElement | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartUserId, setCartUserId] = useState<string | null>(null);
+  const [cartAuthReady, setCartAuthReady] = useState(false);
   const [buyNowNotice, setBuyNowNotice] = useState<string | null>(null);
   const [cartPreviewOpen, setCartPreviewOpen] = useState(false);
   const [cartFeedback, setCartFeedback] = useState<{ message: string; item: CartItem | null } | null>(null);
@@ -1310,11 +1315,65 @@ export default function FarmVerbSite() {
   }, []);
 
   useEffect(() => {
-    setCartItems(getCartItems());
-    return subscribeToCart(() => {
-      setCartItems(getCartItems());
+    if (!ACCOUNT_UI_ENABLED) {
+      setCartAuthReady(true);
+      return;
+    }
+
+    const supabase = createBrowserSupabaseClient();
+    let mounted = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (!mounted) {
+        return;
+      }
+
+      setCartUserId(data.user?.id ?? null);
+      setCartAuthReady(true);
     });
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) {
+        return;
+      }
+
+      setCartUserId(session?.user.id ?? null);
+      setCartAuthReady(true);
+      if (!session) {
+        setCartItems([]);
+        setCartFeedback(null);
+        setCartPreviewOpen(false);
+      }
+    });
+
+    const hideCartOnLogout = () => {
+      setCartUserId(null);
+      setCartItems([]);
+      setCartFeedback(null);
+      setCartPreviewOpen(false);
+    };
+
+    window.addEventListener('farmverb:auth-logout', hideCartOnLogout);
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+      window.removeEventListener('farmverb:auth-logout', hideCartOnLogout);
+    };
   }, []);
+
+  useEffect(() => {
+    if (!cartUserId) {
+      setCartItems([]);
+      return;
+    }
+
+    const syncCart = () => setCartItems(getCartItems(cartUserId));
+    syncCart();
+    return subscribeToCart(cartUserId, syncCart);
+  }, [cartUserId]);
 
   useEffect(() => {
     if (!buyNowNotice) {
@@ -1632,13 +1691,41 @@ export default function FarmVerbSite() {
   const cartItemCount = useMemo(() => getCartItemCount(cartItems), [cartItems]);
   const lemonMyOrdersUrl = getLemonMyOrdersUrl();
 
-  const addToCart = (productName: string) => {
+  const redirectToLogin = () => {
+    const returnPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    window.location.assign(`/login?redirect=${encodeURIComponent(returnPath)}`);
+  };
+
+  const addToCart = async (productName: string) => {
+    let userId = cartUserId;
+
+    if (!userId && ACCOUNT_UI_ENABLED) {
+      try {
+        const supabase = createBrowserSupabaseClient();
+        const {
+          data: { user }
+        } = await supabase.auth.getUser();
+        userId = user?.id ?? null;
+        if (userId) {
+          setCartUserId(userId);
+          setCartAuthReady(true);
+        }
+      } catch {
+        userId = null;
+      }
+    }
+
+    if (!userId) {
+      redirectToLogin();
+      return;
+    }
+
     const catalogProduct = getCatalogProductByName(productName);
     const normalizedName = productName.trim().toLowerCase();
-    const existing = getCartItems().some((item) =>
+    const existing = getCartItems(userId).some((item) =>
       catalogProduct ? item.slug === catalogProduct.slug : item.name.trim().toLowerCase() === normalizedName
     );
-    const nextCart = addItemToCart(productName);
+    const nextCart = addItemToCart(userId, productName);
     const addedItem =
       nextCart.find((item) =>
         catalogProduct ? item.slug === catalogProduct.slug : item.name.trim().toLowerCase() === normalizedName
@@ -1812,41 +1899,43 @@ export default function FarmVerbSite() {
             <Link href="/support" className="nav-link nav-link-support" data-route="support">
               Support
             </Link>
-            <div className={`cart-nav-wrap ${cartPreviewOpen ? 'is-open' : ''}`} ref={cartPreviewRef}>
-              <Link
-                href="/cart"
-                className="cart-trigger"
-                aria-label={`Shopping cart, ${cartItemCount} item${cartItemCount === 1 ? '' : 's'}`}
-              >
-                <span className="cart-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                    <path d="M3 4h2l1.4 8.2a2 2 0 0 0 2 1.8h7.9a2 2 0 0 0 2-1.6L20 7H7.2" />
-                    <circle cx="10" cy="19" r="1.7" />
-                    <circle cx="17" cy="19" r="1.7" />
-                  </svg>
-                </span>
-                <span className="cart-label">Cart</span>
-                <span className="cart-badge">{cartItemCount}</span>
-              </Link>
+            {cartAuthReady && cartUserId ? (
+              <div className={`cart-nav-wrap ${cartPreviewOpen ? 'is-open' : ''}`} ref={cartPreviewRef}>
+                <Link
+                  href="/cart"
+                  className="cart-trigger"
+                  aria-label={`Shopping cart, ${cartItemCount} item${cartItemCount === 1 ? '' : 's'}`}
+                >
+                  <span className="cart-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                      <path d="M3 4h2l1.4 8.2a2 2 0 0 0 2 1.8h7.9a2 2 0 0 0 2-1.6L20 7H7.2" />
+                      <circle cx="10" cy="19" r="1.7" />
+                      <circle cx="17" cy="19" r="1.7" />
+                    </svg>
+                  </span>
+                  <span className="cart-label">Cart</span>
+                  <span className="cart-badge">{cartItemCount}</span>
+                </Link>
 
-              {cartPreviewOpen && cartFeedback ? (
-                <div className="mini-cart-popover" role="status" aria-live="polite">
-                  <p className="mini-cart-status">{cartFeedback.message}</p>
-                  {cartFeedback.item ? (
-                    <div className="mini-cart-line">
-                      {cartFeedback.item.image ? <img src={cartFeedback.item.image} alt="" /> : null}
-                      <div>
-                        <strong>{cartFeedback.item.name}</strong>
-                        <span>{cartFeedback.item.description}</span>
+                {cartPreviewOpen && cartFeedback ? (
+                  <div className="mini-cart-popover" role="status" aria-live="polite">
+                    <p className="mini-cart-status">{cartFeedback.message}</p>
+                    {cartFeedback.item ? (
+                      <div className="mini-cart-line">
+                        {cartFeedback.item.image ? <img src={cartFeedback.item.image} alt="" /> : null}
+                        <div>
+                          <strong>{cartFeedback.item.name}</strong>
+                          <span>{cartFeedback.item.description}</span>
+                        </div>
                       </div>
-                    </div>
-                  ) : null}
-                  <Link href="/cart" className="mini-cart-link">
-                    View Cart
-                  </Link>
-                </div>
-              ) : null}
-            </div>
+                    ) : null}
+                    <Link href="/cart" className="mini-cart-link">
+                      View Cart
+                    </Link>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             <AuthNav />
           </div>
         </nav>

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
@@ -7,12 +8,14 @@ import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import { getPaymentCopy, type PaymentApiErrorCode, type PaymentLocale } from '@/lib/i18n/payment';
 import CountrySelect from '@/components/ui/CountrySelect';
 import type { PurchaseRecord } from '@/lib/payments/purchases';
+import { getLemonMyOrdersUrl } from '@/lib/checkout/lemonLinks';
+import { getCatalogProductBySlug } from '@/lib/cart/store';
 import { normalizeCountryName } from '@/lib/ui/country';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 const MY_PAGE_LOGIN_REDIRECT = '/login?redirect=%2Fmypage';
 
-type DashboardTabKey = 'account' | 'orders' | 'security';
+type AccountTabKey = 'products' | 'account' | 'security';
 
 type Profile = {
   id: string;
@@ -38,15 +41,15 @@ type License = {
   created_at: string;
 };
 
-const dashboardTabs: { key: DashboardTabKey; label: string }[] = [
-  { key: 'account', label: 'Account Info' },
-  { key: 'orders', label: 'Orders / Purchase History' },
+const accountTabs: { key: AccountTabKey; label: string }[] = [
+  { key: 'products', label: 'My Products' },
+  { key: 'account', label: 'Account' },
   { key: 'security', label: 'Security' }
 ];
 
-const dashboardSectionCopy: Record<DashboardTabKey, string> = {
+const accountSectionCopy: Record<AccountTabKey, string> = {
+  products: 'Your purchased products, downloads, and license details.',
   account: 'Personal details and account profile settings.',
-  orders: 'Lemon Squeezy purchases plus existing FarmVerb order and license records.',
   security: 'Email verification and passwordless one-time code access.'
 };
 
@@ -132,7 +135,7 @@ export default function MyPage() {
   const paymentCopy = getPaymentCopy(paymentLocale);
   const isLoggingOutRef = useRef(false);
 
-  const [activeTab, setActiveTab] = useState<DashboardTabKey>('account');
+  const [activeTab, setActiveTab] = useState<AccountTabKey>('products');
 
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -510,9 +513,11 @@ export default function MyPage() {
     return map;
   }, [licenses]);
 
-  const activeDashboardTabMeta = useMemo(() => {
-    return dashboardTabs.find((tab) => tab.key === activeTab) ?? dashboardTabs[0];
+  const activeAccountTabMeta = useMemo(() => {
+    return accountTabs.find((tab) => tab.key === activeTab) ?? accountTabs[0];
   }, [activeTab]);
+
+  const lemonMyOrdersUrl = getLemonMyOrdersUrl();
 
   if (isLoading) {
     return (
@@ -545,12 +550,12 @@ export default function MyPage() {
       <AuthPageHeader />
 
       <main className="auth-page-main">
-        <section className="mypage-card mypage-dashboard" aria-label="FarmVerb account dashboard">
+        <section className="mypage-card mypage-dashboard" aria-label="FarmVerb account">
           <div className="mypage-dashboard-head">
             <div>
               <p className="auth-overline">My Account</p>
-              <h1 className="auth-title">Dashboard</h1>
-              <p className="auth-copy">Manage account, purchases, licenses, and security in one place.</p>
+              <h1 className="auth-title">My Account</h1>
+              <p className="auth-copy">Access your products, downloads, licenses, and account details.</p>
             </div>
 
             <button type="button" className="auth-submit auth-submit-secondary mypage-logout" onClick={handleLogout}>
@@ -559,9 +564,9 @@ export default function MyPage() {
           </div>
 
           <div className="mypage-dashboard-layout">
-            <aside className="mypage-sidebar" aria-label="My Page navigation">
+            <aside className="mypage-sidebar" aria-label="My Account navigation">
               <nav className="mypage-sidebar-nav" role="tablist" aria-orientation="vertical">
-                {dashboardTabs.map((tab) => (
+                {accountTabs.map((tab) => (
                   <button
                     key={tab.key}
                     type="button"
@@ -578,9 +583,9 @@ export default function MyPage() {
 
             <section className="mypage-panel mypage-panel-dashboard" role="tabpanel">
               <header className="mypage-content-head">
-                <p className="mypage-content-overline">Dashboard</p>
-                <h2 className="mypage-content-title">{activeDashboardTabMeta.label}</h2>
-                <p className="mypage-content-copy">{dashboardSectionCopy[activeDashboardTabMeta.key]}</p>
+                <p className="mypage-content-overline">My Account</p>
+                <h2 className="mypage-content-title">{activeAccountTabMeta.label}</h2>
+                <p className="mypage-content-copy">{accountSectionCopy[activeAccountTabMeta.key]}</p>
               </header>
 
               {activeTab === 'account' ? (
@@ -672,48 +677,94 @@ export default function MyPage() {
                 </>
               ) : null}
 
-              {activeTab === 'orders' ? (
+              {activeTab === 'products' ? (
                 <>
                   <section className="mypage-purchase-section" aria-labelledby="lemon-purchases-title">
-                    <h3 id="lemon-purchases-title" className="mypage-subsection-title">My Purchases</h3>
-                    <p className="mypage-subsection-copy">Purchases verified through Lemon Squeezy.</p>
+                    <h3 id="lemon-purchases-title" className="mypage-subsection-title">Purchased Products</h3>
+                    <p className="mypage-subsection-copy">Products verified through Lemon Squeezy appear here with their downloads and license details.</p>
 
                     {purchasesMessage ? <p className="auth-message is-error">{purchasesMessage}</p> : null}
 
-                    {!purchasesMessage && purchases.length === 0 ? (
-                      <p>No Lemon Squeezy purchases linked yet.</p>
+                    {!purchasesMessage && purchases.length === 0 && orders.length === 0 ? (
+                      <div className="mypage-empty-products">
+                        <strong>You don&apos;t own any products yet.</strong>
+                        <p>Your FarmVerb products will appear here after purchase.</p>
+                        <Link href="/plugins" className="auth-submit mypage-small-button">
+                          Browse Plugins
+                        </Link>
+                      </div>
                     ) : null}
 
                     {purchases.length > 0 ? (
                       <ul className="mypage-list">
-                        {purchases.map((purchase) => (
-                          <li key={purchase.id} className="mypage-list-item">
-                            <div className="mypage-item-head">{purchase.product_name}</div>
-                            <div className="mypage-meta-row">
-                              Amount: {formatCurrency(purchase.total_cents / 100, purchase.currency, paymentLocale)}
-                            </div>
-                            <div className="mypage-meta-row">
-                              Purchased: {formatDate(purchase.purchased_at)}
-                            </div>
-                            <div className="mypage-meta-row">
-                              Order ID: {purchase.lemon_order_id}
-                            </div>
-                            <div className="mypage-meta-row">
-                              Status: {normalizePaymentStatus(purchase.status)}
-                            </div>
-                            {!purchase.product_slug ? (
-                              <div className="mypage-meta-row">Product mapping is pending.</div>
-                            ) : null}
-                          </li>
-                        ))}
+                        {purchases.map((purchase) => {
+                          const productImage = purchase.product_slug
+                            ? getCatalogProductBySlug(purchase.product_slug)?.image ?? null
+                            : null;
+
+                          return (
+                            <li key={purchase.id} className="mypage-list-item mypage-product-item">
+                              {productImage ? (
+                                <figure className="mypage-product-media">
+                                  <img src={productImage} alt="" />
+                                </figure>
+                              ) : null}
+                              <div className="mypage-product-copy">
+                                <div className="mypage-item-head">{purchase.product_name}</div>
+                                <div className="mypage-meta-row">
+                                  Purchased · {formatDate(purchase.purchased_at)}
+                                </div>
+                                <div className="mypage-meta-row">
+                                  {formatCurrency(purchase.total_cents / 100, purchase.currency, paymentLocale)} · {normalizePaymentStatus(purchase.status)}
+                                </div>
+                                <div className="mypage-meta-row">Order ID: {purchase.lemon_order_id}</div>
+
+                                {purchase.lemon_license_key ? (
+                                  <div className="mypage-license-row">
+                                    <span className="mypage-meta-label">License</span>
+                                    <code className="mypage-license-key">{purchase.lemon_license_key}</code>
+                                    <button
+                                      type="button"
+                                      className="auth-submit auth-submit-secondary mypage-small-button"
+                                      onClick={() => void handleCopyLicense(purchase.id, purchase.lemon_license_key ?? '')}
+                                    >
+                                      {copiedLicenseId === purchase.id ? paymentCopy.licenses.copied : paymentCopy.licenses.copy}
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="mypage-meta-row">License is being issued.</div>
+                                )}
+
+                                <div className="mypage-product-actions">
+                                  {purchase.download_url ? (
+                                    <a
+                                      href={purchase.download_url}
+                                      className="auth-submit mypage-small-button"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      Download
+                                    </a>
+                                  ) : (
+                                    <span className="mypage-meta-row">Download will appear when available.</span>
+                                  )}
+                                </div>
+
+                                {!purchase.product_slug ? (
+                                  <div className="mypage-meta-row">Product mapping is pending.</div>
+                                ) : null}
+                              </div>
+                            </li>
+                          );
+                        })}
                       </ul>
                     ) : null}
                   </section>
 
                   {orders.length > 0 || ordersMessage || licensesMessage ? (
                     <section className="mypage-purchase-section" aria-labelledby="legacy-orders-title">
-                      <h3 id="legacy-orders-title" className="mypage-subsection-title">Legacy Orders / Licenses</h3>
-                      <p className="mypage-subsection-copy">Existing FarmVerb records are preserved during migration.</p>
+                      <h3 id="legacy-orders-title" className="mypage-subsection-title">Previous FarmVerb Products</h3>
+                      <p className="mypage-subsection-copy">Products purchased through the earlier FarmVerb order system.</p>
 
                       {ordersMessage ? <p>{ordersMessage}</p> : null}
                       {!ordersMessage && licensesMessage ? <p>{licensesMessage}</p> : null}
@@ -725,52 +776,68 @@ export default function MyPage() {
                             const byProduct = licensesByProductName.get((order.product_name ?? '').trim().toLowerCase());
                             const license = byOrder ?? byProduct ?? null;
                             const productSlug = toProductSlug(order.product_name);
+                            const productImage = productSlug ? getCatalogProductBySlug(productSlug)?.image ?? null : null;
 
                             return (
-                              <li key={order.id} className="mypage-list-item">
-                                <div className="mypage-item-head">{order.product_name ?? paymentCopy.orders.unknownProduct}</div>
-                                <div className="mypage-meta-row">
-                                  Amount: {formatOrderAmount(order.amount)}
-                                </div>
-                                <div className="mypage-meta-row">
-                                  Purchased: {formatDate(order.created_at)}
-                                </div>
-                                <div className="mypage-meta-row">
-                                  Order ID: {order.order_id ?? '-'}
-                                </div>
+                              <li key={order.id} className="mypage-list-item mypage-product-item">
+                                {productImage ? (
+                                  <figure className="mypage-product-media">
+                                    <img src={productImage} alt="" />
+                                  </figure>
+                                ) : null}
+                                <div className="mypage-product-copy">
+                                  <div className="mypage-item-head">{order.product_name ?? paymentCopy.orders.unknownProduct}</div>
+                                  <div className="mypage-meta-row">
+                                    Purchased · {formatDate(order.created_at)}
+                                  </div>
+                                  <div className="mypage-meta-row">
+                                    {formatOrderAmount(order.amount)} · Order ID: {order.order_id ?? '-'}
+                                  </div>
 
-                                {license ? (
-                                  <div className="mypage-license-row">
-                                    <span className="mypage-meta-label">{paymentCopy.licenses.label}</span>
-                                    <code className="mypage-license-key">{license.license_key}</code>
+                                  {license ? (
+                                    <div className="mypage-license-row">
+                                      <span className="mypage-meta-label">{paymentCopy.licenses.label}</span>
+                                      <code className="mypage-license-key">{license.license_key}</code>
+                                      <button
+                                        type="button"
+                                        className="auth-submit auth-submit-secondary mypage-small-button"
+                                        onClick={() => void handleCopyLicense(license.id, license.license_key)}
+                                      >
+                                        {copiedLicenseId === license.id ? paymentCopy.licenses.copied : paymentCopy.licenses.copy}
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="mypage-meta-row">License is being issued.</div>
+                                  )}
+
+                                  {productSlug ? (
                                     <button
                                       type="button"
-                                      className="auth-submit auth-submit-secondary mypage-small-button"
-                                      onClick={() => void handleCopyLicense(license.id, license.license_key)}
+                                      className="auth-submit mypage-small-button"
+                                      onClick={() => void handleDownload(productSlug)}
+                                      disabled={isDownloading}
                                     >
-                                      {copiedLicenseId === license.id ? paymentCopy.licenses.copied : paymentCopy.licenses.copy}
+                                      {isDownloading ? paymentCopy.licenses.preparing : paymentCopy.licenses.download}
                                     </button>
-                                  </div>
-                                ) : (
-                                  <div className="mypage-meta-row">License will be issued soon.</div>
-                                )}
-
-                                {productSlug ? (
-                                  <button
-                                    type="button"
-                                    className="auth-submit mypage-small-button"
-                                    onClick={() => void handleDownload(productSlug)}
-                                    disabled={isDownloading}
-                                  >
-                                    {isDownloading ? paymentCopy.licenses.preparing : paymentCopy.licenses.download}
-                                  </button>
-                                ) : null}
+                                  ) : null}
+                                </div>
                               </li>
                             );
                           })}
                         </ul>
                       ) : null}
                     </section>
+                  ) : null}
+
+                  {lemonMyOrdersUrl ? (
+                    <a
+                      href={lemonMyOrdersUrl}
+                      className="auth-submit auth-submit-secondary mypage-manage-orders"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Manage Orders
+                    </a>
                   ) : null}
 
                   {downloadMessage ? <p className="mypage-inline-message">{downloadMessage}</p> : null}

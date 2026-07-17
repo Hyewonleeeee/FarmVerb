@@ -16,6 +16,9 @@ import {
   subscribeToCart,
   type CartItem
 } from '@/lib/cart/store';
+import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+
+const CART_LOGIN_REDIRECT = '/login?redirect=%2Fcart';
 
 const formatCurrency = (amount: number, currency: string, locale: PaymentLocale) => {
   const numberLocale = locale === 'ko' ? 'ko-KR' : 'en-US';
@@ -40,19 +43,85 @@ export default function CartPage() {
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartMessage, setCartMessage] = useState('');
+  const [cartUserId, setCartUserId] = useState<string | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
-    const syncCart = () => {
-      setCartItems(getCartItems());
+    const supabase = createBrowserSupabaseClient();
+    let mounted = true;
+
+    const checkSession = async () => {
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+
+      if (!mounted) {
+        return;
+      }
+
+      if (!session) {
+        setCartItems([]);
+        setCartUserId(null);
+        setIsAuthReady(true);
+        window.location.replace(CART_LOGIN_REDIRECT);
+        return;
+      }
+
+      setCartUserId(session.user.id);
+      setIsAuthReady(true);
     };
 
+    void checkSession();
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) {
+        return;
+      }
+
+      if (!session) {
+        setCartItems([]);
+        setCartUserId(null);
+        setIsAuthReady(true);
+        window.location.replace(CART_LOGIN_REDIRECT);
+        return;
+      }
+
+      setCartUserId(session.user.id);
+      setIsAuthReady(true);
+    });
+
+    const hideCartOnLogout = () => {
+      setCartItems([]);
+      setCartUserId(null);
+      setIsAuthReady(true);
+    };
+
+    window.addEventListener('farmverb:auth-logout', hideCartOnLogout);
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+      window.removeEventListener('farmverb:auth-logout', hideCartOnLogout);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!cartUserId) {
+      setCartItems([]);
+      return;
+    }
+
+    const syncCart = () => setCartItems(getCartItems(cartUserId));
+
     syncCart();
-    const unsubscribeCart = subscribeToCart(syncCart);
+    const unsubscribeCart = subscribeToCart(cartUserId, syncCart);
 
     return () => {
       unsubscribeCart();
     };
-  }, []);
+  }, [cartUserId]);
 
   const summary = useMemo(() => {
     const itemCount = getCartItemCount(cartItems);
@@ -67,8 +136,12 @@ export default function CartPage() {
   }, [cartItems]);
 
   const handleRemove = (slug: string) => {
-    removeCartItem(slug);
-    setCartItems(getCartItems());
+    if (!cartUserId) {
+      return;
+    }
+
+    removeCartItem(cartUserId, slug);
+    setCartItems(getCartItems(cartUserId));
     setCartMessage('');
   };
 
@@ -84,12 +157,29 @@ export default function CartPage() {
   };
 
   const handleClearCart = () => {
-    clearCartItems();
+    if (!cartUserId) {
+      return;
+    }
+
+    clearCartItems(cartUserId);
     setCartItems([]);
     setCartMessage(paymentCopy.cart.cartCleared);
   };
 
   const lemonMyOrdersUrl = getLemonMyOrdersUrl();
+
+  if (!isAuthReady || !cartUserId) {
+    return (
+      <div className="auth-page-shell">
+        <AuthPageHeader />
+        <main className="auth-page-main cart-page-main">
+          <section className="auth-card">
+            <h1 className="auth-title">Checking your account...</h1>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-page-shell">

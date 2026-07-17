@@ -5427,6 +5427,65 @@ img {
   padding: 0.78rem 0.84rem;
 }
 
+.mypage-product-item {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  padding: 0.9rem;
+}
+
+.mypage-product-media {
+  width: 132px;
+  aspect-ratio: 4 / 3;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(153, 183, 86, 0.28);
+  background: rgba(249, 252, 237, 0.9);
+}
+
+.mypage-product-media img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.mypage-product-copy {
+  min-width: 0;
+}
+
+.mypage-product-actions {
+  margin-top: 0.45rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.mypage-empty-products {
+  margin-top: 0.8rem;
+  border-radius: 16px;
+  border: 1px dashed rgba(154, 185, 87, 0.4);
+  background: rgba(245, 251, 221, 0.72);
+  padding: 1.15rem;
+}
+
+.mypage-empty-products strong {
+  color: rgba(43, 65, 25, 0.96);
+}
+
+.mypage-empty-products p {
+  margin: 0.3rem 0 0;
+  color: rgba(61, 84, 39, 0.82);
+}
+
+.mypage-manage-orders {
+  width: fit-content;
+  margin-top: 1rem;
+}
+
 .mypage-item-head {
   margin: 0;
   font-size: 0.95rem;
@@ -6416,6 +6475,15 @@ img {
   .auth-card,
   .mypage-card {
     width: 100%;
+  }
+
+  .mypage-product-item {
+    grid-template-columns: 1fr;
+  }
+
+  .mypage-product-media {
+    width: 100%;
+    max-width: 260px;
   }
 
   .auth-name-grid {

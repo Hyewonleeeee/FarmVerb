@@ -22,7 +22,7 @@ type CatalogProduct = {
   checkoutUrl: string | null;
 };
 
-const CART_STORAGE_KEY = 'farmverb_cart_v1';
+const CART_STORAGE_PREFIX = 'farmverb_cart_v1';
 const CART_UPDATED_EVENT = 'farmverb:cart-updated';
 
 function priceOf(productName: string, fallback = 0) {
@@ -121,6 +121,11 @@ function getStorage() {
   return window.localStorage;
 }
 
+function getCartStorageKey(userId: string) {
+  const normalizedUserId = userId.trim();
+  return normalizedUserId ? `${CART_STORAGE_PREFIX}:${normalizedUserId}` : null;
+}
+
 function resolveProduct(productName: string): CatalogProduct {
   const fromCatalog = productByName.get(productName.toLowerCase().trim());
   if (fromCatalog) {
@@ -201,24 +206,26 @@ function emitCartUpdated() {
   window.dispatchEvent(new Event(CART_UPDATED_EVENT));
 }
 
-function writeCartItems(nextItems: CartItem[]) {
+function writeCartItems(userId: string, nextItems: CartItem[]) {
   const storage = getStorage();
-  if (!storage) {
+  const storageKey = getCartStorageKey(userId);
+  if (!storage || !storageKey) {
     return nextItems;
   }
 
-  storage.setItem(CART_STORAGE_KEY, JSON.stringify(nextItems));
+  storage.setItem(storageKey, JSON.stringify(nextItems));
   emitCartUpdated();
   return nextItems;
 }
 
-export function getCartItems(): CartItem[] {
+export function getCartItems(userId: string): CartItem[] {
   const storage = getStorage();
-  if (!storage) {
+  const storageKey = getCartStorageKey(userId);
+  if (!storage || !storageKey) {
     return [];
   }
 
-  const raw = storage.getItem(CART_STORAGE_KEY);
+  const raw = storage.getItem(storageKey);
   if (!raw) {
     return [];
   }
@@ -236,7 +243,7 @@ export function getCartItems(): CartItem[] {
     const shouldRewrite = normalized.length !== parsed.length || normalized.some((item, index) => !isSameCartItem(item, parsed[index] ?? {}));
 
     if (shouldRewrite) {
-      writeCartItems(normalized);
+      writeCartItems(userId, normalized);
     }
 
     return normalized;
@@ -245,13 +252,13 @@ export function getCartItems(): CartItem[] {
   }
 }
 
-export function addItemToCart(productName: string): CartItem[] {
+export function addItemToCart(userId: string, productName: string): CartItem[] {
   const product = resolveProduct(productName);
-  const currentItems = getCartItems();
+  const currentItems = getCartItems(userId);
   const existing = currentItems.find((item) => item.slug === product.slug);
 
   if (!existing) {
-    return writeCartItems([
+    return writeCartItems(userId, [
       ...currentItems,
       {
         slug: product.slug,
@@ -267,6 +274,7 @@ export function addItemToCart(productName: string): CartItem[] {
   }
 
   return writeCartItems(
+    userId,
     currentItems.map((item) =>
       item.slug === product.slug
         ? {
@@ -284,29 +292,30 @@ export function addItemToCart(productName: string): CartItem[] {
   );
 }
 
-export function updateCartItemQuantity(productSlug: string, nextQuantity: number): CartItem[] {
+export function updateCartItemQuantity(userId: string, productSlug: string, nextQuantity: number): CartItem[] {
   const safeQuantity = Number.isFinite(nextQuantity) ? Math.floor(nextQuantity) : 1;
   if (safeQuantity <= 0) {
-    return removeCartItem(productSlug);
+    return removeCartItem(userId, productSlug);
   }
 
-  const currentItems = getCartItems();
+  const currentItems = getCartItems(userId);
   const nextItems = currentItems.map((item) =>
     item.slug === productSlug ? { ...item, quantity: safeQuantity } : item
   );
-  return writeCartItems(nextItems);
+  return writeCartItems(userId, nextItems);
 }
 
-export function removeCartItem(productSlug: string): CartItem[] {
-  const currentItems = getCartItems();
+export function removeCartItem(userId: string, productSlug: string): CartItem[] {
+  const currentItems = getCartItems(userId);
   const nextItems = currentItems.filter((item) => item.slug !== productSlug);
-  return writeCartItems(nextItems);
+  return writeCartItems(userId, nextItems);
 }
 
-export function clearCartItems(): CartItem[] {
+export function clearCartItems(userId: string): CartItem[] {
   const storage = getStorage();
-  if (storage) {
-    storage.removeItem(CART_STORAGE_KEY);
+  const storageKey = getCartStorageKey(userId);
+  if (storage && storageKey) {
+    storage.removeItem(storageKey);
     emitCartUpdated();
   }
 
@@ -322,21 +331,27 @@ export function getCartSubtotal(items: CartItem[]) {
 }
 
 export function getCatalogProductBySlug(slug: string) {
-  return productBySlug.get(slugify(slug)) ?? null;
+  const normalizedSlug = slugify(slug);
+  return productBySlug.get(normalizedSlug) ?? legacyProductAliases.get(normalizedSlug) ?? null;
 }
 
 export function getCatalogProductByName(name: string) {
   return productByName.get(name.toLowerCase().trim()) ?? null;
 }
 
-export function subscribeToCart(listener: () => void) {
+export function subscribeToCart(userId: string, listener: () => void) {
   if (typeof window === 'undefined') {
+    return () => {};
+  }
+
+  const storageKey = getCartStorageKey(userId);
+  if (!storageKey) {
     return () => {};
   }
 
   const onCartUpdated = () => listener();
   const onStorage = (event: StorageEvent) => {
-    if (event.key === CART_STORAGE_KEY) {
+    if (event.key === storageKey) {
       listener();
     }
   };

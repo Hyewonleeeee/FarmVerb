@@ -44,6 +44,7 @@ export default function AuthNav() {
 
   const handleLogout = async () => {
     const supabase = createBrowserSupabaseClient();
+    window.dispatchEvent(new Event('farmverb:auth-logout'));
     try {
       await supabase.auth.signOut();
     } finally {
@@ -72,7 +73,7 @@ export default function AuthNav() {
   return (
     <div className="auth-nav" aria-label="Authenticated actions">
       <Link href="/mypage" className="auth-nav-link">
-        My Page
+        My Account
       </Link>
       <button type="button" className="auth-nav-link auth-nav-button" onClick={handleLogout}>
         Logout
