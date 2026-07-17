@@ -5353,6 +5353,88 @@ img {
   padding: 0.25rem 0.85rem 0.85rem;
 }
 
+.mypage-account-summary {
+  padding: 1rem;
+}
+
+.mypage-account-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.38rem;
+  padding: 1rem;
+  border: 1px solid rgba(153, 183, 86, 0.28);
+  border-radius: 14px;
+  background: rgba(249, 252, 235, 0.76);
+}
+
+.mypage-account-identity > strong {
+  max-width: 100%;
+  color: rgba(43, 65, 25, 0.96);
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.mypage-account-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.65rem;
+  margin-top: 0.15rem;
+  padding: 0.25rem 0.58rem;
+  border: 1px solid rgba(126, 159, 62, 0.36);
+  border-radius: 999px;
+  color: rgba(54, 78, 34, 0.9);
+  background: rgba(224, 240, 174, 0.7);
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mypage-account-badge.is-pending {
+  border-color: rgba(184, 143, 76, 0.34);
+  color: rgba(111, 76, 29, 0.92);
+  background: rgba(247, 227, 174, 0.66);
+}
+
+.mypage-account-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 0.75rem;
+}
+
+.mypage-account-fact {
+  padding: 0.85rem 0.9rem;
+  border: 1px solid rgba(153, 183, 86, 0.24);
+  border-radius: 13px;
+  background: rgba(244, 250, 220, 0.68);
+}
+
+.mypage-account-fact span {
+  display: block;
+  color: rgba(73, 95, 50, 0.76);
+  font-size: 0.66rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.mypage-account-fact strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: rgba(45, 67, 27, 0.95);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.mypage-account-note {
+  margin: 0.9rem 0.15rem 0.05rem;
+  color: rgba(61, 84, 39, 0.8);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
 .mypage-account-row {
   margin-top: 0.5rem;
   padding: 0.62rem 0;
@@ -5482,8 +5564,11 @@ img {
 }
 
 .mypage-manage-orders {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: fit-content;
-  margin-top: 1rem;
+  margin-top: 1.25rem;
 }
 
 .mypage-item-head {
@@ -5877,6 +5962,92 @@ img {
   letter-spacing: 0.13em;
   text-decoration: none;
   text-transform: uppercase;
+}
+
+.farmverb-root.theme-nebula .mini-cart-popover {
+  border-color: rgba(190, 143, 255, 0.38);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(167, 91, 255, 0.25) 0%, transparent 44%),
+    radial-gradient(circle at 92% 88%, rgba(69, 197, 255, 0.16) 0%, transparent 42%),
+    linear-gradient(150deg, rgba(28, 19, 49, 0.98), rgba(12, 10, 24, 0.98));
+  box-shadow:
+    0 22px 42px rgba(4, 3, 12, 0.48),
+    0 0 28px rgba(139, 83, 230, 0.16);
+  color: rgba(247, 239, 255, 0.96);
+}
+
+.farmverb-root.theme-nebula .mini-cart-popover::before {
+  border-color: rgba(190, 143, 255, 0.38);
+  background: rgba(27, 18, 47, 0.98);
+}
+
+.farmverb-root.theme-nebula .mini-cart-status {
+  color: rgba(207, 175, 255, 0.9);
+}
+
+.farmverb-root.theme-nebula .mini-cart-line img {
+  border-color: rgba(190, 143, 255, 0.3);
+  background: rgba(12, 10, 23, 0.92);
+  box-shadow: 0 8px 18px rgba(4, 3, 12, 0.34);
+}
+
+.farmverb-root.theme-nebula .mini-cart-line span {
+  color: rgba(220, 207, 244, 0.72);
+}
+
+.farmverb-root.theme-nebula .mini-cart-link {
+  border-color: rgba(191, 143, 255, 0.42);
+  background: linear-gradient(135deg, rgba(139, 73, 232, 0.82), rgba(62, 153, 211, 0.68));
+  color: #fff8ff;
+  box-shadow: 0 8px 18px rgba(67, 35, 122, 0.28);
+}
+
+.farmverb-root.theme-nebula .mini-cart-link:hover,
+.farmverb-root.theme-nebula .mini-cart-link:focus-visible {
+  border-color: rgba(224, 195, 255, 0.62);
+  background: linear-gradient(135deg, rgba(156, 85, 251, 0.92), rgba(65, 177, 235, 0.76));
+}
+
+.farmverb-root.theme-glitch .mini-cart-popover {
+  border-color: rgba(73, 62, 52, 0.24);
+  background:
+    radial-gradient(circle at 10% 6%, rgba(255, 255, 255, 0.62) 0%, transparent 42%),
+    linear-gradient(150deg, rgba(247, 240, 229, 0.99), rgba(222, 210, 194, 0.98));
+  box-shadow:
+    0 22px 40px rgba(27, 22, 18, 0.24),
+    0 0 0 1px rgba(255, 255, 255, 0.22) inset;
+  color: rgba(30, 25, 21, 0.96);
+}
+
+.farmverb-root.theme-glitch .mini-cart-popover::before {
+  border-color: rgba(73, 62, 52, 0.24);
+  background: rgba(244, 237, 226, 0.99);
+}
+
+.farmverb-root.theme-glitch .mini-cart-status {
+  color: rgba(69, 57, 47, 0.82);
+}
+
+.farmverb-root.theme-glitch .mini-cart-line img {
+  border-color: rgba(73, 62, 52, 0.2);
+  background: rgba(250, 245, 238, 0.92);
+  box-shadow: 0 8px 18px rgba(35, 29, 24, 0.14);
+}
+
+.farmverb-root.theme-glitch .mini-cart-line span {
+  color: rgba(74, 62, 51, 0.72);
+}
+
+.farmverb-root.theme-glitch .mini-cart-link {
+  border-color: rgba(57, 48, 40, 0.28);
+  background: rgba(46, 39, 33, 0.94);
+  color: rgba(250, 244, 236, 0.98);
+}
+
+.farmverb-root.theme-glitch .mini-cart-link:hover,
+.farmverb-root.theme-glitch .mini-cart-link:focus-visible {
+  background: rgba(27, 23, 20, 0.98);
+  border-color: rgba(27, 23, 20, 0.5);
 }
 
 .cart-page-summary-row strong {
@@ -6386,6 +6557,10 @@ img {
     flex: 1 1 calc(50% - 0.36rem);
     min-width: 130px;
     border-radius: 11px;
+  }
+
+  .mypage-account-facts {
+    grid-template-columns: 1fr;
   }
 
   .cart-page-head {

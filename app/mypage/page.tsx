@@ -2,20 +2,18 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import { getPaymentCopy, type PaymentApiErrorCode, type PaymentLocale } from '@/lib/i18n/payment';
-import CountrySelect from '@/components/ui/CountrySelect';
 import type { PurchaseRecord } from '@/lib/payments/purchases';
 import { getLemonMyOrdersUrl } from '@/lib/checkout/lemonLinks';
 import { getCatalogProductBySlug } from '@/lib/cart/store';
-import { normalizeCountryName } from '@/lib/ui/country';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 const MY_PAGE_LOGIN_REDIRECT = '/login?redirect=%2Fmypage';
 
-type AccountTabKey = 'products' | 'account' | 'security';
+type AccountTabKey = 'products' | 'account';
 
 type Profile = {
   id: string;
@@ -43,14 +41,12 @@ type License = {
 
 const accountTabs: { key: AccountTabKey; label: string }[] = [
   { key: 'products', label: 'My Products' },
-  { key: 'account', label: 'Account' },
-  { key: 'security', label: 'Security' }
+  { key: 'account', label: 'Account' }
 ];
 
 const accountSectionCopy: Record<AccountTabKey, string> = {
   products: 'Your purchased products, downloads, and license details.',
-  account: 'Personal details and account profile settings.',
-  security: 'Email verification and passwordless one-time code access.'
+  account: 'Your sign-in email, verification status, and account access.'
 };
 
 const formatDate = (dateText: string | null | undefined) => {
@@ -67,11 +63,6 @@ const formatDate = (dateText: string | null | undefined) => {
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const dd = String(date.getDate()).padStart(2, '0');
   return `${yyyy}.${mm}.${dd}`;
-};
-
-const normalizeOptionalCountryName = (country: string | null | undefined) => {
-  const trimmedCountry = (country ?? '').trim();
-  return trimmedCountry ? normalizeCountryName(trimmedCountry) : '';
 };
 
 const formatOrderAmount = (value: number | null | undefined) => {
@@ -133,8 +124,6 @@ export default function MyPage() {
   const router = useRouter();
   const paymentLocale: PaymentLocale = 'en';
   const paymentCopy = getPaymentCopy(paymentLocale);
-  const isLoggingOutRef = useRef(false);
-
   const [activeTab, setActiveTab] = useState<AccountTabKey>('products');
 
   const [user, setUser] = useState<User | null>(null);
@@ -149,13 +138,6 @@ export default function MyPage() {
 
   const [licenses, setLicenses] = useState<License[]>([]);
   const [licensesMessage, setLicensesMessage] = useState('');
-
-  const [isAccountEditMode, setIsAccountEditMode] = useState(false);
-  const [nameInput, setNameInput] = useState('');
-  const [countryInput, setCountryInput] = useState('');
-  const [accountMessage, setAccountMessage] = useState('');
-  const [accountMessageType, setAccountMessageType] = useState<'error' | 'success' | ''>('');
-  const [isSavingAccount, setIsSavingAccount] = useState(false);
 
   const [downloadMessage, setDownloadMessage] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
@@ -190,8 +172,6 @@ export default function MyPage() {
         };
 
         setProfile(fallbackProfile);
-        setNameInput(fallbackProfile.name ?? '');
-        setCountryInput(normalizeOptionalCountryName(fallbackProfile.country));
         return;
       }
 
@@ -204,8 +184,6 @@ export default function MyPage() {
       };
 
       setProfile(loadedProfile);
-      setNameInput(loadedProfile.name ?? '');
-      setCountryInput(normalizeOptionalCountryName(loadedProfile.country));
     };
 
     const loadOrders = async (currentUser: User) => {
@@ -330,7 +308,6 @@ export default function MyPage() {
         return;
       }
 
-      isLoggingOutRef.current = false;
       setUser(session.user);
       await loadDashboardData(session.user, session.access_token);
     };
@@ -346,12 +323,10 @@ export default function MyPage() {
         setPurchases([]);
         setOrders([]);
         setLicenses([]);
-        setIsAccountEditMode(false);
-        router.replace(isLoggingOutRef.current ? '/' : MY_PAGE_LOGIN_REDIRECT);
+        router.replace(MY_PAGE_LOGIN_REDIRECT);
         return;
       }
 
-      isLoggingOutRef.current = false;
       setUser(session.user);
       void loadDashboardData(session.user, session.access_token);
     });
@@ -361,75 +336,6 @@ export default function MyPage() {
       subscription.unsubscribe();
     };
   }, [router, paymentLocale]);
-
-  const handleLogout = async () => {
-    const supabase = createBrowserSupabaseClient();
-    isLoggingOutRef.current = true;
-    try {
-      await supabase.auth.signOut();
-    } finally {
-      window.location.assign('/');
-    }
-  };
-
-  const handleStartEdit = () => {
-    setAccountMessage('');
-    setAccountMessageType('');
-    setIsAccountEditMode(true);
-  };
-
-  const handleCancelEdit = () => {
-    setNameInput(profile?.name ?? '');
-    setCountryInput(normalizeOptionalCountryName(profile?.country));
-    setAccountMessage('');
-    setAccountMessageType('');
-    setIsAccountEditMode(false);
-  };
-
-  const handleSaveProfile = async () => {
-    if (!user) {
-      return;
-    }
-
-    setIsSavingAccount(true);
-    setAccountMessage('');
-    setAccountMessageType('');
-
-    const supabase = createBrowserSupabaseClient();
-    const trimmedName = nameInput.trim();
-    const trimmedCountry = normalizeOptionalCountryName(countryInput);
-
-    const nextProfile = {
-      id: user.id,
-      email: user.email ?? '',
-      name: trimmedName || null,
-      country: trimmedCountry || null
-    };
-
-    const { error } = await supabase.from('profiles').upsert(nextProfile, { onConflict: 'id' });
-
-    if (error) {
-      setAccountMessage(`Failed to save profile: ${error.message}`);
-      setAccountMessageType('error');
-      setIsSavingAccount(false);
-      return;
-    }
-
-    setProfile((prev) => ({
-      id: prev?.id ?? user.id,
-      email: nextProfile.email || null,
-      name: nextProfile.name,
-      country: nextProfile.country,
-      created_at: prev?.created_at ?? user.created_at ?? null
-    }));
-
-    setNameInput(nextProfile.name ?? '');
-    setCountryInput(nextProfile.country ?? '');
-    setAccountMessage('Account information updated.');
-    setAccountMessageType('success');
-    setIsAccountEditMode(false);
-    setIsSavingAccount(false);
-  };
 
   const handleDownload = async (productSlug: string) => {
     setDownloadMessage('');
@@ -557,10 +463,6 @@ export default function MyPage() {
               <h1 className="auth-title">My Account</h1>
               <p className="auth-copy">Access your products, downloads, licenses, and account details.</p>
             </div>
-
-            <button type="button" className="auth-submit auth-submit-secondary mypage-logout" onClick={handleLogout}>
-              Logout
-            </button>
           </div>
 
           <div className="mypage-dashboard-layout">
@@ -589,92 +491,30 @@ export default function MyPage() {
               </header>
 
               {activeTab === 'account' ? (
-                <>
-                  {!isAccountEditMode ? (
-                    <section className="mypage-account-view" aria-label="Account details">
-                      <div className="mypage-account-row">
-                        <span className="mypage-account-label">Name</span>
-                        <strong className="mypage-account-value">{profile?.name || '-'}</strong>
-                      </div>
-                      <div className="mypage-account-row">
-                        <span className="mypage-account-label">Email</span>
-                        <strong className="mypage-account-value">{profile?.email || user.email || '-'}</strong>
-                      </div>
-                      <div className="mypage-account-row">
-                        <span className="mypage-account-label">Country</span>
-                        <strong className="mypage-account-value">{countryInput || '-'}</strong>
-                      </div>
-                      <div className="mypage-account-row">
-                        <span className="mypage-account-label">Join Date</span>
-                        <strong className="mypage-account-value">{formatDate(accountJoinDate)}</strong>
-                      </div>
+                <section className="mypage-account-view mypage-account-summary" aria-label="Account access details">
+                  <div className="mypage-account-identity">
+                    <span className="mypage-account-label">Signed in as</span>
+                    <strong>{profile?.email || user.email || '-'}</strong>
+                    <span className={`mypage-account-badge ${emailVerified ? 'is-verified' : 'is-pending'}`}>
+                      {emailVerified ? 'Verified email' : 'Verification pending'}
+                    </span>
+                  </div>
 
-                      <button type="button" className="auth-submit" onClick={handleStartEdit}>
-                        Edit
-                      </button>
-                    </section>
-                  ) : (
-                    <form
-                      className="auth-form"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        void handleSaveProfile();
-                      }}
-                    >
-                      <div className="mypage-account-row">
-                        <span className="mypage-account-label">Email</span>
-                        <strong className="mypage-account-value">{profile?.email || user.email || '-'}</strong>
-                      </div>
-                      <div className="mypage-account-row">
-                        <span className="mypage-account-label">Join Date</span>
-                        <strong className="mypage-account-value">{formatDate(accountJoinDate)}</strong>
-                      </div>
+                  <div className="mypage-account-facts">
+                    <div className="mypage-account-fact">
+                      <span>Member since</span>
+                      <strong>{formatDate(accountJoinDate)}</strong>
+                    </div>
+                    <div className="mypage-account-fact">
+                      <span>Sign-in method</span>
+                      <strong>Email one-time code</strong>
+                    </div>
+                  </div>
 
-                      <label className="auth-label" htmlFor="account-name">
-                        Name
-                      </label>
-                      <input
-                        id="account-name"
-                        className="auth-input"
-                        type="text"
-                        autoComplete="name"
-                        value={nameInput}
-                        onChange={(event) => setNameInput(event.target.value)}
-                        disabled={isSavingAccount}
-                      />
-
-                      <label className="auth-label" htmlFor="account-country">
-                        Country
-                      </label>
-                      <CountrySelect
-                        id="account-country"
-                        value={countryInput}
-                        onChange={setCountryInput}
-                        disabled={isSavingAccount}
-                      />
-
-                      <div className="mypage-form-actions">
-                        <button
-                          type="button"
-                          className="auth-submit auth-submit-secondary"
-                          onClick={handleCancelEdit}
-                          disabled={isSavingAccount}
-                        >
-                          Cancel
-                        </button>
-                        <button type="submit" className="auth-submit" disabled={isSavingAccount}>
-                          {isSavingAccount ? 'Saving...' : 'Save'}
-                        </button>
-                      </div>
-                    </form>
-                  )}
-
-                  {accountMessage ? (
-                    <p className={`auth-message ${accountMessageType === 'error' ? 'is-error' : 'is-success'}`}>
-                      {accountMessage}
-                    </p>
-                  ) : null}
-                </>
+                  <p className="mypage-account-note">
+                    You sign in securely using a one-time code sent to this email address.
+                  </p>
+                </section>
               ) : null}
 
               {activeTab === 'products' ? (
@@ -844,29 +684,6 @@ export default function MyPage() {
                 </>
               ) : null}
 
-              {activeTab === 'security' ? (
-                <>
-                  <div className="mypage-security-stack">
-                    <div className="mypage-security-block">
-                      <div className="mypage-item-head">Email Verification</div>
-                      <div className="mypage-meta-row">
-                        Status:{' '}
-                        <strong className={`mypage-status ${emailVerified ? 'is-ok' : 'is-pending'}`}>
-                          {emailVerified ? 'Verified' : 'Not verified'}
-                        </strong>
-                      </div>
-
-                    </div>
-
-                    <div className="mypage-security-block">
-                      <div className="mypage-item-head">Passwordless Sign-In</div>
-                      <p className="mypage-meta-row">
-                        You sign in securely using a one-time code sent to your email.
-                      </p>
-                    </div>
-                  </div>
-                </>
-              ) : null}
             </section>
           </div>
         </section>
