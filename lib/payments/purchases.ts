@@ -25,5 +25,50 @@ export type PurchaseRecord = {
   updated_at: string;
 };
 
+export type PurchaseLicense = {
+  id: string;
+  orderItemId: string | null;
+  productId: string | null;
+  key: string;
+  keyShort: string;
+  status: string;
+  activationLimit: number | null;
+  instancesCount: number;
+  expiresAt: string | null;
+};
+
+export type PurchaseDownloadFile = {
+  id: string;
+  name: string;
+  extension: string | null;
+  size: number | null;
+  version: string | null;
+};
+
+export type PurchaseDownloadGroup = {
+  orderItemId: string;
+  productId: string | null;
+  variantId: string;
+  productName: string;
+  variantName: string | null;
+  files: PurchaseDownloadFile[];
+};
+
+export type PurchaseLicensesResponse = {
+  ok: true;
+  licenses: PurchaseLicense[];
+};
+
+export type PurchaseDownloadsResponse = {
+  ok: true;
+  groups: PurchaseDownloadGroup[];
+};
+
+export type PurchaseDownloadUrlResponse = {
+  ok: true;
+  downloadUrl: string;
+  file: PurchaseDownloadFile;
+};
+
 // Kept as an alias so future purchase-related code can migrate without a breaking rename.
 export type FuturePurchaseRecord = PurchaseRecord;

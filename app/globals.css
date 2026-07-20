@@ -5606,6 +5606,65 @@ img {
   border-radius: 6px;
   background: rgba(227, 239, 185, 0.72);
   border: 1px solid rgba(152, 183, 85, 0.32);
+  overflow-wrap: anywhere;
+}
+
+.mypage-entitlement-block {
+  margin-top: 0.75rem;
+  padding-top: 0.72rem;
+  border-top: 1px solid rgba(153, 183, 86, 0.22);
+}
+
+.mypage-license-list,
+.mypage-download-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.mypage-entitlement-message {
+  margin: 0.38rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: rgba(60, 83, 38, 0.82);
+}
+
+.mypage-entitlement-message.is-error {
+  color: #9e3f34;
+}
+
+.mypage-download-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.58rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid rgba(153, 183, 86, 0.26);
+  background: rgba(248, 251, 234, 0.68);
+}
+
+.mypage-download-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.mypage-download-copy strong {
+  font-size: 0.8rem;
+  color: rgba(43, 65, 25, 0.96);
+  overflow-wrap: anywhere;
+}
+
+.mypage-download-copy span {
+  font-size: 0.7rem;
+  color: rgba(61, 84, 39, 0.74);
+}
+
+.mypage-license-row .mypage-small-button,
+.mypage-download-row .mypage-small-button {
+  flex: 0 0 auto;
+  margin-top: 0;
 }
 
 .mypage-small-button {
@@ -6659,6 +6718,11 @@ img {
   .mypage-product-media {
     width: 100%;
     max-width: 260px;
+  }
+
+  .mypage-download-row {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .auth-name-grid {

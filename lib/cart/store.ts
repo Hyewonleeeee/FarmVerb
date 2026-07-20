@@ -314,6 +314,18 @@ export function removeCartItem(userId: string, productSlug: string): CartItem[] 
   return writeCartItems(userId, nextItems);
 }
 
+export function removePurchasedCartItems(userId: string, productSlugs: string[]): CartItem[] {
+  const purchasedSlugs = new Set(productSlugs.map((slug) => slugify(slug)).filter(Boolean));
+  const currentItems = getCartItems(userId);
+
+  if (purchasedSlugs.size === 0) {
+    return currentItems;
+  }
+
+  const nextItems = currentItems.filter((item) => !purchasedSlugs.has(item.slug));
+  return nextItems.length === currentItems.length ? currentItems : writeCartItems(userId, nextItems);
+}
+
 export function clearCartItems(userId: string): CartItem[] {
   const storage = getStorage();
   const storageKey = getCartStorageKey(userId);

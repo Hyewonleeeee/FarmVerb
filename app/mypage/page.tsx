@@ -6,9 +6,16 @@ import { useEffect, useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import { getPaymentCopy, type PaymentApiErrorCode, type PaymentLocale } from '@/lib/i18n/payment';
-import type { PurchaseRecord } from '@/lib/payments/purchases';
+import type {
+  PurchaseDownloadGroup,
+  PurchaseDownloadsResponse,
+  PurchaseDownloadUrlResponse,
+  PurchaseLicense,
+  PurchaseLicensesResponse,
+  PurchaseRecord
+} from '@/lib/payments/purchases';
 import { getLemonMyOrdersUrl } from '@/lib/checkout/lemonLinks';
-import { getCatalogProductBySlug } from '@/lib/cart/store';
+import { getCatalogProductBySlug, removePurchasedCartItems } from '@/lib/cart/store';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 const MY_PAGE_LOGIN_REDIRECT = '/login?redirect=%2Fmypage';
@@ -37,6 +44,20 @@ type License = {
   product_name: string | null;
   license_key: string;
   created_at: string;
+};
+
+type PurchaseEntitlementState = {
+  licenses: PurchaseLicense[];
+  downloadGroups: PurchaseDownloadGroup[];
+  licenseError: string;
+  downloadError: string;
+  loading: boolean;
+};
+
+type AccountApiError = {
+  ok?: false;
+  error?: string;
+  errorCode?: string;
 };
 
 const accountTabs: { key: AccountTabKey; label: string }[] = [
@@ -135,12 +156,14 @@ export default function MyPage() {
 
   const [purchases, setPurchases] = useState<PurchaseRecord[]>([]);
   const [purchasesMessage, setPurchasesMessage] = useState('');
+  const [purchaseEntitlements, setPurchaseEntitlements] = useState<Record<string, PurchaseEntitlementState>>({});
 
   const [licenses, setLicenses] = useState<License[]>([]);
   const [licensesMessage, setLicensesMessage] = useState('');
 
   const [downloadMessage, setDownloadMessage] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
+  const [activeLemonDownloadId, setActiveLemonDownloadId] = useState<string | null>(null);
   const [copiedLicenseId, setCopiedLicenseId] = useState<string | null>(null);
 
   const emailVerified = Boolean(user?.email_confirmed_at);
@@ -218,7 +241,80 @@ export default function MyPage() {
       setOrdersMessage('');
     };
 
-    const loadPurchases = async (accessToken: string) => {
+    const loadPurchaseEntitlements = async (purchaseRows: PurchaseRecord[], accessToken: string) => {
+      const eligiblePurchases = purchaseRows.filter((purchase) => purchase.status === 'paid');
+      if (eligiblePurchases.length === 0) {
+        if (mounted) {
+          setPurchaseEntitlements({});
+        }
+        return;
+      }
+
+      if (mounted) {
+        setPurchaseEntitlements(
+          Object.fromEntries(
+            eligiblePurchases.map((purchase) => [
+              purchase.id,
+              {
+                licenses: [],
+                downloadGroups: [],
+                licenseError: '',
+                downloadError: '',
+                loading: true
+              }
+            ])
+          )
+        );
+      }
+
+      const results = await Promise.all(
+        eligiblePurchases.map(async (purchase) => {
+          const requestOptions: RequestInit = {
+            method: 'GET',
+            headers: { Authorization: `Bearer ${accessToken}` },
+            cache: 'no-store'
+          };
+
+          const requestJson = async <T,>(url: string) => {
+            try {
+              const response = await fetch(url, requestOptions);
+              const payload = (await response.json().catch(() => null)) as T | AccountApiError | null;
+              if (!response.ok) {
+                return { data: null as T | null, error: (payload as AccountApiError | null)?.error ?? 'Request failed.' };
+              }
+              return { data: payload as T, error: '' };
+            } catch {
+              return { data: null as T | null, error: 'Could not connect to purchase services.' };
+            }
+          };
+
+          const purchasePath = encodeURIComponent(purchase.id);
+          const [licenseResult, downloadResult] = await Promise.all([
+            requestJson<PurchaseLicensesResponse>(`/api/account/purchases/${purchasePath}/licenses`),
+            requestJson<PurchaseDownloadsResponse>(`/api/account/purchases/${purchasePath}/downloads`)
+          ]);
+
+          return {
+            purchaseId: purchase.id,
+            state: {
+              licenses: licenseResult.data?.licenses ?? [],
+              downloadGroups: downloadResult.data?.groups ?? [],
+              licenseError: licenseResult.error,
+              downloadError: downloadResult.error,
+              loading: false
+            } satisfies PurchaseEntitlementState
+          };
+        })
+      );
+
+      if (mounted) {
+        setPurchaseEntitlements(
+          Object.fromEntries(results.map((result) => [result.purchaseId, result.state]))
+        );
+      }
+    };
+
+    const loadPurchases = async (currentUser: User, accessToken: string) => {
       try {
         const response = await fetch('/api/account/purchases', {
           method: 'GET',
@@ -242,11 +338,20 @@ export default function MyPage() {
           return;
         }
 
-        setPurchases(payload?.purchases ?? []);
+        const loadedPurchases = payload?.purchases ?? [];
+        setPurchases(loadedPurchases);
+        removePurchasedCartItems(
+          currentUser.id,
+          loadedPurchases
+            .filter((purchase) => purchase.status === 'paid' && Boolean(purchase.product_slug))
+            .map((purchase) => purchase.product_slug as string)
+        );
         setPurchasesMessage('');
+        void loadPurchaseEntitlements(loadedPurchases, accessToken);
       } catch {
         if (mounted) {
           setPurchases([]);
+          setPurchaseEntitlements({});
           setPurchasesMessage('Failed to load Lemon Squeezy purchases.');
         }
       }
@@ -284,7 +389,7 @@ export default function MyPage() {
     const loadDashboardData = async (currentUser: User, accessToken: string) => {
       await Promise.all([
         loadProfile(currentUser),
-        loadPurchases(accessToken),
+        loadPurchases(currentUser, accessToken),
         loadOrders(currentUser),
         loadLicenses(currentUser)
       ]);
@@ -321,6 +426,7 @@ export default function MyPage() {
         setUser(null);
         setProfile(null);
         setPurchases([]);
+        setPurchaseEntitlements({});
         setOrders([]);
         setLicenses([]);
         router.replace(MY_PAGE_LOGIN_REDIRECT);
@@ -382,6 +488,53 @@ export default function MyPage() {
     setDownloadMessage(paymentCopy.download.starting);
     window.location.assign(payload.downloadUrl);
     setIsDownloading(false);
+  };
+
+  const handleLemonDownload = async (purchaseId: string, fileId: string) => {
+    const downloadId = `${purchaseId}:${fileId}`;
+    setDownloadMessage('');
+    setActiveLemonDownloadId(downloadId);
+
+    try {
+      const supabase = createBrowserSupabaseClient();
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        setDownloadMessage(paymentCopy.download.loginAgain);
+        return;
+      }
+
+      const response = await fetch(`/api/account/purchases/${encodeURIComponent(purchaseId)}/downloads`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fileId }),
+        cache: 'no-store'
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | PurchaseDownloadUrlResponse
+        | AccountApiError
+        | null;
+
+      if (!response.ok || !payload || !('downloadUrl' in payload)) {
+        setDownloadMessage(
+          (payload as AccountApiError | null)?.error ?? 'Could not prepare this download.'
+        );
+        return;
+      }
+
+      setDownloadMessage(paymentCopy.download.starting);
+      window.location.assign(payload.downloadUrl);
+    } catch {
+      setDownloadMessage('Could not connect to purchase services.');
+    } finally {
+      setActiveLemonDownloadId(null);
+    }
   };
 
   const handleCopyLicense = async (licenseId: string, licenseKey: string) => {
@@ -541,6 +694,10 @@ export default function MyPage() {
                           const productImage = purchase.product_slug
                             ? getCatalogProductBySlug(purchase.product_slug)?.image ?? null
                             : null;
+                          const entitlement = purchaseEntitlements[purchase.id];
+                          const availableDownloads = entitlement?.downloadGroups.flatMap((group) =>
+                            group.files.map((file) => ({ group, file }))
+                          ) ?? [];
 
                           return (
                             <li key={purchase.id} className="mypage-list-item mypage-product-item">
@@ -559,36 +716,73 @@ export default function MyPage() {
                                 </div>
                                 <div className="mypage-meta-row">Order ID: {purchase.lemon_order_id}</div>
 
-                                {purchase.lemon_license_key ? (
-                                  <div className="mypage-license-row">
-                                    <span className="mypage-meta-label">License</span>
-                                    <code className="mypage-license-key">{purchase.lemon_license_key}</code>
-                                    <button
-                                      type="button"
-                                      className="auth-submit auth-submit-secondary mypage-small-button"
-                                      onClick={() => void handleCopyLicense(purchase.id, purchase.lemon_license_key ?? '')}
-                                    >
-                                      {copiedLicenseId === purchase.id ? paymentCopy.licenses.copied : paymentCopy.licenses.copy}
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <div className="mypage-meta-row">License is being issued.</div>
-                                )}
-
-                                <div className="mypage-product-actions">
-                                  {purchase.download_url ? (
-                                    <a
-                                      href={purchase.download_url}
-                                      className="auth-submit mypage-small-button"
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                    >
-                                      Download
-                                    </a>
+                                <section className="mypage-entitlement-block" aria-label={`${purchase.product_name} license`}>
+                                  <span className="mypage-meta-label">License</span>
+                                  {entitlement?.loading ? (
+                                    <p className="mypage-entitlement-message">Checking your license...</p>
+                                  ) : entitlement?.licenseError ? (
+                                    <p className="mypage-entitlement-message is-error">{entitlement.licenseError}</p>
+                                  ) : entitlement?.licenses.length ? (
+                                    <div className="mypage-license-list">
+                                      {entitlement.licenses.map((license) => {
+                                        const copyId = `${purchase.id}:${license.id}`;
+                                        return (
+                                          <div key={license.id} className="mypage-license-row">
+                                            <code className="mypage-license-key">{license.key}</code>
+                                            <button
+                                              type="button"
+                                              className="auth-submit auth-submit-secondary mypage-small-button"
+                                              onClick={() => void handleCopyLicense(copyId, license.key)}
+                                            >
+                                              {copiedLicenseId === copyId ? paymentCopy.licenses.copied : paymentCopy.licenses.copy}
+                                            </button>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
                                   ) : (
-                                    <span className="mypage-meta-row">Download will appear when available.</span>
+                                    <p className="mypage-entitlement-message">License is being issued.</p>
                                   )}
-                                </div>
+                                </section>
+
+                                <section className="mypage-entitlement-block" aria-label={`${purchase.product_name} downloads`}>
+                                  <span className="mypage-meta-label">Downloads</span>
+                                  {entitlement?.loading ? (
+                                    <p className="mypage-entitlement-message">Checking available files...</p>
+                                  ) : entitlement?.downloadError ? (
+                                    <p className="mypage-entitlement-message is-error">{entitlement.downloadError}</p>
+                                  ) : availableDownloads.length > 0 ? (
+                                    <div className="mypage-download-list">
+                                      {availableDownloads.map(({ group, file }) => {
+                                        const downloadId = `${purchase.id}:${file.id}`;
+                                        const fileLabel = file.extension
+                                          ? `${file.name}.${file.extension.replace(/^\./, '')}`
+                                          : file.name;
+                                        return (
+                                          <div key={`${group.orderItemId}:${file.id}`} className="mypage-download-row">
+                                            <div className="mypage-download-copy">
+                                              <strong>{fileLabel}</strong>
+                                              {entitlement.downloadGroups.length > 1 ? (
+                                                <span>{group.productName}</span>
+                                              ) : null}
+                                              {file.version ? <span>Version {file.version}</span> : null}
+                                            </div>
+                                            <button
+                                              type="button"
+                                              className="auth-submit mypage-small-button"
+                                              onClick={() => void handleLemonDownload(purchase.id, file.id)}
+                                              disabled={activeLemonDownloadId === downloadId}
+                                            >
+                                              {activeLemonDownloadId === downloadId ? 'Preparing...' : 'Download'}
+                                            </button>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <p className="mypage-entitlement-message">Download is not available yet.</p>
+                                  )}
+                                </section>
 
                                 {!purchase.product_slug ? (
                                   <div className="mypage-meta-row">Product mapping is pending.</div>
