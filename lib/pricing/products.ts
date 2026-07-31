@@ -7,13 +7,17 @@ export type ProductPricing = {
   saleActive?: boolean;
 };
 
+export type ProductData = ProductPricing & {
+  youtubeVideoId?: string;
+};
+
 const glitchSaleActive = process.env.NEXT_PUBLIC_GLITCH_SALE_ACTIVE === 'true';
 
 const PRODUCT_NAME_ALIASES: Record<string, string> = {
   'Nebula Series': 'Nebula Series Bundle'
 };
 
-const PRICING_BY_PRODUCT_NAME: Record<string, ProductPricing> = {
+const PRODUCT_DATA_BY_PRODUCT_NAME: Record<string, ProductData> = {
   'Nebula Series Bundle': {
     currency: 'USD',
     launchPrice: 189,
@@ -24,32 +28,38 @@ const PRICING_BY_PRODUCT_NAME: Record<string, ProductPricing> = {
     regularPrice: 99,
     defaultPrice: 49,
     salePrice: 40,
-    saleActive: glitchSaleActive
+    saleActive: glitchSaleActive,
+    youtubeVideoId: '_y4nx3WViI4'
   },
   'Nebula Crush': {
     currency: 'USD',
     launchPrice: 39,
-    regularPrice: 59
+    regularPrice: 59,
+    youtubeVideoId: 'bBMgHURSguY'
   },
   'Nebula Space': {
     currency: 'USD',
     launchPrice: 59,
-    regularPrice: 79
+    regularPrice: 79,
+    youtubeVideoId: 'Jut9LH1BAXo'
   },
   'Nebula Drift': {
     currency: 'USD',
     launchPrice: 49,
-    regularPrice: 69
+    regularPrice: 69,
+    youtubeVideoId: 'VE7s3_-_1i4'
   },
   'Nebula Rift': {
     currency: 'USD',
     launchPrice: 59,
-    regularPrice: 79
+    regularPrice: 79,
+    youtubeVideoId: 'SNlqyr_8APo'
   },
   'Nebula Drums': {
     currency: 'USD',
     launchPrice: 49,
-    regularPrice: 59
+    regularPrice: 59,
+    youtubeVideoId: '7rXF8HeFUkM'
   },
   'Germinate': {
     currency: 'USD',
@@ -68,9 +78,17 @@ const PRICING_BY_PRODUCT_NAME: Record<string, ProductPricing> = {
   }
 };
 
-export function getProductPricing(productName: string): ProductPricing | null {
+export function getProductData(productName: string): ProductData | null {
   const canonicalName = PRODUCT_NAME_ALIASES[productName] ?? productName;
-  return PRICING_BY_PRODUCT_NAME[canonicalName] ?? null;
+  return PRODUCT_DATA_BY_PRODUCT_NAME[canonicalName] ?? null;
+}
+
+export function getProductPricing(productName: string): ProductPricing | null {
+  return getProductData(productName);
+}
+
+export function getProductYoutubeVideoId(productName: string): string | null {
+  return getProductData(productName)?.youtubeVideoId ?? null;
 }
 
 export function getMainProductPrice(pricing: ProductPricing): number {

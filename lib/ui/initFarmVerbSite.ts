@@ -598,13 +598,6 @@ export function initFarmVerbSite() {
     }
 
     resetThemeMotionState();
-
-    if (route !== 'sample-pack') {
-      const sampleVideo = document.querySelector<HTMLVideoElement>('.sample-film-video');
-      if (sampleVideo && !sampleVideo.paused) {
-        sampleVideo.pause();
-      }
-    }
   };
 
   const switchTo = (route: string, options: SwitchOptions = {}) => {

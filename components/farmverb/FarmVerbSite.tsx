@@ -1,8 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent
+} from 'react';
 import AuthNav from '@/components/auth/AuthNav';
+import AudioPluginsMegaMenu from '@/components/farmverb/AudioPluginsMegaMenu';
 import GlobalFooter from '@/components/farmverb/GlobalFooter';
 import {
   addItemToCart,
@@ -13,7 +20,13 @@ import {
   type CartItem
 } from '@/lib/cart/store';
 import { getLemonBuyButtonLabel, getLemonCheckoutUrlByProductName, getLemonMyOrdersUrl } from '@/lib/checkout/lemonLinks';
-import { formatUsdPrice, getLimitedSalePrice, getMainProductPrice, getProductPricing } from '@/lib/pricing/products';
+import {
+  formatUsdPrice,
+  getLimitedSalePrice,
+  getMainProductPrice,
+  getProductPricing,
+  getProductYoutubeVideoId
+} from '@/lib/pricing/products';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 import {
   DEFAULT_PLUGIN_SECTION,
@@ -51,14 +64,6 @@ type HomeStoryCard = {
   href: string;
   ctaLabel: string;
 };
-
-const AUDIO_PLUGIN_MENU_ITEMS: Array<{ label: string; section: PluginSectionKey }> = [
-  { label: 'Nebula Series Bundle', section: 'series' },
-  { label: 'Nebula Crush', section: 'nebula-crush' },
-  { label: 'Nebula Space', section: 'nebula-space' },
-  { label: 'Nebula Drift', section: 'nebula-drift' },
-  { label: 'Nebula Rift', section: 'nebula-rift' }
-];
 
 const ACCOUNT_UI_ENABLED = process.env.NEXT_PUBLIC_ENABLE_ACCOUNT_UI !== 'false';
 
@@ -170,18 +175,6 @@ const GLITCH_VALUE_STRIP = [
   '284 MB Download',
   'Commercial Use Included'
 ] as const;
-
-function formatTimeLabel(seconds: number) {
-  if (!Number.isFinite(seconds) || seconds < 0) {
-    return '0:00';
-  }
-
-  const rounded = Math.floor(seconds);
-  const minutes = Math.floor(rounded / 60);
-  const remainingSeconds = rounded % 60;
-
-  return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`;
-}
 
 function ProductPrice({
   productName,
@@ -996,6 +989,21 @@ function FaqAccordion({ items }: { items: FaqItem[] }) {
   );
 }
 
+function YouTubeDemo({ videoId, title, className = '' }: { videoId: string; title: string; className?: string }) {
+  return (
+    <div className={`product-youtube-frame ${className}`.trim()}>
+      <iframe
+        src={`https://www.youtube.com/embed/${videoId}`}
+        title={title}
+        loading="lazy"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerPolicy="strict-origin-when-cross-origin"
+        allowFullScreen
+      />
+    </div>
+  );
+}
+
 function ProductCommercialSections({
   details,
   manuals,
@@ -1015,6 +1023,7 @@ function ProductCommercialSections({
 }) {
   const checkoutReady = hasCheckoutUrl(details.productName);
   const primaryManual = manuals[0] ?? null;
+  const youtubeVideoId = getProductYoutubeVideoId(details.productName);
 
   return (
     <section className="product-commercial-stack" aria-label={`${details.eyebrow} product story`}>
@@ -1115,14 +1124,17 @@ function ProductCommercialSections({
         </div>
       </section>
 
-      <section className="product-demo-teaser">
-        <div>
-          <p className="section-overline">Demo Video</p>
-          <h3>Demo film placeholder</h3>
-          <p>Future YouTube demo embeds will appear here.</p>
-        </div>
-        <span aria-hidden="true">▶</span>
-      </section>
+      {details.productName === 'Nebula Series Bundle' ? (
+        <BundleIncludesSection />
+      ) : youtubeVideoId ? (
+        <section className="product-demo-section" aria-label={`${details.productName} demo video`}>
+          <div className="product-section-kicker">
+            <p className="section-overline">Product Demo</p>
+            <h3>{details.productName} in motion.</h3>
+          </div>
+          <YouTubeDemo videoId={youtubeVideoId} title={`${details.productName} product demo`} />
+        </section>
+      ) : null}
 
       {relatedCards.length > 0 ? (
         <section className="product-related-section">
@@ -1235,6 +1247,41 @@ function ProductSupportSections({
 
 function BundleIncludesSection() {
   const includedCards = getRelatedProductCards([...BUNDLE_INCLUDED_PRODUCT_NAMES]);
+  const [activeProductName, setActiveProductName] = useState<string>(BUNDLE_INCLUDED_PRODUCT_NAMES[0]);
+  const activeIndex = Math.max(
+    0,
+    includedCards.findIndex((card) => card.name === activeProductName)
+  );
+  const activeCard = includedCards[activeIndex] ?? includedCards[0] ?? null;
+  const activeVideoId = activeCard ? getProductYoutubeVideoId(activeCard.productName) : null;
+
+  const handleTabKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+      return;
+    }
+
+    event.preventDefault();
+    let nextIndex = index;
+
+    if (event.key === 'ArrowLeft') {
+      nextIndex = (index - 1 + includedCards.length) % includedCards.length;
+    } else if (event.key === 'ArrowRight') {
+      nextIndex = (index + 1) % includedCards.length;
+    } else if (event.key === 'Home') {
+      nextIndex = 0;
+    } else if (event.key === 'End') {
+      nextIndex = includedCards.length - 1;
+    }
+
+    const nextCard = includedCards[nextIndex];
+    if (!nextCard) {
+      return;
+    }
+
+    setActiveProductName(nextCard.name);
+    const tabs = event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+    window.requestAnimationFrame(() => tabs?.[nextIndex]?.focus());
+  };
 
   return (
     <section className="bundle-includes-section" aria-label="Nebula Series Bundle contents">
@@ -1243,19 +1290,55 @@ function BundleIncludesSection() {
         <h2>Four Nebula effects plus Nebula Drums as a bonus.</h2>
         <p>Nebula Series Bundle includes the core effect devices and the Decent Sampler drum instrument as a bonus.</p>
       </div>
-      <div className="bundle-includes-grid">
-        {includedCards.map((card) => (
-          <article key={card.name} className="bundle-include-card">
-            <figure>
-              <img src={card.image} alt={card.name} />
-            </figure>
-            <div>
-              <p>{card.eyebrow}</p>
-              <h3>{card.name}</h3>
-            </div>
-          </article>
-        ))}
+      <div className="bundle-demo-tabs" role="tablist" aria-label="Nebula Series product demos">
+        {includedCards.map((card, index) => {
+          const isActive = card.name === activeCard?.name;
+
+          return (
+            <button
+              key={card.name}
+              id={`bundle-demo-tab-${index}`}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-controls="bundle-demo-panel"
+              tabIndex={isActive ? 0 : -1}
+              className={`bundle-demo-tab ${isActive ? 'is-active' : ''}`}
+              onClick={() => setActiveProductName(card.name)}
+              onKeyDown={(event) => handleTabKeyDown(event, index)}
+            >
+              {card.name}
+            </button>
+          );
+        })}
       </div>
+
+      {activeCard && activeVideoId ? (
+        <article
+          id="bundle-demo-panel"
+          className="bundle-demo-panel"
+          role="tabpanel"
+          aria-labelledby={`bundle-demo-tab-${activeIndex}`}
+        >
+          <YouTubeDemo videoId={activeVideoId} title={`${activeCard.name} product demo`} />
+          <div className="bundle-demo-copy">
+            <figure className="bundle-demo-artwork">
+              <img src={activeCard.image} alt="" />
+            </figure>
+            <p className="section-overline">{activeCard.eyebrow}</p>
+            <h3>{activeCard.name}</h3>
+            <p>{activeCard.description}</p>
+            <Link
+              href={activeCard.href}
+              className="plugin-action plugin-action-cart"
+              data-route={activeCard.route}
+              data-plugin-section={activeCard.pluginSection}
+            >
+              View {activeCard.name}
+            </Link>
+          </div>
+        </article>
+      ) : null}
     </section>
   );
 }
@@ -1263,8 +1346,6 @@ function BundleIncludesSection() {
 export default function FarmVerbSite() {
   const [currentRoute, setCurrentRoute] = useState<RouteKey>('home');
   const [activeNebulaSection, setActiveNebulaSection] = useState<PluginSectionKey>(DEFAULT_PLUGIN_SECTION);
-  const [pluginMenuOpen, setPluginMenuOpen] = useState(false);
-  const audioPluginsMenuRef = useRef<HTMLDivElement | null>(null);
   const cartPreviewRef = useRef<HTMLDivElement | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartUserId, setCartUserId] = useState<string | null>(null);
@@ -1272,14 +1353,6 @@ export default function FarmVerbSite() {
   const [buyNowNotice, setBuyNowNotice] = useState<string | null>(null);
   const [cartPreviewOpen, setCartPreviewOpen] = useState(false);
   const [cartFeedback, setCartFeedback] = useState<{ message: string; item: CartItem | null } | null>(null);
-  const sampleFilmRef = useRef<HTMLVideoElement | null>(null);
-  const sampleFilmContainerRef = useRef<HTMLDivElement | null>(null);
-  const [sampleFilmPlaying, setSampleFilmPlaying] = useState(false);
-  const [sampleFilmCurrentTime, setSampleFilmCurrentTime] = useState(0);
-  const [sampleFilmDuration, setSampleFilmDuration] = useState(0);
-  const [sampleFilmMuted, setSampleFilmMuted] = useState(false);
-  const [sampleFilmVolume, setSampleFilmVolume] = useState(0.85);
-  const [sampleFilmFullscreen, setSampleFilmFullscreen] = useState(false);
 
   useEffect(() => {
     return initFarmVerbSite();
@@ -1290,7 +1363,6 @@ export default function FarmVerbSite() {
       const { route, pluginSection } = getRouteStateFromLocation(window.location.pathname, window.location.search);
       setCurrentRoute(route);
       setActiveNebulaSection(pluginSection);
-      setPluginMenuOpen(false);
     };
 
     const onRouteChange = (event: Event) => {
@@ -1301,7 +1373,6 @@ export default function FarmVerbSite() {
 
       setCurrentRoute(detail.route);
       setActiveNebulaSection(detail.pluginSection ?? DEFAULT_PLUGIN_SECTION);
-      setPluginMenuOpen(false);
     };
 
     syncFromLocation();
@@ -1401,31 +1472,6 @@ export default function FarmVerbSite() {
   }, [cartFeedback]);
 
   useEffect(() => {
-    if (!pluginMenuOpen) {
-      return;
-    }
-
-    const onPointerDown = (event: PointerEvent) => {
-      const target = event.target;
-      if (!(target instanceof Node)) {
-        return;
-      }
-
-      if (audioPluginsMenuRef.current?.contains(target)) {
-        return;
-      }
-
-      setPluginMenuOpen(false);
-    };
-
-    document.addEventListener('pointerdown', onPointerDown);
-
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-    };
-  }, [pluginMenuOpen]);
-
-  useEffect(() => {
     if (!cartPreviewOpen) {
       return;
     }
@@ -1450,73 +1496,6 @@ export default function FarmVerbSite() {
     };
   }, [cartPreviewOpen]);
 
-  useEffect(() => {
-    const video = sampleFilmRef.current;
-    if (!video) {
-      return;
-    }
-
-    const syncPlaying = () => setSampleFilmPlaying(!video.paused && !video.ended);
-    const syncPaused = () => setSampleFilmPlaying(false);
-    const syncTime = () => setSampleFilmCurrentTime(video.currentTime || 0);
-    const syncMetadata = () => setSampleFilmDuration(Number.isFinite(video.duration) ? video.duration : 0);
-    const syncVolume = () => {
-      setSampleFilmMuted(video.muted);
-      setSampleFilmVolume(video.volume);
-    };
-
-    video.addEventListener('play', syncPlaying);
-    video.addEventListener('pause', syncPaused);
-    video.addEventListener('ended', syncPaused);
-    video.addEventListener('timeupdate', syncTime);
-    video.addEventListener('loadedmetadata', syncMetadata);
-    video.addEventListener('durationchange', syncMetadata);
-    video.addEventListener('volumechange', syncVolume);
-
-    syncMetadata();
-    syncVolume();
-
-    return () => {
-      video.removeEventListener('play', syncPlaying);
-      video.removeEventListener('pause', syncPaused);
-      video.removeEventListener('ended', syncPaused);
-      video.removeEventListener('timeupdate', syncTime);
-      video.removeEventListener('loadedmetadata', syncMetadata);
-      video.removeEventListener('durationchange', syncMetadata);
-      video.removeEventListener('volumechange', syncVolume);
-    };
-  }, []);
-
-  useEffect(() => {
-    const video = sampleFilmRef.current;
-    if (!video) {
-      return;
-    }
-
-    video.muted = sampleFilmMuted;
-  }, [sampleFilmMuted]);
-
-  useEffect(() => {
-    const video = sampleFilmRef.current;
-    if (!video) {
-      return;
-    }
-
-    video.volume = sampleFilmVolume;
-  }, [sampleFilmVolume]);
-
-  useEffect(() => {
-    const onFullscreenChange = () => {
-      setSampleFilmFullscreen(Boolean(document.fullscreenElement));
-    };
-
-    document.addEventListener('fullscreenchange', onFullscreenChange);
-
-    return () => {
-      document.removeEventListener('fullscreenchange', onFullscreenChange);
-    };
-  }, []);
-
   const selectedSeriesProduct = useMemo(() => {
     if (activeNebulaSection === DEFAULT_PLUGIN_SECTION) {
       return NEBULA_BUNDLE_PRODUCT;
@@ -1536,10 +1515,10 @@ export default function FarmVerbSite() {
   const glitchPackPricing = getProductPricing('Glitch Drum Pack Vol.1');
   const glitchPackPrice = glitchPackPricing ? getMainProductPrice(glitchPackPricing) : 49;
   const glitchPackRegularPrice = glitchPackPricing?.regularPrice ?? 99;
+  const glitchPackYoutubeVideoId = getProductYoutubeVideoId('Glitch Drum Pack Vol.1');
 
   const showSeriesFeature = Boolean(selectedSeriesProduct) && currentRoute === 'plugins';
 
-  const activePluginMenuSection = currentRoute === 'plugins' ? activeNebulaSection : null;
   const activePluginMenuName =
     activeNebulaSection === DEFAULT_PLUGIN_SECTION
       ? 'Nebula Series Bundle'
@@ -1552,7 +1531,6 @@ export default function FarmVerbSite() {
   const selectNebulaSection = (section: PluginSectionKey) => {
     setCurrentRoute('plugins');
     setActiveNebulaSection(section);
-    setPluginMenuOpen(false);
   };
 
   const onProductNameClick = (section: PluginSectionKey) => {
@@ -1784,70 +1762,6 @@ export default function FarmVerbSite() {
     );
   };
 
-  const toggleSampleFilm = async () => {
-    const video = sampleFilmRef.current;
-    if (!video) {
-      return;
-    }
-
-    if (video.paused || video.ended) {
-      video.muted = sampleFilmMuted;
-
-      try {
-        await video.play();
-      } catch {
-        setSampleFilmPlaying(false);
-      }
-      return;
-    }
-
-    video.pause();
-  };
-
-  const seekSampleFilm = (nextTime: number) => {
-    const video = sampleFilmRef.current;
-    if (!video || !Number.isFinite(nextTime)) {
-      return;
-    }
-
-    const clampedTime = Math.max(0, Math.min(sampleFilmDuration || nextTime, nextTime));
-    video.currentTime = clampedTime;
-    setSampleFilmCurrentTime(clampedTime);
-  };
-
-  const handleSampleFilmProgressChange = (event: ChangeEvent<HTMLInputElement>) => {
-    seekSampleFilm(Number(event.target.value));
-  };
-
-  const handleSampleFilmVolumeChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextVolume = Math.max(0, Math.min(1, Number(event.target.value)));
-    setSampleFilmVolume(nextVolume);
-    if (nextVolume > 0 && sampleFilmMuted) {
-      setSampleFilmMuted(false);
-    }
-  };
-
-  const toggleSampleFilmMuted = () => {
-    setSampleFilmMuted((currentMuted) => !currentMuted);
-  };
-
-  const toggleSampleFilmFullscreen = async () => {
-    const target = sampleFilmContainerRef.current;
-    if (!target) {
-      return;
-    }
-
-    try {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
-      } else if (target.requestFullscreen) {
-        await target.requestFullscreen();
-      }
-    } catch {
-      // Ignore fullscreen failures.
-    }
-  };
-
   return (
     <div className="farmverb-root">
       <div className="grain-layer" aria-hidden="true" />
@@ -1858,36 +1772,10 @@ export default function FarmVerbSite() {
             <Link href="/instrument" className="nav-link" data-route="instrument">
               Software Instrument
             </Link>
-            <div className={`nav-dropdown ${pluginMenuOpen ? 'is-open' : ''}`} ref={audioPluginsMenuRef}>
-              <button
-                type="button"
-                className="nav-link nav-link-trigger"
-                aria-haspopup="menu"
-                aria-expanded={pluginMenuOpen}
-                aria-controls="audio-plugins-dropdown"
-                onClick={() => setPluginMenuOpen((current) => !current)}
-              >
-                <span>Audio Plugins</span>
-                <span className="nav-dropdown-caret" aria-hidden="true">
-                  ▾
-                </span>
-              </button>
-              <div id="audio-plugins-dropdown" className="nav-dropdown-panel" role="menu" aria-label="Audio Plugins">
-                {AUDIO_PLUGIN_MENU_ITEMS.map((item) => (
-                  <button
-                    key={item.label}
-                    type="button"
-                    className={`nav-dropdown-item ${activePluginMenuSection === item.section ? 'is-active' : ''}`}
-                    data-route="plugins"
-                    data-plugin-section={item.section}
-                    role="menuitem"
-                    onClick={() => selectNebulaSection(item.section)}
-                  >
-                    <span className="nav-dropdown-item-label">{item.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            <AudioPluginsMegaMenu
+              currentRoute={currentRoute}
+              activePluginSection={activeNebulaSection}
+            />
             <Link href="/sample-pack" className="nav-link" data-route="sample-pack">
               Sample Pack
             </Link>
@@ -2101,7 +1989,6 @@ export default function FarmVerbSite() {
           <div className="page-scroll page-shell site-container">
             <section className="plugin-series-view plugin-landing-view">
               {renderProductCommercial(activePluginMenuName)}
-              {activeNebulaSection === DEFAULT_PLUGIN_SECTION ? <BundleIncludesSection /> : null}
               {renderProductSupport(activePluginMenuName)}
             </section>
 
@@ -2186,97 +2073,13 @@ export default function FarmVerbSite() {
 
               <section className="sample-panel-section sample-film-section">
                 <p className="section-overline">Product Film</p>
-                <div className={`sample-film-card ${sampleFilmPlaying ? 'is-playing' : ''}`} ref={sampleFilmContainerRef}>
-                  <video
-                    ref={sampleFilmRef}
-                    className="sample-film-video"
-                    muted={sampleFilmMuted}
-                    loop
-                    playsInline
-                    preload="metadata"
-                    poster="/GlitchDrum/GlitchDrum.png"
-                  >
-                    <source src="/GlitchDrum/GlitchMov.mp4" type="video/mp4" />
-                  </video>
-                  <div className="sample-film-overlay" aria-hidden="true" />
-                  <button
-                    type="button"
-                    className="sample-film-play"
-                    onClick={() => void toggleSampleFilm()}
-                    aria-label={sampleFilmPlaying ? 'Pause product film' : 'Play product film with sound'}
-                  >
-                    <span className="sample-film-play-icon" aria-hidden="true">
-                      {sampleFilmPlaying ? '❚❚' : '▶'}
-                    </span>
-                  </button>
-                  <div className="sample-film-controls" aria-label="Video controls">
-                    <button
-                      type="button"
-                      className="sample-film-control-button"
-                      onClick={() => void toggleSampleFilm()}
-                      aria-label={sampleFilmPlaying ? 'Pause video' : 'Play video'}
-                    >
-                      {sampleFilmPlaying ? (
-                        <span aria-hidden="true">❚❚</span>
-                      ) : (
-                        <span aria-hidden="true">▶</span>
-                      )}
-                    </button>
-
-                    <span className="sample-film-time" aria-label="Playback time">
-                      {formatTimeLabel(sampleFilmCurrentTime)} / {formatTimeLabel(sampleFilmDuration)}
-                    </span>
-
-                    <div className="sample-film-range-wrap sample-film-progress-wrap">
-                      <input
-                        className="sample-film-range sample-film-progress"
-                        type="range"
-                        min={0}
-                        max={sampleFilmDuration || 0}
-                        step="0.01"
-                        value={Math.min(sampleFilmCurrentTime, sampleFilmDuration || sampleFilmCurrentTime)}
-                        onChange={handleSampleFilmProgressChange}
-                        aria-label="Seek video"
-                        disabled={sampleFilmDuration <= 0}
-                      />
-                    </div>
-
-                    <button
-                      type="button"
-                      className="sample-film-control-button"
-                      onClick={toggleSampleFilmMuted}
-                      aria-label={sampleFilmMuted || sampleFilmVolume === 0 ? 'Unmute video' : 'Mute video'}
-                    >
-                      {sampleFilmMuted || sampleFilmVolume === 0 ? (
-                        <span aria-hidden="true">🔇</span>
-                      ) : (
-                        <span aria-hidden="true">🔈</span>
-                      )}
-                    </button>
-
-                    <div className="sample-film-range-wrap sample-film-volume-wrap">
-                      <input
-                        className="sample-film-range sample-film-volume"
-                        type="range"
-                        min={0}
-                        max={1}
-                        step="0.01"
-                        value={sampleFilmVolume}
-                        onChange={handleSampleFilmVolumeChange}
-                        aria-label="Volume"
-                      />
-                    </div>
-
-                    <button
-                      type="button"
-                      className="sample-film-control-button"
-                      onClick={() => void toggleSampleFilmFullscreen()}
-                      aria-label={sampleFilmFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                    >
-                      {sampleFilmFullscreen ? <span aria-hidden="true">⤢</span> : <span aria-hidden="true">⛶</span>}
-                    </button>
-                  </div>
-                </div>
+                {glitchPackYoutubeVideoId ? (
+                  <YouTubeDemo
+                    videoId={glitchPackYoutubeVideoId}
+                    title="Glitch Drum Pack Vol. I product film"
+                    className="sample-film-card sample-film-youtube"
+                  />
+                ) : null}
                 <p className="sample-film-caption">Fractured rhythm. Digital texture. Controlled chaos.</p>
               </section>
 
