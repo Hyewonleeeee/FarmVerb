@@ -10,6 +10,7 @@ import {
 } from 'react';
 import AuthNav from '@/components/auth/AuthNav';
 import AudioPluginsMegaMenu from '@/components/farmverb/AudioPluginsMegaMenu';
+import MobileSiteNavigation from '@/components/farmverb/MobileSiteNavigation';
 import GlobalFooter from '@/components/farmverb/GlobalFooter';
 import {
   addItemToCart,
@@ -960,14 +961,23 @@ const BUNDLE_INCLUDED_PRODUCT_NAMES = [
   'Nebula Drums'
 ] as const;
 
+const GLITCH_RELATED_PRODUCT_NAMES = [
+  'Nebula Series Bundle',
+  'Nebula Crush',
+  'Nebula Drums'
+] as const;
+
 function getHomeProductCard(productName: string) {
   return HOME_FEATURE_CARDS.find((card) => card.productName === productName || card.name === productName) ?? null;
 }
 
-function getRelatedProductCards(productNames: string[]) {
+function getRelatedProductCards(productNames: readonly string[], currentProductName?: string) {
+  const normalizedCurrentProductName = currentProductName?.trim().toLowerCase();
+
   return productNames
     .map((productName) => getHomeProductCard(productName))
-    .filter((card): card is HomeFeatureCard => Boolean(card));
+    .filter((card): card is HomeFeatureCard => Boolean(card))
+    .filter((card) => card.productName.trim().toLowerCase() !== normalizedCurrentProductName);
 }
 
 function getProductSupportId(productName: string) {
@@ -1004,10 +1014,81 @@ function YouTubeDemo({ videoId, title, className = '' }: { videoId: string; titl
   );
 }
 
+function ExploreMoreProductsSection({
+  cards,
+  onAddToCart,
+  onBuyNow,
+  hasCheckoutUrl,
+  getBuyLabel
+}: {
+  cards: HomeFeatureCard[];
+  onAddToCart: (productName: string) => void;
+  onBuyNow: (productName: string) => void;
+  hasCheckoutUrl: (productName: string) => boolean;
+  getBuyLabel: (productName: string) => string;
+}) {
+  if (cards.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="product-related-section" aria-label="Explore more FarmVerb products">
+      <div className="product-section-kicker">
+        <p className="section-overline">More from FarmVerb</p>
+        <h3>Explore More Products</h3>
+      </div>
+      <div className="related-product-grid">
+        {cards.map((card) => {
+          const checkoutReady = hasCheckoutUrl(card.productName);
+
+          return (
+            <article key={card.name} className="related-product-card interactive-tilt">
+              <figure className="related-product-media">
+                <img src={card.image} alt={card.name} />
+              </figure>
+              <div className="related-product-copy">
+                <p className="home-product-eyebrow">{card.eyebrow}</p>
+                <h4>{card.name}</h4>
+                <p>{card.description}</p>
+                <ProductPrice productName={card.productName} />
+              </div>
+              <div className="related-product-actions">
+                <Link
+                  href={card.href}
+                  className="plugin-action plugin-action-cart"
+                  data-route={card.route}
+                  data-plugin-section={card.pluginSection}
+                >
+                  View
+                </Link>
+                <button
+                  type="button"
+                  className="plugin-action plugin-action-buy"
+                  onClick={() => onBuyNow(card.productName)}
+                  disabled={!checkoutReady}
+                  title={checkoutReady ? undefined : 'Checkout link coming soon'}
+                >
+                  {getBuyLabel(card.productName)}
+                </button>
+                <button
+                  type="button"
+                  className="plugin-action plugin-action-cart"
+                  onClick={() => onAddToCart(card.productName)}
+                >
+                  Add to Cart
+                </button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function ProductCommercialSections({
   details,
   manuals,
-  relatedCards,
   onAddToCart,
   onBuyNow,
   hasCheckoutUrl,
@@ -1015,7 +1096,6 @@ function ProductCommercialSections({
 }: {
   details: ProductCommercialDetails;
   manuals: ManualDownloadItem[];
-  relatedCards: HomeFeatureCard[];
   onAddToCart: (productName: string) => void;
   onBuyNow: (productName: string) => void;
   hasCheckoutUrl: (productName: string) => boolean;
@@ -1087,6 +1167,18 @@ function ProductCommercialSections({
         </figure>
       </section>
 
+      {details.productName === 'Nebula Series Bundle' ? (
+        <BundleVideoTabsSection />
+      ) : youtubeVideoId ? (
+        <section className="product-demo-section" aria-label={`${details.productName} demo video`}>
+          <div className="product-section-kicker">
+            <p className="section-overline">Product Demo</p>
+            <h3>{details.productName} in motion.</h3>
+          </div>
+          <YouTubeDemo videoId={youtubeVideoId} title={`${details.productName} product demo`} />
+        </section>
+      ) : null}
+
       <div className="product-value-row" aria-label="Product highlights">
         {details.valueItems.map((item) => (
           <span key={item}>{item}</span>
@@ -1125,69 +1217,7 @@ function ProductCommercialSections({
       </section>
 
       {details.productName === 'Nebula Series Bundle' ? (
-        <BundleIncludesSection />
-      ) : youtubeVideoId ? (
-        <section className="product-demo-section" aria-label={`${details.productName} demo video`}>
-          <div className="product-section-kicker">
-            <p className="section-overline">Product Demo</p>
-            <h3>{details.productName} in motion.</h3>
-          </div>
-          <YouTubeDemo videoId={youtubeVideoId} title={`${details.productName} product demo`} />
-        </section>
-      ) : null}
-
-      {relatedCards.length > 0 ? (
-        <section className="product-related-section">
-          <div className="product-section-kicker">
-            <p className="section-overline">Related Products</p>
-            <h3>More from FarmVerb</h3>
-          </div>
-          <div className="related-product-grid">
-            {relatedCards.map((card) => {
-              const checkoutReady = hasCheckoutUrl(card.productName);
-
-              return (
-                <article key={card.name} className="related-product-card interactive-tilt">
-                  <figure className="related-product-media">
-                    <img src={card.image} alt={card.name} />
-                  </figure>
-                  <div className="related-product-copy">
-                    <p className="home-product-eyebrow">{card.eyebrow}</p>
-                    <h4>{card.name}</h4>
-                    <p>{card.description}</p>
-                    <ProductPrice productName={card.productName} />
-                  </div>
-                  <div className="related-product-actions">
-                    <Link
-                      href={card.href}
-                      className="plugin-action plugin-action-cart"
-                      data-route={card.route}
-                      data-plugin-section={card.pluginSection}
-                    >
-                      View
-                    </Link>
-                    <button
-                      type="button"
-                      className="plugin-action plugin-action-buy"
-                      onClick={() => onBuyNow(card.productName)}
-                      disabled={!checkoutReady}
-                      title={checkoutReady ? undefined : 'Checkout link coming soon'}
-                    >
-                      {getBuyLabel(card.productName)}
-                    </button>
-                    <button
-                      type="button"
-                      className="plugin-action plugin-action-cart"
-                      onClick={() => onAddToCart(card.productName)}
-                    >
-                      Add to Cart
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
+        <BundleContentsSection />
       ) : null}
     </section>
   );
@@ -1245,8 +1275,8 @@ function ProductSupportSections({
   );
 }
 
-function BundleIncludesSection() {
-  const includedCards = getRelatedProductCards([...BUNDLE_INCLUDED_PRODUCT_NAMES]);
+function BundleVideoTabsSection() {
+  const includedCards = getRelatedProductCards(BUNDLE_INCLUDED_PRODUCT_NAMES);
   const [activeProductName, setActiveProductName] = useState<string>(BUNDLE_INCLUDED_PRODUCT_NAMES[0]);
   const activeIndex = Math.max(
     0,
@@ -1284,12 +1314,7 @@ function BundleIncludesSection() {
   };
 
   return (
-    <section className="bundle-includes-section" aria-label="Nebula Series Bundle contents">
-      <div className="product-support-head">
-        <p className="section-overline">Bundle Includes</p>
-        <h2>Four Nebula effects plus Nebula Drums as a bonus.</h2>
-        <p>Nebula Series Bundle includes the core effect devices and the Decent Sampler drum instrument as a bonus.</p>
-      </div>
+    <section className="bundle-includes-section bundle-video-tabs-section" aria-label="Nebula Series product demos">
       <div className="bundle-demo-tabs" role="tablist" aria-label="Nebula Series product demos">
         {includedCards.map((card, index) => {
           const isActive = card.name === activeCard?.name;
@@ -1339,6 +1364,33 @@ function BundleIncludesSection() {
           </div>
         </article>
       ) : null}
+    </section>
+  );
+}
+
+function BundleContentsSection() {
+  const includedCards = getRelatedProductCards(BUNDLE_INCLUDED_PRODUCT_NAMES);
+
+  return (
+    <section className="bundle-includes-section" aria-label="Nebula Series Bundle contents">
+      <div className="product-support-head">
+        <p className="section-overline">Bundle Includes</p>
+        <h2>Four Nebula effects plus Nebula Drums as a bonus.</h2>
+        <p>Nebula Series Bundle includes the core effect devices and the Decent Sampler drum instrument as a bonus.</p>
+      </div>
+      <div className="bundle-includes-grid">
+        {includedCards.map((card) => (
+          <article key={card.name} className="bundle-include-card">
+            <figure>
+              <img src={card.image} alt={card.name} />
+            </figure>
+            <div>
+              <p>{card.eyebrow}</p>
+              <h3>{card.name}</h3>
+            </div>
+          </article>
+        ))}
+      </div>
     </section>
   );
 }
@@ -1741,7 +1793,24 @@ export default function FarmVerbSite() {
       <ProductCommercialSections
         details={details}
         manuals={supportDetails?.manuals ?? []}
-        relatedCards={getRelatedProductCards(details.relatedProducts)}
+        onAddToCart={addToCart}
+        onBuyNow={onBuyNow}
+        hasCheckoutUrl={hasCheckoutUrl}
+        getBuyLabel={getPlaceholderBuyLabel}
+      />
+    );
+  };
+
+  const renderExploreMoreProducts = (
+    currentProductName: string,
+    relatedProductNames?: readonly string[]
+  ) => {
+    const productNames = relatedProductNames ?? PRODUCT_COMMERCIAL_DETAILS[currentProductName]?.relatedProducts ?? [];
+    const cards = getRelatedProductCards(productNames, currentProductName);
+
+    return (
+      <ExploreMoreProductsSection
+        cards={cards}
         onAddToCart={addToCart}
         onBuyNow={onBuyNow}
         hasCheckoutUrl={hasCheckoutUrl}
@@ -1767,7 +1836,7 @@ export default function FarmVerbSite() {
       <div className="grain-layer" aria-hidden="true" />
 
       <header className="site-header">
-        <nav className="site-nav site-container" aria-label="Primary navigation">
+        <nav className="site-nav site-nav-desktop site-container" aria-label="Primary navigation">
           <div className="nav-group nav-left">
             <Link href="/instrument" className="nav-link" data-route="instrument">
               Software Instrument
@@ -1829,6 +1898,12 @@ export default function FarmVerbSite() {
             <AuthNav />
           </div>
         </nav>
+        <MobileSiteNavigation
+          currentRoute={currentRoute}
+          activePluginSection={activeNebulaSection}
+          showCart={cartAuthReady && Boolean(cartUserId)}
+          cartItemCount={cartItemCount}
+        />
       </header>
 
       <main className="experience" id="experience">
@@ -1990,6 +2065,7 @@ export default function FarmVerbSite() {
             <section className="plugin-series-view plugin-landing-view">
               {renderProductCommercial(activePluginMenuName)}
               {renderProductSupport(activePluginMenuName)}
+              {renderExploreMoreProducts(activePluginMenuName)}
             </section>
 
             <div className="global-footer-host">
@@ -2002,6 +2078,7 @@ export default function FarmVerbSite() {
           <div className="page-scroll page-shell site-container">
             {renderProductCommercial('Nebula Drums')}
             {renderProductSupport('Nebula Drums')}
+            {renderExploreMoreProducts('Nebula Drums')}
 
             <div className="global-footer-host">
               <GlobalFooter />
@@ -2063,14 +2140,6 @@ export default function FarmVerbSite() {
                 </figure>
               </div>
 
-              <section className="sample-value-strip" aria-label="Product facts">
-                {GLITCH_VALUE_STRIP.map((item) => (
-                  <div key={item} className="sample-value-item">
-                    {item}
-                  </div>
-                ))}
-              </section>
-
               <section className="sample-panel-section sample-film-section">
                 <p className="section-overline">Product Film</p>
                 {glitchPackYoutubeVideoId ? (
@@ -2081,6 +2150,14 @@ export default function FarmVerbSite() {
                   />
                 ) : null}
                 <p className="sample-film-caption">Fractured rhythm. Digital texture. Controlled chaos.</p>
+              </section>
+
+              <section className="sample-value-strip" aria-label="Product facts">
+                {GLITCH_VALUE_STRIP.map((item) => (
+                  <div key={item} className="sample-value-item">
+                    {item}
+                  </div>
+                ))}
               </section>
 
               <section className="sample-panel-section sample-story-section">
@@ -2169,20 +2246,6 @@ export default function FarmVerbSite() {
                 </article>
               </section>
 
-              <section className="sample-panel-section">
-                <p className="section-overline">FAQ</p>
-                <article className="sample-spec-card sample-spec-card-wide">
-                  <FaqAccordion items={GLITCH_FAQ_ITEMS} />
-                  <div className="product-faq-contact">
-                    <p>Still have questions?</p>
-                    <a href="mailto:support@farmverb.com">support@farmverb.com</a>
-                    <a href="mailto:support@farmverb.com" className="manual-download-link">
-                      Contact Support
-                    </a>
-                  </div>
-                </article>
-              </section>
-
               <section className="sample-panel-section sample-about-section">
                 <p className="section-overline">About FARMVERB</p>
                 <div className="sample-about-grid">
@@ -2202,6 +2265,22 @@ export default function FarmVerbSite() {
                   </div>
                 </div>
               </section>
+
+              <section className="sample-panel-section">
+                <p className="section-overline">FAQ</p>
+                <article className="sample-spec-card sample-spec-card-wide">
+                  <FaqAccordion items={GLITCH_FAQ_ITEMS} />
+                  <div className="product-faq-contact">
+                    <p>Still have questions?</p>
+                    <a href="mailto:support@farmverb.com">support@farmverb.com</a>
+                    <a href="mailto:support@farmverb.com" className="manual-download-link">
+                      Contact Support
+                    </a>
+                  </div>
+                </article>
+              </section>
+
+              {renderExploreMoreProducts('Glitch Drum Pack Vol.1', GLITCH_RELATED_PRODUCT_NAMES)}
             </div>
 
             <div className="global-footer-host">
