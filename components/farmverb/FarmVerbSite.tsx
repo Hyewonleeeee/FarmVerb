@@ -464,6 +464,10 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
       {
         title: 'Blend into the track',
         body: 'Use Mix, Blend, or output-level controls where available to keep the source musical.'
+      },
+      {
+        title: 'Finish in Context',
+        body: 'Check the chosen processor in the full mix and set the final blend or output where available.'
       }
     ],
     relatedProducts: ['Glitch Drum Pack Vol.1']
