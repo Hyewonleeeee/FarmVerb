@@ -12,6 +12,8 @@ import AuthNav from '@/components/auth/AuthNav';
 import AudioPluginsMegaMenu from '@/components/farmverb/AudioPluginsMegaMenu';
 import MobileSiteNavigation from '@/components/farmverb/MobileSiteNavigation';
 import GlobalFooter from '@/components/farmverb/GlobalFooter';
+import YouTubeDemo from '@/components/farmverb/YouTubeDemo';
+import { FARMVERB_SOCIAL_LINKS } from '@/lib/content/socialLinks';
 import {
   addItemToCart,
   getCatalogProductByName,
@@ -37,6 +39,7 @@ import {
   getRouteStateFromLocation,
 } from '@/lib/ui/farmVerbRoutes';
 import { initFarmVerbSite } from '@/lib/ui/initFarmVerbSite';
+import { pauseAllYouTubePlayers } from '@/lib/ui/youtubePlaybackManager';
 
 type PluginProduct = {
   section: PluginSectionKey;
@@ -250,7 +253,7 @@ const HOME_FEATURE_CARDS: HomeFeatureCard[] = [
   {
     eyebrow: 'Audio Plugins',
     name: 'Nebula Series Bundle',
-    description: 'The Nebula overview, anchored by the main series artwork and the brand’s flagship atmosphere.',
+    description: 'Four creative effects for saturation, space, motion, and fracture, with Nebula Drums included as a bonus.',
     image: '/Nebula%20Series/Main/Nebula%20Series.png',
     href: buildRouteHref('plugins'),
     route: 'plugins',
@@ -327,7 +330,7 @@ const HOME_STORY_CARDS: HomeStoryCard[] = [
   {
     eyebrow: 'FarmVerb Journal',
     title: 'In a field of noise, make music that matters.',
-    description: 'A warm editorial opening that keeps the page commercial and calm without becoming a gallery.',
+    description: 'Explore expressive audio tools shaped for character, movement, and a musical sense of space.',
     image: '/Main/Main.jpg',
     href: buildRouteHref('plugins'),
     ctaLabel: 'Explore Products'
@@ -335,7 +338,7 @@ const HOME_STORY_CARDS: HomeStoryCard[] = [
   {
     eyebrow: 'Studio View',
     title: 'Texture, motion, and depth.',
-    description: 'Images and type working together like a premium landing page, not a shop grid.',
+    description: 'Discover fractured percussion and tactile digital detail built for modern production.',
     image: '/Main/Main_2.jpg',
     href: buildRouteHref('sample-pack'),
     ctaLabel: 'View Sample Pack'
@@ -343,7 +346,7 @@ const HOME_STORY_CARDS: HomeStoryCard[] = [
   {
     eyebrow: 'Creative Tools',
     title: 'Warm tools for modern sound.',
-    description: 'Clear, editorial spacing with room for the FarmVerb identity to breathe.',
+    description: 'Move from subtle color to experimental motion with instruments and effects made for creative play.',
     image: '/Main/Main_3.jpg',
     href: buildRouteHref('instrument'),
     ctaLabel: 'View Instrument'
@@ -377,7 +380,7 @@ const STANDARD_NEBULA_PLUGIN_REQUIREMENTS: SupportRequirementGroup[] = [
   },
   {
     label: 'Formats',
-    items: ['VST3', 'AU on macOS', 'AAX optional build']
+    items: ['VST3', 'AU on macOS', 'AAX']
   },
   {
     label: 'Troubleshooting',
@@ -392,34 +395,34 @@ const RIFT_REQUIREMENTS: SupportRequirementGroup[] = [
   },
   {
     label: 'macOS AU',
-    items: ['Install Nebula Rift.component to ~/Library/Audio/Plug-Ins/Components/ if included']
+    items: ['Install Nebula Rift.component to ~/Library/Audio/Plug-Ins/Components/']
+  },
+  {
+    label: 'Formats',
+    items: ['VST3', 'AU on macOS', 'AAX']
   },
   {
     label: 'Host Scan',
     items: ['Rescan plugins in your DAW', 'Clear host plugin cache if not visible']
-  },
-  {
-    label: 'Testing Note',
-    items: ['Use the current user-path build if user and system plugin locations both contain Nebula Rift']
   }
 ];
 
 const DRUMS_REQUIREMENTS: SupportRequirementGroup[] = [
   {
     label: 'Host',
-    items: ['Decent Sampler required']
+    items: ['Decent Sampler 1.11.1 or later', 'Latest Decent Sampler version recommended']
   },
   {
-    label: 'Installation',
-    items: ['Install Decent Sampler', 'Load Nebula Drums inside Decent Sampler', 'Open presets from the Nebula Drums library']
+    label: 'Library Format',
+    items: ['30 .dspreset files', 'Open a preset from the FILE… menu']
   },
   {
-    label: 'Instrument Format',
-    items: ['Creative drum instrument for Decent Sampler']
+    label: 'Folder Structure',
+    items: ['Keep .dspreset, Samples, and Resources together', 'Do not move the included folders separately']
   },
   {
-    label: 'Keyboard Layout',
-    items: ['C1 Glitch & Industrial', 'C2 Organic Lo-Fi', 'C3 Cybernetic Trap', 'C4 Experimental Cinematic']
+    label: 'First Preset',
+    items: ['01 Hybrid Kinetic Drums.dspreset']
   }
 ];
 
@@ -481,7 +484,7 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
     image: NEBULA_REAL_IMAGES.crush,
     imageAlt: 'Nebula Crush product photograph',
     imageLayout: 'wide',
-    valueItems: ['Drive', 'Tone', 'Blend', 'Output'],
+    valueItems: ['Gain', 'Width', 'Tone', 'Output'],
     features: [
       {
         title: 'SAFE / PUNCHY',
@@ -492,8 +495,8 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
         body: 'Select the distortion flavor before dialing the intensity and tone.'
       },
       {
-        title: 'Blend control',
-        body: 'Mix dry and processed sound to keep the original signal present.'
+        title: 'Width control',
+        body: 'Adjust the stereo width of the processed signal to suit the source and mix.'
       },
       {
         title: 'Output trim',
@@ -506,12 +509,12 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
         body: 'Start with the distortion flavor that fits the source.'
       },
       {
-        title: 'Set Drive',
-        body: 'Increase distortion intensity until the texture lands.'
+        title: 'Set Gain',
+        body: 'Adjust Gain until the harmonic character lands.'
       },
       {
-        title: 'Balance Tone and Blend',
-        body: 'Shape brightness and mix the processed signal to taste.'
+        title: 'Balance Width and Tone',
+        body: 'Set the stereo spread and brightness for the source.'
       },
       {
         title: 'Match Output',
@@ -694,12 +697,8 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
     ],
     workflow: [
       {
-        title: 'Install Decent Sampler',
-        body: 'Nebula Drums requires Decent Sampler before loading the instrument.'
-      },
-      {
-        title: 'Load a preset',
-        body: 'Open the Nebula Drums library inside Decent Sampler.'
+        title: 'Choose a preset',
+        body: 'Start with a drum world that matches the rhythm or texture you want to build.'
       },
       {
         title: 'Play a theme',
@@ -708,11 +707,24 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
       {
         title: 'Shape with XY',
         body: 'Use the XY Pad and front-panel controls for movement and space.'
+      },
+      {
+        title: 'Finish in context',
+        body: 'Balance the selected preset and performance against the rest of the track.'
       }
     ],
     relatedProducts: ['Nebula Series Bundle', 'Nebula Crush', 'Glitch Drum Pack Vol.1']
   }
 };
+
+const PLUGIN_INSTALL_ANSWER =
+  'Run the product installer, select the formats used by your DAW, then rescan plugins in the host. On Windows, follow the locations provided by the Windows installer.';
+const PLUGIN_FORMAT_ANSWER =
+  'FarmVerb effect releases are provided in VST3, AU on macOS, and AAX formats. Use the format supported by your DAW.';
+const PRODUCT_ACCESS_ANSWER =
+  'Sign in and open My Account to access verified purchases, available downloads, and license details. You can also use the order link provided with your purchase.';
+const PRODUCT_COMMERCIAL_USE_ANSWER =
+  'The FarmVerb EULA permits use in personal and commercial music, sound design, and media projects. Product files, installers, license keys, presets, and raw content may not be redistributed or resold as standalone assets.';
 
 const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
   'Nebula Series Bundle': {
@@ -729,7 +741,7 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
       },
       {
         label: 'Plugin Formats',
-        items: ['VST3', 'AU on macOS', 'AAX optional build where available']
+        items: ['VST3', 'AU on macOS', 'AAX']
       },
       {
         label: 'Instrument Host',
@@ -750,19 +762,23 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
       },
       {
         question: 'Does Nebula Drums require anything extra?',
-        answer: 'Yes. The Nebula Drums manual states that Decent Sampler is required and should be installed before using Nebula Drums.'
+        answer: 'Yes. Install Decent Sampler 1.11.1 or later, with the latest version recommended. Nebula Drums is loaded by opening one of its .dspreset files inside Decent Sampler.'
       },
       {
-        question: 'Which plugin formats are referenced in the manuals?',
-        answer: 'The Nebula plugin manuals reference VST3, AU on macOS, and AAX as an optional build. Installation steps also describe rescanning the host after installation.'
+        question: 'Which formats are included?',
+        answer: 'The four Nebula effects are provided in VST3, AU on macOS, and AAX formats. Nebula Drums uses .dspreset files and requires Decent Sampler.'
       },
       {
-        question: 'Where are the individual manuals?',
-        answer: 'Use the manual download control near the purchase buttons to access the included product manuals.'
+        question: 'How do I install the bundle?',
+        answer: 'Run the installers for the four effects and rescan your DAW. Separately unzip Nebula Drums, keep its .dspreset, Samples, and Resources structure intact, and open a preset from Decent Sampler’s FILE… menu.'
+      },
+      {
+        question: 'Where do I find downloads and license details?',
+        answer: PRODUCT_ACCESS_ANSWER
       },
       {
         question: 'Can I use the products commercially?',
-        answer: 'The manuals state that use is allowed in personal and commercial music productions, while redistribution, resale, sharing of installers, license keys, sample content, or product files is not permitted.'
+        answer: PRODUCT_COMMERCIAL_USE_ANSWER
       }
     ],
     relatedProducts: ['Glitch Drum Pack Vol.1']
@@ -774,28 +790,20 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
     manuals: [{ label: 'Nebula Crush User Manual', href: NEBULA_MANUALS.crush }],
     faqs: [
       {
-        question: 'What is Nebula Crush?',
-        answer: 'The manual describes Nebula Crush as an energetic distortion plugin with a cinematic edge for subtle harmonic color or aggressive modern grit.'
-      },
-      {
         question: 'How do I install it?',
-        answer: 'Run the installer, choose AU/VST3 locations on macOS or confirm the VST3 path on Windows, then rescan your DAW or host.'
+        answer: PLUGIN_INSTALL_ANSWER
       },
       {
-        question: 'Which formats are listed?',
-        answer: 'The manual lists VST3, AU on macOS, and AAX as an optional build.'
+        question: 'Which plugin formats are included?',
+        answer: PLUGIN_FORMAT_ANSWER
       },
       {
-        question: 'Which controls define the workflow?',
-        answer: 'The interface overview lists Preset Browser, SAFE/PUNCHY, Character Matrix, Drive, Blend, Tone, and Output.'
-      },
-      {
-        question: 'What is the simple workflow?',
-        answer: 'The manual suggests choosing a character, setting Drive, balancing with Tone and Blend, then level matching with Output.'
+        question: 'Where do I find downloads and license details?',
+        answer: PRODUCT_ACCESS_ANSWER
       },
       {
         question: 'Can I use it commercially?',
-        answer: 'The legal page in the manual allows personal and commercial music productions, but redistribution, resale, sharing of installers, license keys, sample content, or product files is not permitted.'
+        answer: PRODUCT_COMMERCIAL_USE_ANSWER
       }
     ],
     relatedProducts: ['Nebula Series Bundle', 'Nebula Space', 'Nebula Rift']
@@ -807,28 +815,24 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
     manuals: [{ label: 'Nebula Space User Manual', href: NEBULA_MANUALS.space }],
     faqs: [
       {
-        question: 'What is Nebula Space?',
-        answer: 'The manual describes Nebula Space as an atmospheric reverb plugin designed for width, depth, and smooth cinematic tails while staying clear in a mix.'
-      },
-      {
         question: 'How do I install it?',
-        answer: 'Run the installer, choose AU/VST3 locations on macOS or confirm the VST3 path on Windows, then rescan your DAW or host.'
+        answer: PLUGIN_INSTALL_ANSWER
       },
       {
-        question: 'Which formats are listed?',
-        answer: 'The manual lists VST3, AU on macOS, and AAX as an optional build.'
-      },
-      {
-        question: 'Which controls are mapped on the interface?',
-        answer: 'The interface overview lists Preset Browser, Space Field, Size, Early, Decay, Color, Mix, Warp, Mass, and Freeze.'
+        question: 'Which plugin formats are included?',
+        answer: PLUGIN_FORMAT_ANSWER
       },
       {
         question: 'What does Freeze do?',
-        answer: 'The parameter page states that Freeze holds the current ambience bed for infinite pads and transition-ready texture beds.'
+        answer: 'Freeze holds the current ambience bed for sustained pads and transition-ready textures.'
       },
       {
-        question: 'What is the simple workflow?',
-        answer: 'The manual suggests setting Size, placing Early, tuning Decay and Color, blending with Mix, then finishing with Warp and Mass.'
+        question: 'Where do I find downloads and license details?',
+        answer: PRODUCT_ACCESS_ANSWER
+      },
+      {
+        question: 'Can I use it commercially?',
+        answer: PRODUCT_COMMERCIAL_USE_ANSWER
       }
     ],
     relatedProducts: ['Nebula Series Bundle', 'Nebula Drift', 'Nebula Crush']
@@ -840,28 +844,20 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
     manuals: [{ label: 'Nebula Drift User Manual', href: NEBULA_MANUALS.drift }],
     faqs: [
       {
-        question: 'What is Nebula Drift?',
-        answer: 'The manual describes Nebula Drift as a flowing modulation plugin with atmospheric, phase-like movement that can stay subtle or become expressive for cinematic motion.'
-      },
-      {
         question: 'How do I install it?',
-        answer: 'Run the installer, choose AU/VST3 locations on macOS or confirm the VST3 path on Windows, then rescan your DAW or host.'
+        answer: PLUGIN_INSTALL_ANSWER
       },
       {
-        question: 'Which formats are listed?',
-        answer: 'The manual lists VST3, AU on macOS, and AAX as an optional build.'
+        question: 'Which plugin formats are included?',
+        answer: PLUGIN_FORMAT_ANSWER
       },
       {
-        question: 'Which modes are included?',
-        answer: 'The interface overview lists a Mode Selector with SILK, TIDE, and FRAC.'
+        question: 'Where do I find downloads and license details?',
+        answer: PRODUCT_ACCESS_ANSWER
       },
       {
-        question: 'Which controls define the sound?',
-        answer: 'The parameter page lists Motion, Drift, Width, Blur, Mix, and Mode.'
-      },
-      {
-        question: 'What is the simple workflow?',
-        answer: 'The manual suggests setting Mix, shaping Width and Drift, adding Motion and Blur, then finalizing Mode.'
+        question: 'Can I use it commercially?',
+        answer: PRODUCT_COMMERCIAL_USE_ANSWER
       }
     ],
     relatedProducts: ['Nebula Series Bundle', 'Nebula Space', 'Nebula Rift']
@@ -873,28 +869,28 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
     manuals: [{ label: 'Nebula Rift User Manual', href: NEBULA_MANUALS.rift }],
     faqs: [
       {
-        question: 'What is Nebula Rift?',
-        answer: 'The manual describes Nebula Rift as a creative granular fracture effect that captures small fragments and rebuilds them as animated rift fields.'
+        question: 'How do I install it?',
+        answer: PLUGIN_INSTALL_ANSWER
       },
       {
-        question: 'How do I install the current build?',
-        answer: 'The manual lists macOS VST3 installation to ~/Library/Audio/Plug-Ins/VST3/ and AU component installation to ~/Library/Audio/Plug-Ins/Components/ if the AU format is included.'
+        question: 'Which plugin formats are included?',
+        answer: PLUGIN_FORMAT_ANSWER
       },
       {
         question: 'What should I do if it does not appear in my DAW?',
-        answer: 'The manual recommends rescanning plugins in the DAW, clearing the host plugin cache, and running a full rescan.'
-      },
-      {
-        question: 'Which modes are included?',
-        answer: 'The manual lists Soft Rift, Glass Crack, and Deep Tear.'
-      },
-      {
-        question: 'Which controls define the sound?',
-        answer: 'The parameter page lists Mode, Rift Size, Density, Color, Mix, Motion, and Fold.'
+        answer: 'Rescan plugins in the DAW. If it is still missing, clear the host plugin cache and run a full rescan.'
       },
       {
         question: 'How do presets behave?',
-        answer: 'The manual says Nebula Rift includes 15 curated presets grouped by mode. Preset selection recalls several controls, while Mix intentionally stays where you set it.'
+        answer: 'Nebula Rift includes 15 curated presets grouped by mode. Preset selection recalls the sound-shaping controls, while Mix intentionally stays where you set it.'
+      },
+      {
+        question: 'Where do I find downloads and license details?',
+        answer: PRODUCT_ACCESS_ANSWER
+      },
+      {
+        question: 'Can I use it commercially?',
+        answer: PRODUCT_COMMERCIAL_USE_ANSWER
       }
     ],
     relatedProducts: ['Nebula Series Bundle', 'Nebula Crush', 'Nebula Drift']
@@ -906,28 +902,20 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
     manuals: [{ label: 'Nebula Drums User Manual', href: NEBULA_MANUALS.drums }],
     faqs: [
       {
-        question: 'What is Nebula Drums?',
-        answer: 'The manual describes Nebula Drums as a creative drum instrument built for Decent Sampler with four themed drum worlds.'
-      },
-      {
         question: 'What do I need before using it?',
-        answer: 'The manual states that Nebula Drums requires Decent Sampler and that Decent Sampler should be installed before using Nebula Drums.'
+        answer: 'Install Decent Sampler 1.11.1 or later before loading Nebula Drums. Using the latest available Decent Sampler version is recommended.'
       },
       {
-        question: 'How do I install and open it?',
-        answer: 'Install Decent Sampler, load Nebula Drums inside Decent Sampler, then open presets from the Nebula Drums library.'
+        question: 'How do I load Nebula Drums?',
+        answer: 'Fully unzip the download, keep the .dspreset files beside the Samples and Resources folders, load Decent Sampler on a DAW instrument track, then open a .dspreset from the FILE… menu.'
       },
       {
-        question: 'How is the keyboard laid out?',
-        answer: 'The manual maps C1 to Glitch & Industrial, C2 to Organic Lo-Fi, C3 to Cybernetic Trap, and C4 to Experimental Cinematic.'
-      },
-      {
-        question: 'What does the XY Pad control?',
-        answer: 'The manual says the XY Pad controls multiple effects simultaneously. The X axis covers wavefolder drive, wavefolder threshold, phaser mix, and phaser modulation rate; the Y axis covers delay wet level, delay feedback, and reverb amount.'
+        question: 'Where do I find downloads and license details?',
+        answer: PRODUCT_ACCESS_ANSWER
       },
       {
         question: 'Can I use it commercially?',
-        answer: 'The legal page in the manual allows personal and commercial music productions, but redistribution, resale, extraction, sharing, or repackaging of the included sample content or instrument files is not permitted.'
+        answer: PRODUCT_COMMERCIAL_USE_ANSWER
       }
     ],
     relatedProducts: ['Nebula Series Bundle', 'Nebula Crush', 'Glitch Drum Pack Vol.1']
@@ -936,24 +924,24 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
 
 const GLITCH_FAQ_ITEMS: FaqItem[] = [
   {
-    question: 'What audio format is included?',
-    answer: 'The page specifications list WAV 24-bit / 48 kHz files.'
+    question: 'What files are included?',
+    answer: 'The pack contains 100 audio samples supplied as 24-bit / 48 kHz WAV files.'
   },
   {
-    question: 'How many samples are included?',
-    answer: 'The page specifications list 100 samples.'
+    question: 'Which DAWs can use the pack?',
+    answer: 'The WAV files can be used in any DAW or host that imports 24-bit / 48 kHz WAV audio.'
   },
   {
-    question: 'Which DAWs are supported?',
-    answer: 'The page specifications list Ableton Live, Logic Pro, FL Studio, Pro Tools, Studio One, and most modern DAWs.'
+    question: 'Where do I find my download?',
+    answer: PRODUCT_ACCESS_ANSWER
   },
   {
     question: 'Can I use the samples commercially?',
-    answer: 'The license section allows use in music releases, games, films, broadcasts, and live performances.'
+    answer: 'Yes. The FarmVerb EULA permits use in personal and commercial projects, including music releases, games, films, broadcasts, and live performances.'
   },
   {
     question: 'Can I redistribute the raw sample files?',
-    answer: 'No. The license section prohibits redistribution or resale of the raw sample files.'
+    answer: 'No. The raw samples may not be redistributed, resold, shared, or repackaged as standalone files or as another sample library.'
   }
 ];
 
@@ -1003,18 +991,68 @@ function FaqAccordion({ items }: { items: FaqItem[] }) {
   );
 }
 
-function YouTubeDemo({ videoId, title, className = '' }: { videoId: string; title: string; className?: string }) {
+function NebulaDrumsLoadSection() {
+  const loadSteps = [
+    {
+      title: 'Install Decent Sampler',
+      body: 'Download and install Decent Sampler 1.11.1 or later. The latest available version is recommended.'
+    },
+    {
+      title: 'Unzip the complete download',
+      body: 'Fully extract the Nebula Drums ZIP before opening any preset.'
+    },
+    {
+      title: 'Keep the folders together',
+      body: 'Keep the .dspreset files beside the Samples and Resources folders. The presets use this relative folder structure.'
+    },
+    {
+      title: 'Create an instrument track',
+      body: 'Open your DAW and add a new software instrument or instrument track.'
+    },
+    {
+      title: 'Load Decent Sampler',
+      body: 'Insert Decent Sampler as the instrument on the track.'
+    },
+    {
+      title: 'Open the first preset',
+      body: 'In Decent Sampler, choose FILE… and open 01 Hybrid Kinetic Drums.dspreset from the extracted Nebula Drums folder.'
+    },
+    {
+      title: 'Explore the collection',
+      body: 'Open the other .dspreset files from the same folder to explore the remaining Nebula Drums sounds.'
+    }
+  ] as const;
+
   return (
-    <div className={`product-youtube-frame ${className}`.trim()}>
-      <iframe
-        src={`https://www.youtube.com/embed/${videoId}`}
-        title={title}
-        loading="lazy"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        referrerPolicy="strict-origin-when-cross-origin"
-        allowFullScreen
-      />
-    </div>
+    <section className="product-load-section" aria-labelledby="nebula-drums-load-title">
+      <div className="product-section-kicker">
+        <p className="section-overline">Getting Started</p>
+        <h3 id="nebula-drums-load-title">How to Load Nebula Drums</h3>
+        <p className="product-load-intro">
+          Nebula Drums is a Decent Sampler instrument, not a standalone VST, AU, or AAX plug-in. Follow these steps
+          after downloading the product.
+        </p>
+        <a
+          className="product-load-link"
+          href="https://www.decentsamples.com/product/decent-sampler-plugin/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Download Decent Sampler
+        </a>
+      </div>
+      <ol className="product-load-steps">
+        {loadSteps.map((step, index) => (
+          <li key={step.title} className="product-load-step">
+            <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+            <div>
+              <h4>{step.title}</h4>
+              <p>{step.body}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 
@@ -1220,6 +1258,8 @@ function ProductCommercialSections({
         </div>
       </section>
 
+      {details.productName === 'Nebula Drums' ? <NebulaDrumsLoadSection /> : null}
+
       {details.productName === 'Nebula Series Bundle' ? (
         <BundleContentsSection />
       ) : null}
@@ -1289,6 +1329,15 @@ function BundleVideoTabsSection() {
   const activeCard = includedCards[activeIndex] ?? includedCards[0] ?? null;
   const activeVideoId = activeCard ? getProductYoutubeVideoId(activeCard.productName) : null;
 
+  const selectProductDemo = (productName: string) => {
+    if (productName === activeProductName) {
+      return;
+    }
+
+    pauseAllYouTubePlayers();
+    setActiveProductName(productName);
+  };
+
   const handleTabKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
       return;
@@ -1312,7 +1361,7 @@ function BundleVideoTabsSection() {
       return;
     }
 
-    setActiveProductName(nextCard.name);
+    selectProductDemo(nextCard.name);
     const tabs = event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
     window.requestAnimationFrame(() => tabs?.[nextIndex]?.focus());
   };
@@ -1333,7 +1382,7 @@ function BundleVideoTabsSection() {
               aria-controls="bundle-demo-panel"
               tabIndex={isActive ? 0 : -1}
               className={`bundle-demo-tab ${isActive ? 'is-active' : ''}`}
-              onClick={() => setActiveProductName(card.name)}
+              onClick={() => selectProductDemo(card.name)}
               onKeyDown={(event) => handleTabKeyDown(event, index)}
             >
               {card.name}
@@ -2315,12 +2364,11 @@ export default function FarmVerbSite() {
             </div>
 
             <div className="support-links">
-              <a href="https://www.instagram.com/farmverb/" target="_blank" rel="noopener noreferrer">
-                Instagram
-              </a>
-              <a href="https://smartstore.naver.com/farmverb" target="_blank" rel="noopener noreferrer">
-                SmartStore
-              </a>
+              {FARMVERB_SOCIAL_LINKS.map((social) => (
+                <a key={social.label} href={social.href} target="_blank" rel="noopener noreferrer">
+                  {social.label}
+                </a>
+              ))}
             </div>
 
             <div className="global-footer-host">

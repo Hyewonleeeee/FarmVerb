@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { FARMVERB_SOCIAL_LINKS } from '@/lib/content/socialLinks';
 
 export default function GlobalFooter() {
   return (
@@ -34,12 +35,11 @@ export default function GlobalFooter() {
 
           <section className="footer-column" aria-label="Social links">
             <h2>Social</h2>
-            <a href="https://www.instagram.com/farmverb/" target="_blank" rel="noopener noreferrer">
-              Instagram
-            </a>
-            <a href="https://www.youtube.com/@farmverb" target="_blank" rel="noopener noreferrer">
-              YouTube
-            </a>
+            {FARMVERB_SOCIAL_LINKS.map((social) => (
+              <a key={social.label} href={social.href} target="_blank" rel="noopener noreferrer">
+                {social.label}
+              </a>
+            ))}
           </section>
 
           <section className="footer-column" aria-label="Contact links">
