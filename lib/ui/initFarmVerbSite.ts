@@ -6,6 +6,7 @@ import {
   type RouteKey,
   buildRouteHref,
   getRouteStateFromLocation,
+  isOrganicPluginSection,
   normalizePluginSectionKey,
   normalizeRouteKey
 } from '@/lib/ui/farmVerbRoutes';
@@ -587,13 +588,14 @@ export function initFarmVerbSite() {
   };
 
   const syncRouteChrome = (route: RouteKey, pluginSection: PluginSectionKey) => {
-    const theme = THEME_BY_ROUTE[route];
+    const theme = route === 'plugins' && isOrganicPluginSection(pluginSection) ? 'organic' : THEME_BY_ROUTE[route];
 
     if (root) {
       root.dataset.theme = theme;
       root.dataset.pluginSection = pluginSection;
       root.classList.toggle('theme-home', theme === 'home');
       root.classList.toggle('theme-nebula', theme === 'nebula');
+      root.classList.toggle('theme-organic', theme === 'organic');
       root.classList.toggle('theme-glitch', theme === 'glitch');
     }
 

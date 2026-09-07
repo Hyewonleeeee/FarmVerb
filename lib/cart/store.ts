@@ -93,6 +93,42 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
     currency: 'USD',
     image: '/GlitchDrum/GlitchDrum.png',
     checkoutUrl: getLemonCheckoutUrl('glitch-drum-pack-vol-1')
+  },
+  {
+    slug: 'organic-series',
+    name: 'Organic Series Bundle',
+    description: 'Jeju Citrus Air, Boseong Green Tea, and Uiseong Garlic',
+    price: priceOf('Organic Series Bundle', 69),
+    currency: 'USD',
+    image: '/Organic%20Series/Main-Jeju.png',
+    checkoutUrl: getLemonCheckoutUrl('organic-series')
+  },
+  {
+    slug: 'jeju-citrus-air',
+    name: 'Jeju Citrus Air',
+    description: 'Octave-led shimmer reverb',
+    price: priceOf('Jeju Citrus Air', 29),
+    currency: 'USD',
+    image: '/Organic%20Series/Main-Jeju.png',
+    checkoutUrl: getLemonCheckoutUrl('jeju-citrus-air')
+  },
+  {
+    slug: 'boseong-green-tea',
+    name: 'Boseong Green Tea',
+    description: 'Focused richness processor',
+    price: priceOf('Boseong Green Tea', 29),
+    currency: 'USD',
+    image: '/Organic%20Series/Main-Boseong.png',
+    checkoutUrl: getLemonCheckoutUrl('boseong-green-tea')
+  },
+  {
+    slug: 'uiseong-garlic',
+    name: 'Uiseong Garlic',
+    description: 'Forward definition processor',
+    price: priceOf('Uiseong Garlic', 29),
+    currency: 'USD',
+    image: '/Organic%20Series/Main-Uiseong.png',
+    checkoutUrl: getLemonCheckoutUrl('uiseong-garlic')
   }
 ];
 

@@ -131,6 +131,7 @@ type ProductCommercialDetails = {
   subhead: string;
   body: string;
   image: string;
+  galleryImages?: string[];
   imageAlt: string;
   imageLayout: 'wide' | 'square' | 'portrait';
   valueItems: string[];
@@ -249,6 +250,45 @@ const NEBULA_PRODUCTS: PluginProduct[] = [
   }
 ];
 
+const ORGANIC_BUNDLE_PRODUCT: PluginProduct = {
+  section: 'organic-series',
+  name: 'Organic Series Bundle',
+  description: 'Jeju Citrus Air, Boseong Green Tea, and Uiseong Garlic in one focused collection.',
+  images: [
+    '/Organic%20Series/Main-Jeju.png',
+    '/Organic%20Series/Main-Boseong.png',
+    '/Organic%20Series/Main-Uiseong.png'
+  ]
+};
+
+const ORGANIC_PRODUCTS: PluginProduct[] = [
+  {
+    section: 'jeju-citrus-air',
+    name: 'Jeju Citrus Air',
+    description: 'An octave-led shimmer reverb for presence, air, and a wider late field.',
+    images: ['/Organic%20Series/Main-Jeju.png']
+  },
+  {
+    section: 'boseong-green-tea',
+    name: 'Boseong Green Tea',
+    description: 'A focused richness processor for smoother, denser, creamier tone.',
+    images: ['/Organic%20Series/Main-Boseong.png']
+  },
+  {
+    section: 'uiseong-garlic',
+    name: 'Uiseong Garlic',
+    description: 'A definition processor that brings weak or buried sources forward.',
+    images: ['/Organic%20Series/Main-Uiseong.png']
+  }
+];
+
+const ALL_PLUGIN_PRODUCTS: PluginProduct[] = [
+  NEBULA_BUNDLE_PRODUCT,
+  ...NEBULA_PRODUCTS,
+  ORGANIC_BUNDLE_PRODUCT,
+  ...ORGANIC_PRODUCTS
+];
+
 const HOME_FEATURE_CARDS: HomeFeatureCard[] = [
   {
     eyebrow: 'Audio Plugins',
@@ -326,6 +366,55 @@ const HOME_FEATURE_CARDS: HomeFeatureCard[] = [
   }
 ];
 
+const ORGANIC_PRODUCT_CARDS: HomeFeatureCard[] = [
+  {
+    eyebrow: 'Organic Series',
+    name: 'Organic Series Bundle',
+    description: 'Three focused processors for air, richness, and definition.',
+    image: '/Organic%20Series/Main-Jeju.png',
+    href: buildRouteHref('plugins', 'organic-series'),
+    route: 'plugins',
+    pluginSection: 'organic-series',
+    productName: 'Organic Series Bundle',
+    ctaLabel: 'Explore Series'
+  },
+  {
+    eyebrow: 'Organic Series',
+    name: 'Jeju Citrus Air',
+    description: 'Octave-led shimmer reverb with Vocal and Ambient modes.',
+    image: '/Organic%20Series/Main-Jeju.png',
+    href: buildRouteHref('plugins', 'jeju-citrus-air'),
+    route: 'plugins',
+    pluginSection: 'jeju-citrus-air',
+    productName: 'Jeju Citrus Air',
+    ctaLabel: 'Explore Plugin'
+  },
+  {
+    eyebrow: 'Organic Series',
+    name: 'Boseong Green Tea',
+    description: 'Focused richness for smoother, denser, creamier sources.',
+    image: '/Organic%20Series/Main-Boseong.png',
+    href: buildRouteHref('plugins', 'boseong-green-tea'),
+    route: 'plugins',
+    pluginSection: 'boseong-green-tea',
+    productName: 'Boseong Green Tea',
+    ctaLabel: 'Explore Plugin'
+  },
+  {
+    eyebrow: 'Organic Series',
+    name: 'Uiseong Garlic',
+    description: 'Definition and forward placement for weak or buried sources.',
+    image: '/Organic%20Series/Main-Uiseong.png',
+    href: buildRouteHref('plugins', 'uiseong-garlic'),
+    route: 'plugins',
+    pluginSection: 'uiseong-garlic',
+    productName: 'Uiseong Garlic',
+    ctaLabel: 'Explore Plugin'
+  }
+];
+
+const PRODUCT_CARD_CATALOG = [...HOME_FEATURE_CARDS, ...ORGANIC_PRODUCT_CARDS];
+
 const HOME_STORY_CARDS: HomeStoryCard[] = [
   {
     eyebrow: 'FarmVerb Journal',
@@ -361,6 +450,12 @@ const NEBULA_MANUALS = {
   drums: '/Manual/Nebula_Drums_User_Manual.pdf'
 } as const;
 
+const ORGANIC_MANUALS = {
+  jeju: '/Manual/Jeju_Citrus_Air_User_Manual.pdf',
+  boseong: '/Manual/Boseong_Green_Tea_User_Manual.pdf',
+  uiseong: '/Manual/Uiseong_Garlic_User_Manual.pdf'
+} as const;
+
 const NEBULA_REAL_IMAGES = {
   crush: '/Real/Crush.png',
   space: '/Real/Space.png',
@@ -385,6 +480,25 @@ const STANDARD_NEBULA_PLUGIN_REQUIREMENTS: SupportRequirementGroup[] = [
   {
     label: 'Troubleshooting',
     items: ['Clear plugin cache', 'Run a full rescan']
+  }
+];
+
+const ORGANIC_PLUGIN_REQUIREMENTS: SupportRequirementGroup[] = [
+  {
+    label: 'macOS',
+    items: ['AU', 'VST3', 'AAX']
+  },
+  {
+    label: 'Windows',
+    items: ['VST3', 'AAX']
+  },
+  {
+    label: 'Audio',
+    items: ['Mono', 'Stereo', 'Matching input and output layouts']
+  },
+  {
+    label: 'Interface',
+    items: ['Fixed 500 × 500 pixel layout']
   }
 ];
 
@@ -667,6 +781,195 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
     ],
     relatedProducts: ['Nebula Crush', 'Nebula Drift', 'Nebula Series Bundle']
   },
+  'Organic Series Bundle': {
+    productName: 'Organic Series Bundle',
+    eyebrow: 'Organic Series Bundle',
+    headline: 'Air, richness, and definition.',
+    subhead: 'Three distinct tools for placing a sound exactly where the mix needs it.',
+    body: 'Organic Series Bundle brings together Jeju Citrus Air, Boseong Green Tea, and Uiseong Garlic: an octave-led shimmer reverb, a focused richness processor, and a forward definition processor.',
+    image: '/Organic%20Series/Main-Jeju.png',
+    galleryImages: [
+      '/Organic%20Series/Main-Jeju.png',
+      '/Organic%20Series/Main-Boseong.png',
+      '/Organic%20Series/Main-Uiseong.png'
+    ],
+    imageAlt: 'Jeju Citrus Air, Boseong Green Tea, and Uiseong Garlic interfaces',
+    imageLayout: 'wide',
+    valueItems: ['Jeju Citrus Air', 'Boseong Green Tea', 'Uiseong Garlic'],
+    features: [
+      {
+        title: 'Jeju Citrus Air',
+        body: 'Keep vocals present or let instruments bloom into a wider, octave-led shimmer field.'
+      },
+      {
+        title: 'Boseong Green Tea',
+        body: 'Round, densify, and smooth thin or spiky sources with a focused richness workflow.'
+      },
+      {
+        title: 'Uiseong Garlic',
+        body: 'Bring weak or buried sources forward through definition, onset, placement, and tightness.'
+      }
+    ],
+    workflow: [
+      {
+        title: 'Choose the purpose',
+        body: 'Start with space, richness, or definition according to what the source needs.'
+      },
+      {
+        title: 'Shape the character',
+        body: 'Use the selected plugin’s focused controls to establish tone and placement.'
+      },
+      {
+        title: 'Balance in context',
+        body: 'Set Mix or Output where available while listening against the full arrangement.'
+      }
+    ],
+    relatedProducts: ['Jeju Citrus Air', 'Boseong Green Tea', 'Uiseong Garlic']
+  },
+  'Jeju Citrus Air': {
+    productName: 'Jeju Citrus Air',
+    eyebrow: 'Octave-led shimmer reverb',
+    headline: 'Let the air open around the source.',
+    subhead: 'Keep vocals present or let instruments bloom into a wider late field.',
+    body: 'Jeju Citrus Air blends airy octave shimmer, a quieter fifth, and a diffused stereo tail. Vocal and Ambient modes shift the balance between front-of-mix presence and a wider, longer space.',
+    image: '/Organic%20Series/Main-Jeju.png',
+    imageAlt: 'Jeju Citrus Air plugin interface',
+    imageLayout: 'wide',
+    valueItems: ['Vocal', 'Ambient', 'Peel', 'Shine', 'Glow', 'Juice', 'Mix'],
+    features: [
+      {
+        title: 'Vocal / Ambient',
+        body: 'Vocal keeps early presence closer; Ambient expands width, decay, and late-field energy.'
+      },
+      {
+        title: 'Peel + Glow',
+        body: 'Place and spread the early field with Peel, then shape tail length and shimmer sustain with Glow.'
+      },
+      {
+        title: 'Shine',
+        body: 'Raise air, octave shimmer, upper-tone lift, and motion inside the wet field.'
+      },
+      {
+        title: 'Juice + Mix',
+        body: 'Add attack-led bloom with Juice, then set the final dry/wet balance with Mix.'
+      }
+    ],
+    workflow: [
+      {
+        title: 'Choose a mode',
+        body: 'Use Vocal for closer placement or Ambient for a wider, longer field.'
+      },
+      {
+        title: 'Set Glow and Peel',
+        body: 'Establish the tail, spacing, diffusion, and stereo spread.'
+      },
+      {
+        title: 'Add Shine and Juice',
+        body: 'Introduce shimmer energy and attack-responsive bloom.'
+      },
+      {
+        title: 'Finish with Mix',
+        body: 'Blend the effect in context, or use 100% for a wet-only signal.'
+      }
+    ],
+    relatedProducts: ['Organic Series Bundle', 'Boseong Green Tea', 'Uiseong Garlic']
+  },
+  'Boseong Green Tea': {
+    productName: 'Boseong Green Tea',
+    eyebrow: 'Focused richness processor',
+    headline: 'Smooth the edge. Keep the focus.',
+    subhead: 'Turn thin or spiky sources into something smoother, denser, and creamier.',
+    body: 'Boseong Green Tea centers its workflow on Grow, a macro that combines transient rounding, density, sustain, low-mid body, and placement. Body, Focus, and Air refine the result before final level matching.',
+    image: '/Organic%20Series/Main-Boseong.png',
+    imageAlt: 'Boseong Green Tea plugin interface',
+    imageLayout: 'wide',
+    valueItems: ['Grow', 'Body', 'Focus', 'Air', 'Output', 'Auto'],
+    features: [
+      {
+        title: 'Grow',
+        body: 'Shape the overall richness response through transient rounding, density, sustain, body, and placement.'
+      },
+      {
+        title: 'Body + Focus',
+        body: 'Add low-mid mass with Body, then move generated density from loose to tight with Focus.'
+      },
+      {
+        title: 'Air',
+        body: 'Move the top character from silky restraint toward a more open presentation.'
+      },
+      {
+        title: 'Output + Auto',
+        body: 'Level match with Output; optional Auto assists level on stronger Grow settings without acting as a limiter.'
+      }
+    ],
+    workflow: [
+      {
+        title: 'Start with Grow',
+        body: 'Set the overall amount of rounding, density, and sustain.'
+      },
+      {
+        title: 'Build Body',
+        body: 'Add the low-mid weight the source needs.'
+      },
+      {
+        title: 'Place with Focus and Air',
+        body: 'Tighten the generated texture and set the upper character.'
+      },
+      {
+        title: 'Level match',
+        body: 'Use Output, with Auto if desired, while checking the DAW meter.'
+      }
+    ],
+    relatedProducts: ['Organic Series Bundle', 'Jeju Citrus Air', 'Uiseong Garlic']
+  },
+  'Uiseong Garlic': {
+    productName: 'Uiseong Garlic',
+    eyebrow: 'Forward definition processor',
+    headline: 'Bring buried sounds into focus.',
+    subhead: 'Move a weak source forward without relying on volume alone.',
+    body: 'Uiseong Garlic uses Bite to set the overall Definition amount, then Attack, Forward, and Tight to shape onset, front-to-back placement, and post-onset masking before final output level matching.',
+    image: '/Organic%20Series/Main-Uiseong.png',
+    imageAlt: 'Uiseong Garlic plugin interface',
+    imageLayout: 'wide',
+    valueItems: ['Bite', 'Attack', 'Forward', 'Tight', 'Output'],
+    features: [
+      {
+        title: 'Bite',
+        body: 'Set the total Definition amount that the other character controls can shape.'
+      },
+      {
+        title: 'Attack',
+        body: 'Move the onset from soft to crisp without treating it as a simple level boost.'
+      },
+      {
+        title: 'Forward',
+        body: 'Adjust back-to-front placement and midrange articulation rather than brightness alone.'
+      },
+      {
+        title: 'Tight + Output',
+        body: 'Reduce post-onset body and masking, then match the finished level in context.'
+      }
+    ],
+    workflow: [
+      {
+        title: 'Set Bite',
+        body: 'Establish enough Definition for the supporting controls to shape.'
+      },
+      {
+        title: 'Tune Attack',
+        body: 'Choose a softer or crisper onset for the source.'
+      },
+      {
+        title: 'Place and tighten',
+        body: 'Use Forward for placement and Tight for post-onset masking.'
+      },
+      {
+        title: 'Match Output',
+        body: 'Set the final level while listening in the full mix.'
+      }
+    ],
+    relatedProducts: ['Organic Series Bundle', 'Jeju Citrus Air', 'Boseong Green Tea']
+  },
   'Nebula Drums': {
     productName: 'Nebula Drums',
     eyebrow: 'Creative drum instrument',
@@ -725,6 +1028,10 @@ const PRODUCT_ACCESS_ANSWER =
   'Sign in and open My Account to access verified purchases, available downloads, and license details. You can also use the order link provided with your purchase.';
 const PRODUCT_COMMERCIAL_USE_ANSWER =
   'The FarmVerb EULA permits use in personal and commercial music, sound design, and media projects. Product files, installers, license keys, presets, and raw content may not be redistributed or resold as standalone assets.';
+const ORGANIC_INSTALL_ANSWER =
+  'When an installer is available for your purchase, download the current build from My Account and follow the instructions supplied with it. The current Organic Series manual does not specify installation paths; contact support@farmverb.com if you need help.';
+const ORGANIC_LICENSE_ANSWER =
+  'The current Organic Series manual does not document the activation workflow. Follow the instructions supplied with the current licensed build, or contact support@farmverb.com if you need help.';
 
 const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
   'Nebula Series Bundle': {
@@ -895,6 +1202,160 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
     ],
     relatedProducts: ['Nebula Series Bundle', 'Nebula Crush', 'Nebula Drift']
   },
+  'Organic Series Bundle': {
+    title: 'Organic Series Bundle Support',
+    description: 'Compatibility notes and manuals for all three Organic Series plugins.',
+    requirements: [
+      {
+        label: 'Included Plugins',
+        items: ['Jeju Citrus Air', 'Boseong Green Tea', 'Uiseong Garlic']
+      },
+      ...ORGANIC_PLUGIN_REQUIREMENTS
+    ],
+    manuals: [
+      { label: 'Jeju Citrus Air User Manual', href: ORGANIC_MANUALS.jeju },
+      { label: 'Boseong Green Tea User Manual', href: ORGANIC_MANUALS.boseong },
+      { label: 'Uiseong Garlic User Manual', href: ORGANIC_MANUALS.uiseong }
+    ],
+    faqs: [
+      {
+        question: 'What is included in the Organic Series Bundle?',
+        answer: 'The bundle includes Jeju Citrus Air, Boseong Green Tea, and Uiseong Garlic.'
+      },
+      {
+        question: 'Which plugin formats are included?',
+        answer: 'Each plugin supports AU, VST3, and AAX on macOS, plus VST3 and AAX on Windows. Mono and stereo layouts are supported with matching input and output.'
+      },
+      {
+        question: 'Is there a separate manual for each plugin?',
+        answer: 'Yes. The Jeju Citrus Air, Boseong Green Tea, and Uiseong Garlic manuals are available separately on this page.'
+      },
+      {
+        question: 'How do I install the Organic Series plugins?',
+        answer: ORGANIC_INSTALL_ANSWER
+      },
+      {
+        question: 'Where do I find downloads and license details?',
+        answer: PRODUCT_ACCESS_ANSWER
+      },
+      {
+        question: 'Where can I find activation instructions?',
+        answer: ORGANIC_LICENSE_ANSWER
+      }
+    ],
+    relatedProducts: ['Jeju Citrus Air', 'Boseong Green Tea', 'Uiseong Garlic']
+  },
+  'Jeju Citrus Air': {
+    title: 'Jeju Citrus Air Support',
+    description: 'Compatibility, control guidance, and the current product manual.',
+    requirements: ORGANIC_PLUGIN_REQUIREMENTS,
+    manuals: [{ label: 'Jeju Citrus Air User Manual', href: ORGANIC_MANUALS.jeju }],
+    faqs: [
+      {
+        question: 'Which plugin formats are included?',
+        answer: 'Jeju Citrus Air supports AU, VST3, and AAX on macOS, plus VST3 and AAX on Windows. Mono and stereo layouts are supported with matching input and output.'
+      },
+      {
+        question: 'What is the difference between Vocal and Ambient mode?',
+        answer: 'Vocal keeps more early presence and restrains the shimmer, width, and tail. Ambient increases the late field, shimmer energy, width, and decay.'
+      },
+      {
+        question: 'What happens to Mix when I load a preset?',
+        answer: 'The 13 presets recall the mode and four character controls, while Mix stays at the value you set.'
+      },
+      {
+        question: 'How do I control the final output level?',
+        answer: 'Jeju Citrus Air has no separate Output control. Use the DAW channel or return fader, or a gain stage after the plugin.'
+      },
+      {
+        question: 'How do I install Jeju Citrus Air?',
+        answer: ORGANIC_INSTALL_ANSWER
+      },
+      {
+        question: 'Where do I find my download and license?',
+        answer: PRODUCT_ACCESS_ANSWER
+      },
+      {
+        question: 'Where can I find activation instructions?',
+        answer: ORGANIC_LICENSE_ANSWER
+      }
+    ],
+    relatedProducts: ['Organic Series Bundle', 'Boseong Green Tea', 'Uiseong Garlic']
+  },
+  'Boseong Green Tea': {
+    title: 'Boseong Green Tea Support',
+    description: 'Compatibility, control guidance, and the current product manual.',
+    requirements: ORGANIC_PLUGIN_REQUIREMENTS,
+    manuals: [{ label: 'Boseong Green Tea User Manual', href: ORGANIC_MANUALS.boseong }],
+    faqs: [
+      {
+        question: 'Which plugin formats are included?',
+        answer: 'Boseong Green Tea supports AU, VST3, and AAX on macOS, plus VST3 and AAX on Windows. Mono and stereo layouts are supported with matching input and output.'
+      },
+      {
+        question: 'What does Auto do?',
+        answer: 'Auto is optional level assistance for stronger Grow settings. It does not move the Output knob and is not a limiter or peak protector.'
+      },
+      {
+        question: 'What stays unchanged when I load a preset?',
+        answer: 'The 11 presets recall Grow, Body, Focus, and Air. Output and Auto stay at the values you set.'
+      },
+      {
+        question: 'Can the plugin exceed available headroom?',
+        answer: 'Yes. A hot input or positive Output setting can exceed the available headroom, so check the DAW peak meter while level matching.'
+      },
+      {
+        question: 'How do I install Boseong Green Tea?',
+        answer: ORGANIC_INSTALL_ANSWER
+      },
+      {
+        question: 'Where do I find my download and license?',
+        answer: PRODUCT_ACCESS_ANSWER
+      },
+      {
+        question: 'Where can I find activation instructions?',
+        answer: ORGANIC_LICENSE_ANSWER
+      }
+    ],
+    relatedProducts: ['Organic Series Bundle', 'Jeju Citrus Air', 'Uiseong Garlic']
+  },
+  'Uiseong Garlic': {
+    title: 'Uiseong Garlic Support',
+    description: 'Compatibility, control guidance, and the current product manual.',
+    requirements: ORGANIC_PLUGIN_REQUIREMENTS,
+    manuals: [{ label: 'Uiseong Garlic User Manual', href: ORGANIC_MANUALS.uiseong }],
+    faqs: [
+      {
+        question: 'Which plugin formats are included?',
+        answer: 'Uiseong Garlic supports AU, VST3, and AAX on macOS, plus VST3 and AAX on Windows. Mono and stereo layouts are supported with matching input and output.'
+      },
+      {
+        question: 'Why do the other controls have little effect when Bite is at 0%?',
+        answer: 'Bite sets the total Definition amount. At 0%, there is effectively no Definition for Attack, Forward, or Tight to shape.'
+      },
+      {
+        question: 'Are Attack and Forward simple boosts?',
+        answer: 'No. Attack changes onset character from soft to crisp, while Forward shapes back-to-front placement and midrange articulation rather than brightness alone.'
+      },
+      {
+        question: 'What stays unchanged when I load a preset?',
+        answer: 'The 11 presets recall Bite, Attack, Forward, and Tight. Output remains independent.'
+      },
+      {
+        question: 'How do I install Uiseong Garlic?',
+        answer: ORGANIC_INSTALL_ANSWER
+      },
+      {
+        question: 'Where do I find my download and license?',
+        answer: PRODUCT_ACCESS_ANSWER
+      },
+      {
+        question: 'Where can I find activation instructions?',
+        answer: ORGANIC_LICENSE_ANSWER
+      }
+    ],
+    relatedProducts: ['Organic Series Bundle', 'Jeju Citrus Air', 'Boseong Green Tea']
+  },
   'Nebula Drums': {
     title: 'Nebula Drums Support',
     description: 'A creative drum instrument built for Decent Sampler.',
@@ -953,6 +1414,12 @@ const BUNDLE_INCLUDED_PRODUCT_NAMES = [
   'Nebula Drums'
 ] as const;
 
+const ORGANIC_BUNDLE_INCLUDED_PRODUCT_NAMES = [
+  'Jeju Citrus Air',
+  'Boseong Green Tea',
+  'Uiseong Garlic'
+] as const;
+
 const GLITCH_RELATED_PRODUCT_NAMES = [
   'Nebula Series Bundle',
   'Nebula Crush',
@@ -960,7 +1427,7 @@ const GLITCH_RELATED_PRODUCT_NAMES = [
 ] as const;
 
 function getHomeProductCard(productName: string) {
-  return HOME_FEATURE_CARDS.find((card) => card.productName === productName || card.name === productName) ?? null;
+  return PRODUCT_CARD_CATALOG.find((card) => card.productName === productName || card.name === productName) ?? null;
 }
 
 function getRelatedProductCards(productNames: readonly string[], currentProductName?: string) {
@@ -1094,7 +1561,7 @@ function ExploreMoreProductsSection({
                 <p>{card.description}</p>
                 <ProductPrice productName={card.productName} />
               </div>
-              <div className="related-product-actions">
+              <div className={checkoutReady ? 'related-product-actions' : 'related-product-actions is-view-only'}>
                 <Link
                   href={card.href}
                   className="plugin-action plugin-action-cart"
@@ -1103,22 +1570,24 @@ function ExploreMoreProductsSection({
                 >
                   View
                 </Link>
-                <button
-                  type="button"
-                  className="plugin-action plugin-action-buy"
-                  onClick={() => onBuyNow(card.productName)}
-                  disabled={!checkoutReady}
-                  title={checkoutReady ? undefined : 'Checkout link coming soon'}
-                >
-                  {getBuyLabel(card.productName)}
-                </button>
-                <button
-                  type="button"
-                  className="plugin-action plugin-action-cart"
-                  onClick={() => onAddToCart(card.productName)}
-                >
-                  Add to Cart
-                </button>
+                {checkoutReady ? (
+                  <>
+                    <button
+                      type="button"
+                      className="plugin-action plugin-action-buy"
+                      onClick={() => onBuyNow(card.productName)}
+                    >
+                      {getBuyLabel(card.productName)}
+                    </button>
+                    <button
+                      type="button"
+                      className="plugin-action plugin-action-cart"
+                      onClick={() => onAddToCart(card.productName)}
+                    >
+                      Add to Cart
+                    </button>
+                  </>
+                ) : null}
               </div>
             </article>
           );
@@ -1157,24 +1626,24 @@ function ProductCommercialSections({
           <p className="product-story-body">{details.body}</p>
           <div className="product-story-commerce">
             <ProductPrice productName={details.productName} className="product-story-price" />
-            <div className="product-story-actions">
-              <button
-                type="button"
-                className="plugin-action plugin-action-cart"
-                onClick={() => onAddToCart(details.productName)}
-              >
-                Add to Cart
-              </button>
-              <button
-                type="button"
-                className="plugin-action plugin-action-buy"
-                onClick={() => onBuyNow(details.productName)}
-                disabled={!checkoutReady}
-                title={checkoutReady ? undefined : 'Checkout link coming soon'}
-              >
-                {getBuyLabel(details.productName)}
-              </button>
-            </div>
+            {checkoutReady ? (
+              <div className="product-story-actions">
+                <button
+                  type="button"
+                  className="plugin-action plugin-action-cart"
+                  onClick={() => onAddToCart(details.productName)}
+                >
+                  Add to Cart
+                </button>
+                <button
+                  type="button"
+                  className="plugin-action plugin-action-buy"
+                  onClick={() => onBuyNow(details.productName)}
+                >
+                  {getBuyLabel(details.productName)}
+                </button>
+              </div>
+            ) : null}
             {manuals.length === 1 && primaryManual ? (
               <a
                 href={primaryManual.href}
@@ -1201,11 +1670,22 @@ function ProductCommercialSections({
                 </div>
               </details>
             ) : null}
-            {!checkoutReady ? <span className="checkout-coming-soon">Checkout link coming soon</span> : null}
           </div>
         </div>
-        <figure className={`product-story-media product-story-media-${details.imageLayout} interactive-tilt`}>
-          <img src={details.image} alt={details.imageAlt} />
+        <figure
+          className={`product-story-media product-story-media-${details.imageLayout} ${
+            details.galleryImages && details.galleryImages.length > 1 ? 'product-story-media-gallery' : ''
+          } interactive-tilt`}
+        >
+          {details.galleryImages && details.galleryImages.length > 1 ? (
+            <div className="product-story-gallery-grid">
+              {details.galleryImages.map((image, index) => (
+                <img key={image} src={image} alt={`${details.imageAlt}, view ${index + 1}`} />
+              ))}
+            </div>
+          ) : (
+            <img src={details.image} alt={details.imageAlt} />
+          )}
         </figure>
       </section>
 
@@ -1262,6 +1742,8 @@ function ProductCommercialSections({
 
       {details.productName === 'Nebula Series Bundle' ? (
         <BundleContentsSection />
+      ) : details.productName === 'Organic Series Bundle' ? (
+        <OrganicBundleContentsSection />
       ) : null}
     </section>
   );
@@ -1448,9 +1930,44 @@ function BundleContentsSection() {
   );
 }
 
+function OrganicBundleContentsSection() {
+  const includedCards = getRelatedProductCards(ORGANIC_BUNDLE_INCLUDED_PRODUCT_NAMES);
+
+  return (
+    <section className="bundle-includes-section organic-bundle-includes" aria-label="Organic Series Bundle contents">
+      <div className="product-support-head">
+        <p className="section-overline">Bundle Includes</p>
+        <h2>Three Organic Series plugins, each with a distinct purpose.</h2>
+        <p>Move from airy space to focused richness and forward definition, then open any product for its full workflow and manual.</p>
+      </div>
+      <div className="bundle-includes-grid organic-bundle-includes-grid">
+        {includedCards.map((card) => (
+          <article key={card.name} className="bundle-include-card organic-bundle-include-card">
+            <Link
+              href={card.href}
+              className="organic-bundle-include-link"
+              data-route={card.route}
+              data-plugin-section={card.pluginSection}
+            >
+              <figure>
+                <img src={card.image} alt={card.name} />
+              </figure>
+              <div>
+                <p>{card.eyebrow}</p>
+                <h3>{card.name}</h3>
+                <span>View plugin</span>
+              </div>
+            </Link>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function FarmVerbSite() {
   const [currentRoute, setCurrentRoute] = useState<RouteKey>('home');
-  const [activeNebulaSection, setActiveNebulaSection] = useState<PluginSectionKey>(DEFAULT_PLUGIN_SECTION);
+  const [activePluginSection, setActivePluginSection] = useState<PluginSectionKey>(DEFAULT_PLUGIN_SECTION);
   const cartPreviewRef = useRef<HTMLDivElement | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartUserId, setCartUserId] = useState<string | null>(null);
@@ -1467,7 +1984,7 @@ export default function FarmVerbSite() {
     const syncFromLocation = () => {
       const { route, pluginSection } = getRouteStateFromLocation(window.location.pathname, window.location.search);
       setCurrentRoute(route);
-      setActiveNebulaSection(pluginSection);
+      setActivePluginSection(pluginSection);
     };
 
     const onRouteChange = (event: Event) => {
@@ -1477,7 +1994,7 @@ export default function FarmVerbSite() {
       }
 
       setCurrentRoute(detail.route);
-      setActiveNebulaSection(detail.pluginSection ?? DEFAULT_PLUGIN_SECTION);
+      setActivePluginSection(detail.pluginSection ?? DEFAULT_PLUGIN_SECTION);
     };
 
     syncFromLocation();
@@ -1601,70 +2118,67 @@ export default function FarmVerbSite() {
     };
   }, [cartPreviewOpen]);
 
-  const selectedSeriesProduct = useMemo(() => {
-    if (activeNebulaSection === DEFAULT_PLUGIN_SECTION) {
-      return NEBULA_BUNDLE_PRODUCT;
-    }
-
-    return NEBULA_PRODUCTS.find((product) => product.section === activeNebulaSection) ?? null;
-  }, [activeNebulaSection]);
+  const selectedPluginProduct = useMemo(
+    () => ALL_PLUGIN_PRODUCTS.find((product) => product.section === activePluginSection) ?? NEBULA_BUNDLE_PRODUCT,
+    [activePluginSection]
+  );
 
   const visibleProducts = useMemo(() => {
-    if (activeNebulaSection === DEFAULT_PLUGIN_SECTION) {
+    if (activePluginSection === DEFAULT_PLUGIN_SECTION) {
       return [NEBULA_BUNDLE_PRODUCT];
     }
 
-    return selectedSeriesProduct ? [selectedSeriesProduct] : NEBULA_PRODUCTS;
-  }, [activeNebulaSection, selectedSeriesProduct]);
+    return selectedPluginProduct ? [selectedPluginProduct] : ALL_PLUGIN_PRODUCTS;
+  }, [activePluginSection, selectedPluginProduct]);
 
   const glitchPackPricing = getProductPricing('Glitch Drum Pack Vol.1');
   const glitchPackPrice = glitchPackPricing ? getMainProductPrice(glitchPackPricing) : 49;
   const glitchPackRegularPrice = glitchPackPricing?.regularPrice ?? 99;
   const glitchPackYoutubeVideoId = getProductYoutubeVideoId('Glitch Drum Pack Vol.1');
 
-  const showSeriesFeature = Boolean(selectedSeriesProduct) && currentRoute === 'plugins';
+  const showSeriesFeature = Boolean(selectedPluginProduct) && currentRoute === 'plugins';
 
   const activePluginMenuName =
-    activeNebulaSection === DEFAULT_PLUGIN_SECTION
+    activePluginSection === DEFAULT_PLUGIN_SECTION
       ? 'Nebula Series Bundle'
-      : selectedSeriesProduct?.name ?? 'Nebula Series Bundle';
+      : selectedPluginProduct?.name ?? 'Nebula Series Bundle';
   const activePluginMenuCopy =
-    activeNebulaSection === DEFAULT_PLUGIN_SECTION
+    activePluginSection === DEFAULT_PLUGIN_SECTION
       ? 'The complete Nebula bundle, prepared as a single product.'
-      : `Choose the overview or jump straight into ${selectedSeriesProduct?.name ?? 'this device'}.`;
+      : `Choose the overview or jump straight into ${selectedPluginProduct?.name ?? 'this device'}.`;
 
-  const selectNebulaSection = (section: PluginSectionKey) => {
+  const selectPluginSection = (section: PluginSectionKey) => {
     setCurrentRoute('plugins');
-    setActiveNebulaSection(section);
+    setActivePluginSection(section);
   };
 
   const onProductNameClick = (section: PluginSectionKey) => {
-    selectNebulaSection(section);
+    selectPluginSection(section);
   };
 
   const hasCheckoutUrl = (productName: string) => Boolean(getLemonCheckoutUrlByProductName(productName));
 
   const renderSeriesFeature = () => {
-    if (!showSeriesFeature || !selectedSeriesProduct) {
+    if (!showSeriesFeature || !selectedPluginProduct) {
       return null;
     }
 
-    const checkoutReady = hasCheckoutUrl(selectedSeriesProduct.name);
+    const checkoutReady = hasCheckoutUrl(selectedPluginProduct.name);
 
     return (
-      <section className="plugin-feature-stage plugin-feature-nebula interactive-tilt" aria-label={`${selectedSeriesProduct.name} detail`}>
-        {selectedSeriesProduct.images && selectedSeriesProduct.images.length > 0 ? (
-          <figure className={`plugin-feature-media ${selectedSeriesProduct.images.length > 1 ? 'plugin-feature-gallery' : ''}`}>
-            {selectedSeriesProduct.images.length > 1 ? (
+      <section className="plugin-feature-stage plugin-feature-nebula interactive-tilt" aria-label={`${selectedPluginProduct.name} detail`}>
+        {selectedPluginProduct.images && selectedPluginProduct.images.length > 0 ? (
+          <figure className={`plugin-feature-media ${selectedPluginProduct.images.length > 1 ? 'plugin-feature-gallery' : ''}`}>
+            {selectedPluginProduct.images.length > 1 ? (
               <div className="plugin-feature-gallery-track">
-                {selectedSeriesProduct.images.map((src, index) => (
-                  <div key={`${selectedSeriesProduct.name}-${src}`} className="plugin-feature-slide">
-                    <img src={src} alt={`${selectedSeriesProduct.name} interface view ${index + 1}`} />
+                {selectedPluginProduct.images.map((src, index) => (
+                  <div key={`${selectedPluginProduct.name}-${src}`} className="plugin-feature-slide">
+                    <img src={src} alt={`${selectedPluginProduct.name} interface view ${index + 1}`} />
                   </div>
                 ))}
               </div>
             ) : (
-              <img src={selectedSeriesProduct.images[0]} alt={`${selectedSeriesProduct.name} interface`} />
+              <img src={selectedPluginProduct.images[0]} alt={`${selectedPluginProduct.name} interface`} />
             )}
           </figure>
         ) : (
@@ -1674,25 +2188,25 @@ export default function FarmVerbSite() {
         )}
 
         <div className="plugin-feature-copy">
-          <h3>{selectedSeriesProduct.name}</h3>
-          <p>{selectedSeriesProduct.description}</p>
-          <ProductPrice productName={selectedSeriesProduct.name} />
+          <h3>{selectedPluginProduct.name}</h3>
+          <p>{selectedPluginProduct.description}</p>
+          <ProductPrice productName={selectedPluginProduct.name} />
           <div className="plugin-feature-actions">
             <button
               type="button"
               className="plugin-action plugin-action-cart"
-              onClick={() => void addToCart(selectedSeriesProduct.name)}
+              onClick={() => void addToCart(selectedPluginProduct.name)}
             >
               Add to Cart
             </button>
             <button
               type="button"
               className="plugin-action plugin-action-buy"
-              onClick={() => onBuyNow(selectedSeriesProduct.name)}
+              onClick={() => onBuyNow(selectedPluginProduct.name)}
               disabled={!checkoutReady}
               title={checkoutReady ? undefined : 'Checkout link coming soon'}
             >
-              {getPlaceholderBuyLabel(selectedSeriesProduct.name)}
+              {getPlaceholderBuyLabel(selectedPluginProduct.name)}
             </button>
             {!checkoutReady ? <span className="checkout-coming-soon">Checkout link coming soon</span> : null}
           </div>
@@ -1896,7 +2410,7 @@ export default function FarmVerbSite() {
             </Link>
             <AudioPluginsMegaMenu
               currentRoute={currentRoute}
-              activePluginSection={activeNebulaSection}
+              activePluginSection={activePluginSection}
             />
             <Link href="/sample-pack" className="nav-link" data-route="sample-pack">
               Sample Pack
@@ -1953,7 +2467,7 @@ export default function FarmVerbSite() {
         </nav>
         <MobileSiteNavigation
           currentRoute={currentRoute}
-          activePluginSection={activeNebulaSection}
+          activePluginSection={activePluginSection}
           showCart={cartAuthReady && Boolean(cartUserId)}
           cartItemCount={cartItemCount}
         />

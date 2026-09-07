@@ -5,7 +5,11 @@ export type LemonCheckoutSlug =
   | 'nebula-drift'
   | 'nebula-rift'
   | 'nebula-drums'
-  | 'glitch-drum-pack-vol-1';
+  | 'glitch-drum-pack-vol-1'
+  | 'organic-series'
+  | 'jeju-citrus-air'
+  | 'boseong-green-tea'
+  | 'uiseong-garlic';
 
 const checkoutUrlBySlug: Record<LemonCheckoutSlug, string | undefined> = {
   'nebula-series': process.env.NEXT_PUBLIC_LEMON_CHECKOUT_NEBULA_SERIES,
@@ -16,7 +20,11 @@ const checkoutUrlBySlug: Record<LemonCheckoutSlug, string | undefined> = {
   'nebula-drums': process.env.NEXT_PUBLIC_LEMON_CHECKOUT_NEBULA_DRUMS,
   'glitch-drum-pack-vol-1':
     process.env.NEXT_PUBLIC_LEMON_CHECKOUT_GLITCH_DRUM_PACK_VOL_1 ??
-    process.env.NEXT_PUBLIC_LEMON_CHECKOUT_GLITCH_DRUM_PACK
+    process.env.NEXT_PUBLIC_LEMON_CHECKOUT_GLITCH_DRUM_PACK,
+  'organic-series': process.env.NEXT_PUBLIC_LEMON_CHECKOUT_ORGANIC_SERIES,
+  'jeju-citrus-air': process.env.NEXT_PUBLIC_LEMON_CHECKOUT_JEJU_CITRUS_AIR,
+  'boseong-green-tea': process.env.NEXT_PUBLIC_LEMON_CHECKOUT_BOSEONG_GREEN_TEA,
+  'uiseong-garlic': process.env.NEXT_PUBLIC_LEMON_CHECKOUT_UISEONG_GARLIC
 };
 
 const slugByProductName = new Map<string, LemonCheckoutSlug>([
@@ -29,7 +37,12 @@ const slugByProductName = new Map<string, LemonCheckoutSlug>([
   ['nebula drums', 'nebula-drums'],
   ['glitch drum pack vol.1', 'glitch-drum-pack-vol-1'],
   ['glitch drum pack vol. i', 'glitch-drum-pack-vol-1'],
-  ['glitch drum pack vol i', 'glitch-drum-pack-vol-1']
+  ['glitch drum pack vol i', 'glitch-drum-pack-vol-1'],
+  ['organic series', 'organic-series'],
+  ['organic series bundle', 'organic-series'],
+  ['jeju citrus air', 'jeju-citrus-air'],
+  ['boseong green tea', 'boseong-green-tea'],
+  ['uiseong garlic', 'uiseong-garlic']
 ]);
 
 function normalizeUrl(value: string | undefined) {

@@ -76,6 +76,44 @@ export const AUDIO_PLUGIN_NAVIGATION: readonly ProductNavigationCategory[] = [
     ]
   },
   {
+    id: 'organic-series',
+    label: 'Organic Series',
+    items: [
+      {
+        id: 'organic-series-bundle',
+        label: 'Organic Series Bundle',
+        href: buildRouteHref('plugins', 'organic-series'),
+        route: 'plugins',
+        pluginSection: 'organic-series',
+        kind: 'product'
+      },
+      {
+        id: 'jeju-citrus-air',
+        label: 'Jeju Citrus Air',
+        href: buildRouteHref('plugins', 'jeju-citrus-air'),
+        route: 'plugins',
+        pluginSection: 'jeju-citrus-air',
+        kind: 'product'
+      },
+      {
+        id: 'boseong-green-tea',
+        label: 'Boseong Green Tea',
+        href: buildRouteHref('plugins', 'boseong-green-tea'),
+        route: 'plugins',
+        pluginSection: 'boseong-green-tea',
+        kind: 'product'
+      },
+      {
+        id: 'uiseong-garlic',
+        label: 'Uiseong Garlic',
+        href: buildRouteHref('plugins', 'uiseong-garlic'),
+        route: 'plugins',
+        pluginSection: 'uiseong-garlic',
+        kind: 'product'
+      }
+    ]
+  },
+  {
     id: 'explore',
     label: 'Explore',
     items: [

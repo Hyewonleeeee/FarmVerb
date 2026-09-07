@@ -14,7 +14,8 @@ export type ProductData = ProductPricing & {
 const glitchSaleActive = process.env.NEXT_PUBLIC_GLITCH_SALE_ACTIVE === 'true';
 
 const PRODUCT_NAME_ALIASES: Record<string, string> = {
-  'Nebula Series': 'Nebula Series Bundle'
+  'Nebula Series': 'Nebula Series Bundle',
+  'Organic Series': 'Organic Series Bundle'
 };
 
 const PRODUCT_DATA_BY_PRODUCT_NAME: Record<string, ProductData> = {
@@ -68,13 +69,19 @@ const PRODUCT_DATA_BY_PRODUCT_NAME: Record<string, ProductData> = {
   },
   'Jeju Citrus Air': {
     currency: 'USD',
-    launchPrice: 49,
-    regularPrice: 69
+    regularPrice: 29
   },
   'Boseong Green Tea': {
     currency: 'USD',
-    launchPrice: 39,
-    regularPrice: 59
+    regularPrice: 29
+  },
+  'Uiseong Garlic': {
+    currency: 'USD',
+    regularPrice: 29
+  },
+  'Organic Series Bundle': {
+    currency: 'USD',
+    regularPrice: 69
   }
 };
 

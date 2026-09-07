@@ -1,8 +1,17 @@
 export type RouteKey = 'home' | 'instrument' | 'plugins' | 'sample-pack' | 'support';
 
-export type ThemeKey = 'home' | 'nebula' | 'glitch';
+export type ThemeKey = 'home' | 'nebula' | 'organic' | 'glitch';
 
-export type PluginSectionKey = 'series' | 'nebula-crush' | 'nebula-space' | 'nebula-drift' | 'nebula-rift';
+export type PluginSectionKey =
+  | 'series'
+  | 'nebula-crush'
+  | 'nebula-space'
+  | 'nebula-drift'
+  | 'nebula-rift'
+  | 'organic-series'
+  | 'jeju-citrus-air'
+  | 'boseong-green-tea'
+  | 'uiseong-garlic';
 
 export const ROUTES: Record<RouteKey, { path: string; title: string }> = {
   home: {
@@ -40,7 +49,18 @@ export const PLUGIN_SECTION_KEYS: PluginSectionKey[] = [
   'nebula-crush',
   'nebula-space',
   'nebula-drift',
-  'nebula-rift'
+  'nebula-rift',
+  'organic-series',
+  'jeju-citrus-air',
+  'boseong-green-tea',
+  'uiseong-garlic'
+];
+
+export const ORGANIC_PLUGIN_SECTION_KEYS: PluginSectionKey[] = [
+  'organic-series',
+  'jeju-citrus-air',
+  'boseong-green-tea',
+  'uiseong-garlic'
 ];
 
 export const DEFAULT_PLUGIN_SECTION: PluginSectionKey = 'series';
@@ -60,6 +80,10 @@ export function normalizePluginSectionKey(inputSection: string | null | undefine
   }
 
   return DEFAULT_PLUGIN_SECTION;
+}
+
+export function isOrganicPluginSection(section: PluginSectionKey) {
+  return ORGANIC_PLUGIN_SECTION_KEYS.includes(section);
 }
 
 export function buildRouteHref(route: RouteKey, pluginSection?: PluginSectionKey) {
