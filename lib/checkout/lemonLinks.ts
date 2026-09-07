@@ -11,6 +11,20 @@ export type LemonCheckoutSlug =
   | 'boseong-green-tea'
   | 'uiseong-garlic';
 
+const organicCheckoutUrlBySlug = {
+  'organic-series':
+    'https://farmverb.lemonsqueezy.com/checkout/buy/abafec50-4129-433d-8467-a4b06bdaeee4',
+  'jeju-citrus-air':
+    'https://farmverb.lemonsqueezy.com/checkout/buy/2db28c70-4ef3-4fac-8342-d1f2b7a22b17',
+  'boseong-green-tea':
+    'https://farmverb.lemonsqueezy.com/checkout/buy/b4d2a735-3a41-4cca-890e-04f4921a19a0',
+  'uiseong-garlic':
+    'https://farmverb.lemonsqueezy.com/checkout/buy/f5215fdc-54c1-4a02-8692-e1af8bb347f0'
+} satisfies Pick<
+  Record<LemonCheckoutSlug, string>,
+  'organic-series' | 'jeju-citrus-air' | 'boseong-green-tea' | 'uiseong-garlic'
+>;
+
 const checkoutUrlBySlug: Record<LemonCheckoutSlug, string | undefined> = {
   'nebula-series': process.env.NEXT_PUBLIC_LEMON_CHECKOUT_NEBULA_SERIES,
   'nebula-crush': process.env.NEXT_PUBLIC_LEMON_CHECKOUT_NEBULA_CRUSH,
@@ -21,10 +35,18 @@ const checkoutUrlBySlug: Record<LemonCheckoutSlug, string | undefined> = {
   'glitch-drum-pack-vol-1':
     process.env.NEXT_PUBLIC_LEMON_CHECKOUT_GLITCH_DRUM_PACK_VOL_1 ??
     process.env.NEXT_PUBLIC_LEMON_CHECKOUT_GLITCH_DRUM_PACK,
-  'organic-series': process.env.NEXT_PUBLIC_LEMON_CHECKOUT_ORGANIC_SERIES,
-  'jeju-citrus-air': process.env.NEXT_PUBLIC_LEMON_CHECKOUT_JEJU_CITRUS_AIR,
-  'boseong-green-tea': process.env.NEXT_PUBLIC_LEMON_CHECKOUT_BOSEONG_GREEN_TEA,
-  'uiseong-garlic': process.env.NEXT_PUBLIC_LEMON_CHECKOUT_UISEONG_GARLIC
+  'organic-series':
+    process.env.NEXT_PUBLIC_LEMON_CHECKOUT_ORGANIC_SERIES?.trim() ||
+    organicCheckoutUrlBySlug['organic-series'],
+  'jeju-citrus-air':
+    process.env.NEXT_PUBLIC_LEMON_CHECKOUT_JEJU_CITRUS_AIR?.trim() ||
+    organicCheckoutUrlBySlug['jeju-citrus-air'],
+  'boseong-green-tea':
+    process.env.NEXT_PUBLIC_LEMON_CHECKOUT_BOSEONG_GREEN_TEA?.trim() ||
+    organicCheckoutUrlBySlug['boseong-green-tea'],
+  'uiseong-garlic':
+    process.env.NEXT_PUBLIC_LEMON_CHECKOUT_UISEONG_GARLIC?.trim() ||
+    organicCheckoutUrlBySlug['uiseong-garlic']
 };
 
 const slugByProductName = new Map<string, LemonCheckoutSlug>([

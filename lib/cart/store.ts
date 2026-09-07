@@ -100,7 +100,7 @@ const PRODUCT_CATALOG: CatalogProduct[] = [
     description: 'Jeju Citrus Air, Boseong Green Tea, and Uiseong Garlic',
     price: priceOf('Organic Series Bundle', 69),
     currency: 'USD',
-    image: '/Organic%20Series/Main-Jeju.png',
+    image: '/Organic%20Series/Organic%20Series%20Bundle.png',
     checkoutUrl: getLemonCheckoutUrl('organic-series')
   },
   {

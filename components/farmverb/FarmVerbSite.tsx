@@ -409,6 +409,12 @@ const ORGANIC_PRODUCT_CARDS: HomeFeatureCard[] = [
   }
 ];
 
+const ORGANIC_PRODUCT_NAMES = new Set(ORGANIC_PRODUCT_CARDS.map((card) => card.productName));
+
+function isOrganicProductName(productName: string) {
+  return ORGANIC_PRODUCT_NAMES.has(productName);
+}
+
 const HOME_PRODUCT_GRID_CARDS = [
   ...HOME_FEATURE_CARDS.slice(0, -1),
   ...ORGANIC_PRODUCT_CARDS,
@@ -1621,6 +1627,7 @@ function ProductCommercialSections({
   const primaryManual = manuals[0] ?? null;
   const youtubeVideoId = getProductYoutubeVideoId(details.productName);
   const isOrganicBundle = details.productName === 'Organic Series Bundle';
+  const isOrganicProduct = isOrganicProductName(details.productName);
 
   return (
     <section className="product-commercial-stack" aria-label={`${details.eyebrow} product story`}>
@@ -1632,7 +1639,7 @@ function ProductCommercialSections({
           <p className="product-story-body">{details.body}</p>
           <div className="product-story-commerce">
             <ProductPrice productName={details.productName} className="product-story-price" />
-            {checkoutReady ? (
+            {checkoutReady || isOrganicProduct ? (
               <div className="product-story-actions">
                 <button
                   type="button"
@@ -1645,10 +1652,15 @@ function ProductCommercialSections({
                   type="button"
                   className="plugin-action plugin-action-buy"
                   onClick={() => onBuyNow(details.productName)}
+                  disabled={!checkoutReady}
+                  title={checkoutReady ? undefined : 'Checkout link coming soon'}
                 >
                   {getBuyLabel(details.productName)}
                 </button>
               </div>
+            ) : null}
+            {isOrganicProduct && !checkoutReady ? (
+              <span className="checkout-coming-soon">Checkout link coming soon</span>
             ) : null}
             {manuals.length === 1 && primaryManual ? (
               <a
@@ -2578,43 +2590,76 @@ export default function FarmVerbSite() {
               </div>
 
               <div className="home-product-grid">
-                {HOME_PRODUCT_GRID_CARDS.map((card) => (
-                  <article
-                    key={card.name}
-                    className={`home-product-card interactive-tilt ${
-                      card.eyebrow === 'Organic Series' ? 'home-product-card-organic' : ''
-                    }`}
-                  >
-                    <figure className="home-product-media">
-                      <img src={card.image} alt={card.name} />
-                    </figure>
+                {HOME_PRODUCT_GRID_CARDS.map((card) => {
+                  const isOrganicCard = isOrganicProductName(card.productName);
+                  const checkoutReady = hasCheckoutUrl(card.productName);
 
-                    <div className="home-product-copy">
-                      <p className="home-product-eyebrow">{card.eyebrow}</p>
-                      <h3>{card.name}</h3>
-                      <p>{card.description}</p>
-                      <ProductPrice productName={card.productName} className="home-product-price" />
-                    </div>
+                  return (
+                    <article
+                      key={card.name}
+                      className={`home-product-card interactive-tilt ${isOrganicCard ? 'home-product-card-organic' : ''}`}
+                    >
+                      <figure className="home-product-media">
+                        <img src={card.image} alt={card.name} />
+                      </figure>
 
-                    <div className="home-product-actions">
-                      <Link
-                        href={card.href}
-                        className="section-action-btn section-action-buy home-product-link"
-                        data-route={card.route}
-                        data-plugin-section={card.pluginSection}
-                      >
-                        {card.ctaLabel}
-                      </Link>
-                      <button
-                        type="button"
-                        className="section-action-btn section-action-cart"
-                        onClick={() => void addToCart(card.productName)}
-                      >
-                        Add to Cart
-                      </button>
-                    </div>
-                  </article>
-                ))}
+                      <div className="home-product-copy">
+                        <p className="home-product-eyebrow">{card.eyebrow}</p>
+                        <h3>
+                          {isOrganicCard ? (
+                            <Link
+                              href={card.href}
+                              className="home-product-title-link"
+                              data-route={card.route}
+                              data-plugin-section={card.pluginSection}
+                            >
+                              {card.name}
+                            </Link>
+                          ) : (
+                            card.name
+                          )}
+                        </h3>
+                        <p>{card.description}</p>
+                        <ProductPrice productName={card.productName} className="home-product-price" />
+                      </div>
+
+                      <div className="home-product-actions">
+                        {isOrganicCard ? (
+                          <button
+                            type="button"
+                            className="section-action-btn section-action-buy"
+                            onClick={() => onBuyNow(card.productName)}
+                            disabled={!checkoutReady}
+                            title={checkoutReady ? undefined : 'Checkout link coming soon'}
+                          >
+                            {getPlaceholderBuyLabel(card.productName)}
+                          </button>
+                        ) : (
+                          <Link
+                            href={card.href}
+                            className="section-action-btn section-action-buy home-product-link"
+                            data-route={card.route}
+                            data-plugin-section={card.pluginSection}
+                          >
+                            {card.ctaLabel}
+                          </Link>
+                        )}
+                        <button
+                          type="button"
+                          className="section-action-btn section-action-cart"
+                          onClick={() => void addToCart(card.productName)}
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                      {isOrganicCard && !checkoutReady ? (
+                        <span className="checkout-coming-soon home-product-checkout-status">
+                          Checkout link coming soon
+                        </span>
+                      ) : null}
+                    </article>
+                  );
+                })}
               </div>
             </section>
 
