@@ -254,11 +254,7 @@ const ORGANIC_BUNDLE_PRODUCT: PluginProduct = {
   section: 'organic-series',
   name: 'Organic Series Bundle',
   description: 'Jeju Citrus Air, Boseong Green Tea, and Uiseong Garlic in one focused collection.',
-  images: [
-    '/Organic%20Series/Main-Jeju.png',
-    '/Organic%20Series/Main-Boseong.png',
-    '/Organic%20Series/Main-Uiseong.png'
-  ]
+  images: ['/Organic%20Series/Organic%20Series%20Bundle.png']
 };
 
 const ORGANIC_PRODUCTS: PluginProduct[] = [
@@ -371,7 +367,7 @@ const ORGANIC_PRODUCT_CARDS: HomeFeatureCard[] = [
     eyebrow: 'Organic Series',
     name: 'Organic Series Bundle',
     description: 'Three focused processors for air, richness, and definition.',
-    image: '/Organic%20Series/Main-Jeju.png',
+    image: '/Organic%20Series/Organic%20Series%20Bundle.png',
     href: buildRouteHref('plugins', 'organic-series'),
     route: 'plugins',
     pluginSection: 'organic-series',
@@ -413,7 +409,13 @@ const ORGANIC_PRODUCT_CARDS: HomeFeatureCard[] = [
   }
 ];
 
-const PRODUCT_CARD_CATALOG = [...HOME_FEATURE_CARDS, ...ORGANIC_PRODUCT_CARDS];
+const HOME_PRODUCT_GRID_CARDS = [
+  ...HOME_FEATURE_CARDS.slice(0, -1),
+  ...ORGANIC_PRODUCT_CARDS,
+  ...HOME_FEATURE_CARDS.slice(-1)
+];
+
+const PRODUCT_CARD_CATALOG = HOME_PRODUCT_GRID_CARDS;
 
 const HOME_STORY_CARDS: HomeStoryCard[] = [
   {
@@ -787,13 +789,8 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
     headline: 'Air, richness, and definition.',
     subhead: 'Three distinct tools for placing a sound exactly where the mix needs it.',
     body: 'Organic Series Bundle brings together Jeju Citrus Air, Boseong Green Tea, and Uiseong Garlic: an octave-led shimmer reverb, a focused richness processor, and a forward definition processor.',
-    image: '/Organic%20Series/Main-Jeju.png',
-    galleryImages: [
-      '/Organic%20Series/Main-Jeju.png',
-      '/Organic%20Series/Main-Boseong.png',
-      '/Organic%20Series/Main-Uiseong.png'
-    ],
-    imageAlt: 'Jeju Citrus Air, Boseong Green Tea, and Uiseong Garlic interfaces',
+    image: '/Organic%20Series/Organic%20Series%20Bundle.png',
+    imageAlt: 'Organic Series Bundle with Jeju Citrus Air, Boseong Green Tea, and Uiseong Garlic',
     imageLayout: 'wide',
     valueItems: ['Jeju Citrus Air', 'Boseong Green Tea', 'Uiseong Garlic'],
     features: [
@@ -808,6 +805,10 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
       {
         title: 'Uiseong Garlic',
         body: 'Bring weak or buried sources forward through definition, onset, placement, and tightness.'
+      },
+      {
+        title: 'Complete Organic Palette',
+        body: 'Move from Jeju’s spacious air to Boseong’s density and richness, then Uiseong’s forward definition and presence within one complementary series.'
       }
     ],
     workflow: [
@@ -820,8 +821,12 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
         body: 'Use the selected plugin’s focused controls to establish tone and placement.'
       },
       {
-        title: 'Balance in context',
-        body: 'Set Mix or Output where available while listening against the full arrangement.'
+        title: 'Set the working level',
+        body: 'Use Mix on Jeju Citrus Air or Output on Boseong Green Tea and Uiseong Garlic to establish the working balance.'
+      },
+      {
+        title: 'Confirm the result',
+        body: 'Compare at a matched listening level and keep the setting only when the source sits more clearly in the full arrangement.'
       }
     ],
     relatedProducts: ['Jeju Citrus Air', 'Boseong Green Tea', 'Uiseong Garlic']
@@ -1615,6 +1620,7 @@ function ProductCommercialSections({
   const checkoutReady = hasCheckoutUrl(details.productName);
   const primaryManual = manuals[0] ?? null;
   const youtubeVideoId = getProductYoutubeVideoId(details.productName);
+  const isOrganicBundle = details.productName === 'Organic Series Bundle';
 
   return (
     <section className="product-commercial-stack" aria-label={`${details.eyebrow} product story`}>
@@ -1675,7 +1681,7 @@ function ProductCommercialSections({
         <figure
           className={`product-story-media product-story-media-${details.imageLayout} ${
             details.galleryImages && details.galleryImages.length > 1 ? 'product-story-media-gallery' : ''
-          } interactive-tilt`}
+          } ${isOrganicBundle ? 'product-story-media-organic-bundle' : ''} interactive-tilt`}
         >
           {details.galleryImages && details.galleryImages.length > 1 ? (
             <div className="product-story-gallery-grid">
@@ -2168,7 +2174,11 @@ export default function FarmVerbSite() {
     return (
       <section className="plugin-feature-stage plugin-feature-nebula interactive-tilt" aria-label={`${selectedPluginProduct.name} detail`}>
         {selectedPluginProduct.images && selectedPluginProduct.images.length > 0 ? (
-          <figure className={`plugin-feature-media ${selectedPluginProduct.images.length > 1 ? 'plugin-feature-gallery' : ''}`}>
+          <figure
+            className={`plugin-feature-media ${
+              selectedPluginProduct.images.length > 1 ? 'plugin-feature-gallery' : ''
+            } ${selectedPluginProduct.name === 'Organic Series Bundle' ? 'plugin-feature-media-organic-bundle' : ''}`}
+          >
             {selectedPluginProduct.images.length > 1 ? (
               <div className="plugin-feature-gallery-track">
                 {selectedPluginProduct.images.map((src, index) => (
@@ -2568,8 +2578,13 @@ export default function FarmVerbSite() {
               </div>
 
               <div className="home-product-grid">
-                {HOME_FEATURE_CARDS.map((card) => (
-                  <article key={card.name} className="home-product-card interactive-tilt">
+                {HOME_PRODUCT_GRID_CARDS.map((card) => (
+                  <article
+                    key={card.name}
+                    className={`home-product-card interactive-tilt ${
+                      card.eyebrow === 'Organic Series' ? 'home-product-card-organic' : ''
+                    }`}
+                  >
                     <figure className="home-product-media">
                       <img src={card.image} alt={card.name} />
                     </figure>
