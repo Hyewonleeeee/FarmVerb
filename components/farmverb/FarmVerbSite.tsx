@@ -491,7 +491,7 @@ const STANDARD_NEBULA_PLUGIN_REQUIREMENTS: SupportRequirementGroup[] = [
   }
 ];
 
-const ORGANIC_PLUGIN_REQUIREMENTS: SupportRequirementGroup[] = [
+const ORGANIC_COMPATIBILITY_REQUIREMENTS: SupportRequirementGroup[] = [
   {
     label: 'macOS',
     items: ['AU', 'VST3', 'AAX']
@@ -503,10 +503,14 @@ const ORGANIC_PLUGIN_REQUIREMENTS: SupportRequirementGroup[] = [
   {
     label: 'Audio',
     items: ['Mono', 'Stereo', 'Matching input and output layouts']
-  },
+  }
+];
+
+const ORGANIC_PLUGIN_REQUIREMENTS: SupportRequirementGroup[] = [
+  ...ORGANIC_COMPATIBILITY_REQUIREMENTS,
   {
-    label: 'Interface',
-    items: ['Fixed 500 × 500 pixel layout']
+    label: 'Downloads',
+    items: ['macOS installer', 'Windows installer', 'Available in My Account']
   }
 ];
 
@@ -1039,10 +1043,16 @@ const PRODUCT_ACCESS_ANSWER =
   'Sign in and open My Account to access verified purchases, available downloads, and license details. You can also use the order link provided with your purchase.';
 const PRODUCT_COMMERCIAL_USE_ANSWER =
   'The FarmVerb EULA permits use in personal and commercial music, sound design, and media projects. Product files, installers, license keys, presets, and raw content may not be redistributed or resold as standalone assets.';
+const ORGANIC_FORMAT_ANSWER =
+  'On macOS, Organic Series plugins are available in AU, VST3, and AAX formats. On Windows, they are available in VST3 and AAX formats. Mono and stereo layouts are supported with matching input and output channels.';
 const ORGANIC_INSTALL_ANSWER =
-  'When an installer is available for your purchase, download the current build from My Account and follow the instructions supplied with it. The current Organic Series manual does not specify installation paths; contact support@farmverb.com if you need help.';
+  'Download the installer for your operating system from My Account. On macOS, select the AU, VST3, and/or AAX formats you use. On Windows, select the VST3 and/or AAX formats required by your DAW. After installation, rescan your plugins or restart your DAW if necessary.';
+const ORGANIC_ACCESS_ANSWER =
+  'Sign in to My Account to view your purchase, download the installer for your operating system, and access your FarmVerb license.';
 const ORGANIC_LICENSE_ANSWER =
-  'The current Organic Series manual does not document the activation workflow. Follow the instructions supplied with the current licensed build, or contact support@farmverb.com if you need help.';
+  'Your FarmVerb license appears in My Account after purchase. Open the plugin in your DAW and complete FarmVerb license activation with that license. Once activation is complete, the plugin is ready to use. When moving to a new computer, manage the activated devices for that license in My Account before activating the new installation.';
+const ORGANIC_MANUAL_ANSWER =
+  'Use the Download User Manual (PDF) link near the purchase controls at the top of this page.';
 
 const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
   'Nebula Series Bundle': {
@@ -1221,7 +1231,7 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
         label: 'Included Plugins',
         items: ['Jeju Citrus Air', 'Boseong Green Tea', 'Uiseong Garlic']
       },
-      ...ORGANIC_PLUGIN_REQUIREMENTS
+      ...ORGANIC_COMPATIBILITY_REQUIREMENTS
     ],
     manuals: [
       { label: 'Jeju Citrus Air User Manual', href: ORGANIC_MANUALS.jeju },
@@ -1235,11 +1245,7 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
       },
       {
         question: 'Which plugin formats are included?',
-        answer: 'Each plugin supports AU, VST3, and AAX on macOS, plus VST3 and AAX on Windows. Mono and stereo layouts are supported with matching input and output.'
-      },
-      {
-        question: 'Is there a separate manual for each plugin?',
-        answer: 'Yes. The Jeju Citrus Air, Boseong Green Tea, and Uiseong Garlic manuals are available separately on this page.'
+        answer: ORGANIC_FORMAT_ANSWER
       },
       {
         question: 'How do I install the Organic Series plugins?',
@@ -1247,36 +1253,28 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
       },
       {
         question: 'Where do I find downloads and license details?',
-        answer: PRODUCT_ACCESS_ANSWER
+        answer: ORGANIC_ACCESS_ANSWER
       },
       {
-        question: 'Where can I find activation instructions?',
+        question: 'How does license activation work?',
         answer: ORGANIC_LICENSE_ANSWER
+      },
+      {
+        question: 'Where can I find the user manuals?',
+        answer: 'Use the Download User Manuals (PDF) menu near the purchase controls at the top of this page. Each included plugin has its own manual.'
       }
     ],
     relatedProducts: ['Jeju Citrus Air', 'Boseong Green Tea', 'Uiseong Garlic']
   },
   'Jeju Citrus Air': {
     title: 'Jeju Citrus Air Support',
-    description: 'Compatibility, control guidance, and the current product manual.',
+    description: 'Compatibility, control guidance, and the product manual.',
     requirements: ORGANIC_PLUGIN_REQUIREMENTS,
     manuals: [{ label: 'Jeju Citrus Air User Manual', href: ORGANIC_MANUALS.jeju }],
     faqs: [
       {
         question: 'Which plugin formats are included?',
-        answer: 'Jeju Citrus Air supports AU, VST3, and AAX on macOS, plus VST3 and AAX on Windows. Mono and stereo layouts are supported with matching input and output.'
-      },
-      {
-        question: 'What is the difference between Vocal and Ambient mode?',
-        answer: 'Vocal keeps more early presence and restrains the shimmer, width, and tail. Ambient increases the late field, shimmer energy, width, and decay.'
-      },
-      {
-        question: 'What happens to Mix when I load a preset?',
-        answer: 'The 13 presets recall the mode and four character controls, while Mix stays at the value you set.'
-      },
-      {
-        question: 'How do I control the final output level?',
-        answer: 'Jeju Citrus Air has no separate Output control. Use the DAW channel or return fader, or a gain stage after the plugin.'
+        answer: ORGANIC_FORMAT_ANSWER
       },
       {
         question: 'How do I install Jeju Citrus Air?',
@@ -1284,36 +1282,40 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
       },
       {
         question: 'Where do I find my download and license?',
-        answer: PRODUCT_ACCESS_ANSWER
+        answer: ORGANIC_ACCESS_ANSWER
       },
       {
-        question: 'Where can I find activation instructions?',
+        question: 'How does license activation work?',
         answer: ORGANIC_LICENSE_ANSWER
+      },
+      {
+        question: 'When should I choose Vocal instead of Ambient?',
+        answer: 'Use Vocal when the source needs to stay forward and easy to locate. Use Ambient for a wider, longer late field. If the effect pushes the source farther back than intended, switch to Vocal before reducing every control.'
+      },
+      {
+        question: 'Why does Mix stay unchanged when I load a preset?',
+        answer: 'Presets recall Vocal or Ambient mode plus Peel, Shine, Glow, and Juice. Mix stays unchanged so you can audition character without losing the dry/wet balance you set for the track.'
+      },
+      {
+        question: 'How do I set the final output level?',
+        answer: 'Jeju Citrus Air has no separate Output control. On an insert, set Mix for the blend you want and adjust the DAW channel or a following gain stage. On a send or return, set Mix to 100% and control the effect level with the return fader.'
+      },
+      {
+        question: 'Where can I find the user manual?',
+        answer: ORGANIC_MANUAL_ANSWER
       }
     ],
     relatedProducts: ['Organic Series Bundle', 'Boseong Green Tea', 'Uiseong Garlic']
   },
   'Boseong Green Tea': {
     title: 'Boseong Green Tea Support',
-    description: 'Compatibility, control guidance, and the current product manual.',
+    description: 'Compatibility, control guidance, and the product manual.',
     requirements: ORGANIC_PLUGIN_REQUIREMENTS,
     manuals: [{ label: 'Boseong Green Tea User Manual', href: ORGANIC_MANUALS.boseong }],
     faqs: [
       {
         question: 'Which plugin formats are included?',
-        answer: 'Boseong Green Tea supports AU, VST3, and AAX on macOS, plus VST3 and AAX on Windows. Mono and stereo layouts are supported with matching input and output.'
-      },
-      {
-        question: 'What does Auto do?',
-        answer: 'Auto is optional level assistance for stronger Grow settings. It does not move the Output knob and is not a limiter or peak protector.'
-      },
-      {
-        question: 'What stays unchanged when I load a preset?',
-        answer: 'The 11 presets recall Grow, Body, Focus, and Air. Output and Auto stay at the values you set.'
-      },
-      {
-        question: 'Can the plugin exceed available headroom?',
-        answer: 'Yes. A hot input or positive Output setting can exceed the available headroom, so check the DAW peak meter while level matching.'
+        answer: ORGANIC_FORMAT_ANSWER
       },
       {
         question: 'How do I install Boseong Green Tea?',
@@ -1321,36 +1323,36 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
       },
       {
         question: 'Where do I find my download and license?',
-        answer: PRODUCT_ACCESS_ANSWER
+        answer: ORGANIC_ACCESS_ANSWER
       },
       {
-        question: 'Where can I find activation instructions?',
+        question: 'How does license activation work?',
         answer: ORGANIC_LICENSE_ANSWER
+      },
+      {
+        question: 'Does Auto prevent clipping?',
+        answer: 'No. Auto provides Grow-dependent level assistance; it does not move Output and is not a limiter or peak protector. Level-match with Output and watch your DAW peak meter, especially with a hot input or positive Output setting.'
+      },
+      {
+        question: 'Why do Output and Auto stay unchanged when I load a preset?',
+        answer: 'Presets recall Grow, Body, Focus, and Air. Output and Auto remain unchanged so your level match and Auto preference stay consistent while you audition character.'
+      },
+      {
+        question: 'Where can I find the user manual?',
+        answer: ORGANIC_MANUAL_ANSWER
       }
     ],
     relatedProducts: ['Organic Series Bundle', 'Jeju Citrus Air', 'Uiseong Garlic']
   },
   'Uiseong Garlic': {
     title: 'Uiseong Garlic Support',
-    description: 'Compatibility, control guidance, and the current product manual.',
+    description: 'Compatibility, control guidance, and the product manual.',
     requirements: ORGANIC_PLUGIN_REQUIREMENTS,
     manuals: [{ label: 'Uiseong Garlic User Manual', href: ORGANIC_MANUALS.uiseong }],
     faqs: [
       {
         question: 'Which plugin formats are included?',
-        answer: 'Uiseong Garlic supports AU, VST3, and AAX on macOS, plus VST3 and AAX on Windows. Mono and stereo layouts are supported with matching input and output.'
-      },
-      {
-        question: 'Why do the other controls have little effect when Bite is at 0%?',
-        answer: 'Bite sets the total Definition amount. At 0%, there is effectively no Definition for Attack, Forward, or Tight to shape.'
-      },
-      {
-        question: 'Are Attack and Forward simple boosts?',
-        answer: 'No. Attack changes onset character from soft to crisp, while Forward shapes back-to-front placement and midrange articulation rather than brightness alone.'
-      },
-      {
-        question: 'What stays unchanged when I load a preset?',
-        answer: 'The 11 presets recall Bite, Attack, Forward, and Tight. Output remains independent.'
+        answer: ORGANIC_FORMAT_ANSWER
       },
       {
         question: 'How do I install Uiseong Garlic?',
@@ -1358,11 +1360,27 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
       },
       {
         question: 'Where do I find my download and license?',
-        answer: PRODUCT_ACCESS_ANSWER
+        answer: ORGANIC_ACCESS_ANSWER
       },
       {
-        question: 'Where can I find activation instructions?',
+        question: 'How does license activation work?',
         answer: ORGANIC_LICENSE_ANSWER
+      },
+      {
+        question: 'Why do Attack, Forward, and Tight have little effect at Bite 0%?',
+        answer: 'Bite sets the total Definition amount. At 0%, there is no meaningful Definition for those controls to shape. Set Bite first, then refine onset, placement, and post-onset control.'
+      },
+      {
+        question: 'How are Attack and Forward different?',
+        answer: 'Attack shapes the first edge from soft to crisp. Forward changes front-to-back placement and midrange articulation. Neither control is a simple level boost.'
+      },
+      {
+        question: 'Why does Output stay unchanged when I load a preset?',
+        answer: 'Presets recall Bite, Attack, Forward, and Tight. Output remains independent so your level-matched comparison stays in place.'
+      },
+      {
+        question: 'Where can I find the user manual?',
+        answer: ORGANIC_MANUAL_ANSWER
       }
     ],
     relatedProducts: ['Organic Series Bundle', 'Jeju Citrus Air', 'Boseong Green Tea']
