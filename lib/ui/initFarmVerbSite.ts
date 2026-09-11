@@ -602,6 +602,16 @@ export function initFarmVerbSite() {
     resetThemeMotionState();
   };
 
+  const resetRouteScroll = (route: RouteKey) => {
+    const page = pages.get(route);
+    if (page) {
+      page.scrollTop = 0;
+      page.scrollLeft = 0;
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  };
+
   const switchTo = (route: string, options: SwitchOptions = {}) => {
     const nextRoute = normalizeRouteKey(route);
     const nextPluginSection = nextRoute === 'plugins' ? normalizePluginSectionKey(options.pluginSection) : DEFAULT_PLUGIN_SECTION;
@@ -611,6 +621,9 @@ export function initFarmVerbSite() {
     const sameSection = nextPluginSection === activePluginSection;
 
     if (sameRoute && sameSection) {
+      if (!fromHistory) {
+        resetRouteScroll(nextRoute);
+      }
       updateNavState(nextRoute);
       updateTitle(nextRoute);
       if (!fromHistory && `${window.location.pathname}${window.location.search}` !== nextHref) {
@@ -628,6 +641,9 @@ export function initFarmVerbSite() {
     }
 
     if (sameRoute) {
+      if (!fromHistory) {
+        resetRouteScroll(nextRoute);
+      }
       activePluginSection = nextPluginSection;
       updateNavState(nextRoute);
       updateTitle(nextRoute);
@@ -666,7 +682,7 @@ export function initFarmVerbSite() {
 
     nextPage.classList.add('is-active');
     nextPage.setAttribute('aria-hidden', 'false');
-    nextPage.scrollTop = 0;
+    resetRouteScroll(nextRoute);
 
     transitionTimer = window.setTimeout(() => {
       currentPage.classList.remove('is-leaving');
