@@ -16,6 +16,8 @@ type SwitchOptions = {
   pluginSection?: PluginSectionKey;
 };
 
+const PAGE_TRANSITION_OUT_MS = 140;
+
 type Source = {
   nx: number;
   ny: number;
@@ -554,6 +556,8 @@ export function initFarmVerbSite() {
   let activeRoute: RouteKey = 'home';
   let activePluginSection: PluginSectionKey = DEFAULT_PLUGIN_SECTION;
   let transitionTimer: number | null = null;
+  let transitionFrame: number | null = null;
+  let transitionRevealFrame: number | null = null;
   let lastWindowPointerX = window.innerWidth * 0.5;
   let lastWindowPointerY = window.innerHeight * 0.5;
 
@@ -612,6 +616,53 @@ export function initFarmVerbSite() {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   };
 
+  const clearRouteTransition = () => {
+    if (transitionTimer !== null) {
+      window.clearTimeout(transitionTimer);
+      transitionTimer = null;
+    }
+
+    if (transitionFrame !== null) {
+      window.cancelAnimationFrame(transitionFrame);
+      transitionFrame = null;
+    }
+
+    if (transitionRevealFrame !== null) {
+      window.cancelAnimationFrame(transitionRevealFrame);
+      transitionRevealFrame = null;
+    }
+
+    pages.forEach((page) => {
+      page.classList.remove('is-transitioning-out', 'is-transition-entering');
+    });
+  };
+
+  const revealRoutePage = (page: HTMLElement) => {
+    if (prefersReducedMotion) {
+      page.classList.remove('is-transition-entering');
+      return;
+    }
+
+    transitionFrame = window.requestAnimationFrame(() => {
+      transitionFrame = null;
+      transitionRevealFrame = window.requestAnimationFrame(() => {
+        transitionRevealFrame = null;
+        page.classList.remove('is-transition-entering');
+      });
+    });
+  };
+
+  const notifyRouteChange = (route: RouteKey, pluginSection: PluginSectionKey) => {
+    window.dispatchEvent(
+      new CustomEvent('farmverb-routechange', {
+        detail: {
+          route,
+          pluginSection
+        }
+      })
+    );
+  };
+
   const switchTo = (route: string, options: SwitchOptions = {}) => {
     const nextRoute = normalizeRouteKey(route);
     const nextPluginSection = nextRoute === 'plugins' ? normalizePluginSectionKey(options.pluginSection) : DEFAULT_PLUGIN_SECTION;
@@ -621,46 +672,14 @@ export function initFarmVerbSite() {
     const sameSection = nextPluginSection === activePluginSection;
 
     if (sameRoute && sameSection) {
-      if (!fromHistory) {
-        resetRouteScroll(nextRoute);
-      }
+      clearRouteTransition();
+      resetRouteScroll(nextRoute);
       updateNavState(nextRoute);
       updateTitle(nextRoute);
       if (!fromHistory && `${window.location.pathname}${window.location.search}` !== nextHref) {
         history.replaceState(null, '', nextHref);
       }
-      window.dispatchEvent(
-        new CustomEvent('farmverb-routechange', {
-          detail: {
-            route: nextRoute,
-            pluginSection: nextPluginSection
-          }
-        })
-      );
-      return;
-    }
-
-    if (sameRoute) {
-      if (!fromHistory) {
-        resetRouteScroll(nextRoute);
-      }
-      activePluginSection = nextPluginSection;
-      updateNavState(nextRoute);
-      updateTitle(nextRoute);
-      syncRouteChrome(nextRoute, nextPluginSection);
-
-      window.dispatchEvent(
-        new CustomEvent('farmverb-routechange', {
-          detail: {
-            route: nextRoute,
-            pluginSection: nextPluginSection
-          }
-        })
-      );
-
-      if (!fromHistory && `${window.location.pathname}${window.location.search}` !== nextHref) {
-        history.pushState(null, '', nextHref);
-      }
+      notifyRouteChange(nextRoute, nextPluginSection);
       return;
     }
 
@@ -671,41 +690,47 @@ export function initFarmVerbSite() {
       return;
     }
 
-    if (transitionTimer !== null) {
-      window.clearTimeout(transitionTimer);
+    clearRouteTransition();
+
+    const completeSwitch = (animateEntrance: boolean) => {
       transitionTimer = null;
+      currentPage.classList.remove('is-transitioning-out');
+
+      if (currentPage !== nextPage) {
+        currentPage.classList.remove('is-active');
+        currentPage.setAttribute('aria-hidden', 'true');
+      }
+
+      if (animateEntrance) {
+        nextPage.classList.add('is-transition-entering');
+      }
+      nextPage.classList.add('is-active');
+      nextPage.setAttribute('aria-hidden', 'false');
+      resetRouteScroll(nextRoute);
+
+      activeRoute = nextRoute;
+      activePluginSection = nextPluginSection;
+      updateNavState(nextRoute);
+      updateTitle(nextRoute);
+      syncRouteChrome(nextRoute, nextPluginSection);
+      notifyRouteChange(nextRoute, nextPluginSection);
+
+      if (!fromHistory && `${window.location.pathname}${window.location.search}` !== nextHref) {
+        history.pushState(null, '', nextHref);
+      }
+
+      if (animateEntrance) {
+        revealRoutePage(nextPage);
+      }
+    };
+
+    if (prefersReducedMotion) {
+      completeSwitch(false);
+      return;
     }
 
-    currentPage.classList.add('is-leaving');
-    currentPage.classList.remove('is-active');
-    currentPage.setAttribute('aria-hidden', 'true');
-
-    nextPage.classList.add('is-active');
-    nextPage.setAttribute('aria-hidden', 'false');
-    resetRouteScroll(nextRoute);
-
-    transitionTimer = window.setTimeout(() => {
-      currentPage.classList.remove('is-leaving');
-    }, prefersReducedMotion ? 0 : 650);
-
-    activeRoute = nextRoute;
-    activePluginSection = nextPluginSection;
-    updateNavState(nextRoute);
-    updateTitle(nextRoute);
-    syncRouteChrome(nextRoute, nextPluginSection);
-
-    window.dispatchEvent(
-      new CustomEvent('farmverb-routechange', {
-        detail: {
-          route: nextRoute,
-          pluginSection: nextPluginSection
-        }
-      })
-    );
-
-    if (!fromHistory && `${window.location.pathname}${window.location.search}` !== nextHref) {
-      history.pushState(null, '', nextHref);
-    }
+    currentPage.classList.add('is-transitioning-out');
+    transitionTimer = window.setTimeout(() => completeSwitch(true), PAGE_TRANSITION_OUT_MS);
   };
 
   const onDocumentClick = (event: MouseEvent) => {
@@ -734,7 +759,7 @@ export function initFarmVerbSite() {
     switchTo(route, { fromHistory: true, pluginSection });
   };
 
-  document.addEventListener('click', onDocumentClick);
+  document.addEventListener('click', onDocumentClick, true);
   window.addEventListener('popstate', onPopState);
   const initialRouteState = getRouteStateFromLocation(window.location.pathname, window.location.search);
   switchTo(initialRouteState.route, { fromHistory: true, pluginSection: initialRouteState.pluginSection });
@@ -1140,13 +1165,10 @@ export function initFarmVerbSite() {
   }
 
   return () => {
-    document.removeEventListener('click', onDocumentClick);
+    document.removeEventListener('click', onDocumentClick, true);
     window.removeEventListener('popstate', onPopState);
 
-    if (transitionTimer !== null) {
-      window.clearTimeout(transitionTimer);
-      transitionTimer = null;
-    }
+    clearRouteTransition();
 
     ambient?.destroy();
     railCleanup.forEach((cleanup) => cleanup());

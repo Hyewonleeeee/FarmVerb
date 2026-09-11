@@ -66,6 +66,8 @@ type HomeStoryCard = {
   description: string;
   image: string;
   href: string;
+  route: RouteKey;
+  pluginSection?: PluginSectionKey;
   ctaLabel: string;
 };
 
@@ -430,6 +432,7 @@ const HOME_STORY_CARDS: HomeStoryCard[] = [
     description: 'Explore expressive audio tools shaped for character, movement, and a musical sense of space.',
     image: '/Main/Main.jpg',
     href: buildRouteHref('plugins'),
+    route: 'plugins',
     ctaLabel: 'Explore Products'
   },
   {
@@ -438,6 +441,7 @@ const HOME_STORY_CARDS: HomeStoryCard[] = [
     description: 'Discover fractured percussion and tactile digital detail built for modern production.',
     image: '/Main/Main_2.jpg',
     href: buildRouteHref('sample-pack'),
+    route: 'sample-pack',
     ctaLabel: 'View Sample Pack'
   },
   {
@@ -446,6 +450,7 @@ const HOME_STORY_CARDS: HomeStoryCard[] = [
     description: 'Move from subtle color to experimental motion with instruments and effects made for creative play.',
     image: '/Main/Main_3.jpg',
     href: buildRouteHref('instrument'),
+    route: 'instrument',
     ctaLabel: 'View Instrument'
   }
 ];
@@ -2035,11 +2040,9 @@ export default function FarmVerbSite() {
 
     syncFromLocation();
     window.addEventListener('farmverb-routechange', onRouteChange as EventListener);
-    window.addEventListener('popstate', syncFromLocation);
 
     return () => {
       window.removeEventListener('farmverb-routechange', onRouteChange as EventListener);
-      window.removeEventListener('popstate', syncFromLocation);
     };
   }, []);
 
@@ -2590,7 +2593,12 @@ export default function FarmVerbSite() {
                   <p className="section-overline">{HOME_STORY_CARDS[0].eyebrow}</p>
                   <h2>{HOME_STORY_CARDS[0].title}</h2>
                   <p>{HOME_STORY_CARDS[0].description}</p>
-                  <Link href={HOME_STORY_CARDS[0].href} className="home-story-link">
+                  <Link
+                    href={HOME_STORY_CARDS[0].href}
+                    className="home-story-link"
+                    data-route={HOME_STORY_CARDS[0].route}
+                    data-plugin-section={HOME_STORY_CARDS[0].pluginSection}
+                  >
                     {HOME_STORY_CARDS[0].ctaLabel}
                   </Link>
                 </div>
@@ -2624,18 +2632,14 @@ export default function FarmVerbSite() {
                       <div className="home-product-copy">
                         <p className="home-product-eyebrow">{card.eyebrow}</p>
                         <h3>
-                          {isOrganicCard ? (
-                            <Link
-                              href={card.href}
-                              className="home-product-title-link"
-                              data-route={card.route}
-                              data-plugin-section={card.pluginSection}
-                            >
-                              {card.name}
-                            </Link>
-                          ) : (
-                            card.name
-                          )}
+                          <Link
+                            href={card.href}
+                            className="home-product-title-link"
+                            data-route={card.route}
+                            data-plugin-section={card.pluginSection}
+                          >
+                            {card.name}
+                          </Link>
                         </h3>
                         <p>{card.description}</p>
                         <ProductPrice productName={card.productName} className="home-product-price" />
@@ -2691,7 +2695,12 @@ export default function FarmVerbSite() {
                     <p className="section-overline">{card.eyebrow}</p>
                     <h3>{card.title}</h3>
                     <p>{card.description}</p>
-                    <Link href={card.href} className="home-story-link">
+                    <Link
+                      href={card.href}
+                      className="home-story-link"
+                      data-route={card.route}
+                      data-plugin-section={card.pluginSection}
+                    >
                       {card.ctaLabel}
                     </Link>
                   </div>
