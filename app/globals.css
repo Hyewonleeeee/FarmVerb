@@ -6132,7 +6132,7 @@ img {
   display: grid;
   grid-template-columns: 132px minmax(0, 1fr);
   gap: 1rem;
-  align-items: center;
+  align-items: start;
   padding: 0.9rem;
 }
 
@@ -6155,6 +6155,7 @@ img {
 
 .mypage-product-copy {
   min-width: 0;
+  max-width: 100%;
 }
 
 .mypage-product-actions {
@@ -6220,12 +6221,17 @@ img {
 }
 
 .mypage-license-key {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
   font-size: 0.78rem;
-  padding: 0.2rem 0.38rem;
-  border-radius: 6px;
+  line-height: 1.45;
+  padding: 0.52rem 0.62rem;
+  border-radius: 8px;
   background: rgba(227, 239, 185, 0.72);
   border: 1px solid rgba(152, 183, 85, 0.32);
   overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .mypage-entitlement-block {
@@ -6234,10 +6240,132 @@ img {
   border-top: 1px solid rgba(153, 183, 86, 0.22);
 }
 
+.mypage-entitlement-title {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(63, 88, 38, 0.82);
+}
+
 .mypage-license-list,
 .mypage-download-list {
   display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  margin-top: 0.55rem;
+}
+
+.mypage-license-card {
+  min-width: 0;
+  padding: 0.72rem;
+  border-radius: 13px;
+  border: 1px solid rgba(153, 183, 86, 0.27);
+  background: rgba(248, 251, 234, 0.7);
+}
+
+.mypage-license-product {
+  margin: 0 0 0.45rem;
+  color: rgba(49, 72, 30, 0.94);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.mypage-license-card > .mypage-license-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   gap: 0.55rem;
+  margin-top: 0;
+}
+
+.mypage-device-section {
+  min-width: 0;
+  margin-top: 0.8rem;
+  padding-top: 0.72rem;
+  border-top: 1px solid rgba(153, 183, 86, 0.2);
+}
+
+.mypage-device-head h5,
+.mypage-download-group h5 {
+  margin: 0;
+  color: rgba(57, 82, 34, 0.88);
+  font-size: 0.68rem;
+  line-height: 1.4;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.mypage-device-head p {
+  margin: 0.18rem 0 0;
+  color: rgba(66, 88, 45, 0.76);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.mypage-device-list,
+.mypage-download-group-files {
+  display: grid;
+  gap: 0.48rem;
+  min-width: 0;
+  margin-top: 0.48rem;
+}
+
+.mypage-device-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: 0.58rem 0.62rem;
+  border-radius: 11px;
+  border: 1px solid rgba(153, 183, 86, 0.22);
+  background: rgba(244, 249, 224, 0.72);
+}
+
+.mypage-device-copy {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.mypage-device-copy strong {
+  color: rgba(43, 65, 25, 0.96);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.mypage-device-copy span {
+  color: rgba(61, 84, 39, 0.74);
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.mypage-device-copy code {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: rgba(62, 82, 44, 0.7);
+  font-size: 0.66rem;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mypage-device-message {
+  margin: 0.5rem 0 0;
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.mypage-device-message.is-error {
+  color: #9e3f34;
+}
+
+.mypage-device-message.is-success {
+  color: rgba(55, 105, 42, 0.96);
 }
 
 .mypage-entitlement-message {
@@ -6252,10 +6380,11 @@ img {
 }
 
 .mypage-download-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem;
+  min-width: 0;
   padding: 0.58rem 0.65rem;
   border-radius: 12px;
   border: 1px solid rgba(153, 183, 86, 0.26);
@@ -6270,9 +6399,16 @@ img {
 }
 
 .mypage-download-copy strong {
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
   font-size: 0.8rem;
+  line-height: 1.4;
   color: rgba(43, 65, 25, 0.96);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .mypage-download-copy span {
@@ -6281,15 +6417,21 @@ img {
 }
 
 .mypage-license-row .mypage-small-button,
-.mypage-download-row .mypage-small-button {
+.mypage-download-row .mypage-small-button,
+.mypage-device-row .mypage-small-button {
   flex: 0 0 auto;
   margin-top: 0;
 }
 
 .mypage-small-button {
   margin-top: 0.45rem;
-  padding: 0.44rem 0.68rem;
+  min-height: 44px;
+  padding: 0.58rem 0.78rem;
   font-size: 0.68rem;
+}
+
+.mypage-deactivate-button {
+  min-width: 6.8rem;
 }
 
 .mypage-inline-message {
@@ -7315,6 +7457,7 @@ img {
   .mypage-sidebar-item {
     flex: 1 1 calc(50% - 0.36rem);
     min-width: 130px;
+    min-height: 44px;
     border-radius: 11px;
   }
 
@@ -7421,8 +7564,31 @@ img {
   }
 
   .mypage-download-row {
-    align-items: flex-start;
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .mypage-license-card > .mypage-license-row,
+  .mypage-device-row {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .mypage-download-row .mypage-small-button,
+  .mypage-license-card > .mypage-license-row .mypage-small-button,
+  .mypage-device-row .mypage-small-button {
+    width: 100%;
+  }
+
+  .mypage-license-card,
+  .mypage-download-row,
+  .mypage-device-row {
+    min-width: 0;
+  }
+
+  .mypage-download-copy strong {
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 
   .auth-name-grid {

@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
+import { getProductSlugByVariantId } from '@/lib/payments/lemonProducts.server';
+import type { AccountPurchase } from '@/lib/payments/purchases';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+const PRIVATE_NO_STORE_HEADERS = { 'Cache-Control': 'private, no-store' };
+
 function jsonError(status: number, error: string) {
-  return NextResponse.json({ ok: false, error }, { status });
+  return NextResponse.json({ ok: false, error }, { status, headers: PRIVATE_NO_STORE_HEADERS });
 }
 
 function getBearerToken(request: Request) {
@@ -59,9 +63,10 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from('purchases')
     .select(
-      'id, user_id, buyer_email, product_slug, product_name, lemon_order_id, lemon_variant_id, total_cents, currency, test_mode, lemon_license_key, download_url, purchased_at, status, created_at, updated_at'
+      'id, product_slug, product_name, lemon_order_id, lemon_variant_id, total_cents, currency, purchased_at, status'
     )
     .eq('user_id', user.id)
+    .eq('status', 'paid')
     .order('purchased_at', { ascending: false });
 
   if (error) {
@@ -73,5 +78,22 @@ export async function GET(request: Request) {
     return jsonError(500, 'Failed to load purchase history.');
   }
 
-  return NextResponse.json({ ok: true, purchases: data ?? [] });
+  const purchases: AccountPurchase[] = (data ?? []).map((purchase) => {
+    const storedProductSlug = purchase.product_slug?.trim() || null;
+    return {
+      id: purchase.id,
+      product_slug: getProductSlugByVariantId(purchase.lemon_variant_id) ?? storedProductSlug,
+      product_name: purchase.product_name,
+      lemon_order_id: purchase.lemon_order_id,
+      total_cents: purchase.total_cents,
+      currency: purchase.currency,
+      purchased_at: purchase.purchased_at,
+      status: purchase.status
+    };
+  });
+
+  return NextResponse.json(
+    { ok: true, purchases },
+    { headers: PRIVATE_NO_STORE_HEADERS }
+  );
 }

@@ -25,22 +25,49 @@ export type PurchaseRecord = {
   updated_at: string;
 };
 
+export type AccountPurchase = Pick<
+  PurchaseRecord,
+  | 'id'
+  | 'product_slug'
+  | 'product_name'
+  | 'lemon_order_id'
+  | 'total_cents'
+  | 'currency'
+  | 'purchased_at'
+  | 'status'
+>;
+
+export type PurchaseLicenseInstance = {
+  id: string;
+  identifier: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type PurchaseLicense = {
   id: string;
   orderItemId: string | null;
   productId: string | null;
+  productName: string | null;
+  variantName: string | null;
   key: string;
   keyShort: string;
   status: string;
   activationLimit: number | null;
   instancesCount: number;
+  instances: PurchaseLicenseInstance[];
   expiresAt: string | null;
 };
+
+export type PurchaseDownloadCategory = 'macos' | 'windows' | 'manual' | 'other';
 
 export type PurchaseDownloadFile = {
   id: string;
   name: string;
+  displayName: string;
   extension: string | null;
+  category: PurchaseDownloadCategory;
   size: number | null;
   version: string | null;
 };
@@ -57,6 +84,16 @@ export type PurchaseDownloadGroup = {
 export type PurchaseLicensesResponse = {
   ok: true;
   licenses: PurchaseLicense[];
+};
+
+export type PurchaseLicenseInstancesResponse = {
+  ok: true;
+  licenseId: string;
+  instances: PurchaseLicenseInstance[];
+};
+
+export type PurchaseLicenseInstanceDeactivateResponse = PurchaseLicenseInstancesResponse & {
+  deactivatedInstanceIdentifier: string;
 };
 
 export type PurchaseDownloadsResponse = {

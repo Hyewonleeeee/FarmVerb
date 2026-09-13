@@ -1,12 +1,18 @@
 import 'server-only';
 
 import type {
+  PurchaseDownloadCategory,
   PurchaseDownloadFile,
   PurchaseDownloadGroup,
   PurchaseLicense,
+  PurchaseLicenseInstance,
   PurchaseRecord
 } from '@/lib/payments/purchases';
-import { LemonApiError, lemonApiRequest } from '@/lib/payments/lemonApi.server';
+import {
+  LemonApiError,
+  lemonApiRequest,
+  lemonLicenseApiRequest
+} from '@/lib/payments/lemonApi.server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 type JsonApiResource<TAttributes> = {
@@ -41,12 +47,32 @@ type LemonLicenseAttributes = {
   order_id?: number | string;
   order_item_id?: number | string;
   product_id?: number | string;
+  variant_id?: number | string;
   key?: string;
   key_short?: string;
   status?: string;
   activation_limit?: number | null;
   instances_count?: number;
   expires_at?: string | null;
+};
+
+type LemonLicenseInstanceAttributes = {
+  license_key_id?: number | string;
+  identifier?: string;
+  name?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+type LemonLicenseDeactivateResponse = {
+  deactivated?: boolean;
+  error?: string | null;
+  license_key?: {
+    id?: number | string;
+  };
+  meta?: {
+    order_id?: number | string;
+  };
 };
 
 type LemonFileAttributes = {
@@ -63,7 +89,13 @@ type LemonFileAttributes = {
 
 type OwnedPurchase = Pick<
   PurchaseRecord,
-  'id' | 'user_id' | 'lemon_order_id' | 'lemon_variant_id' | 'status' | 'test_mode'
+  | 'id'
+  | 'user_id'
+  | 'product_slug'
+  | 'lemon_order_id'
+  | 'lemon_variant_id'
+  | 'status'
+  | 'test_mode'
 >;
 
 export class EntitlementError extends Error {
@@ -175,7 +207,7 @@ export async function requireOwnedPurchase(request: Request, purchaseId: string)
 
   const { data, error } = await supabase
     .from('purchases')
-    .select('id, user_id, lemon_order_id, lemon_variant_id, status, test_mode')
+    .select('id, user_id, product_slug, lemon_order_id, lemon_variant_id, status, test_mode')
     .eq('id', purchaseId)
     .eq('user_id', user.id)
     .maybeSingle();
@@ -221,7 +253,7 @@ async function getOrderItems(purchase: OwnedPurchase) {
   );
 }
 
-export async function getPurchaseLicenses(purchase: OwnedPurchase): Promise<PurchaseLicense[]> {
+async function getOwnedLicenseResources(purchase: OwnedPurchase) {
   const query = new URLSearchParams({
     'filter[order_id]': purchase.lemon_order_id,
     'page[size]': '100'
@@ -236,18 +268,139 @@ export async function getPurchaseLicenses(purchase: OwnedPurchase): Promise<Purc
 
   return response.data
     .filter((license) => toStringId(license.attributes.order_id) === purchase.lemon_order_id)
-    .filter((license) => Boolean(license.attributes.key))
-    .map((license) => ({
+    .filter((license) => Boolean(license.attributes.key));
+}
+
+function toLicenseInstance(
+  instance: JsonApiResource<LemonLicenseInstanceAttributes>
+): PurchaseLicenseInstance | null {
+  const identifier = instance.attributes.identifier?.trim();
+  if (!identifier) {
+    return null;
+  }
+
+  return {
+    id: instance.id,
+    identifier,
+    name: instance.attributes.name?.trim() || 'Activated device',
+    createdAt: instance.attributes.created_at ?? '',
+    updatedAt: instance.attributes.updated_at ?? instance.attributes.created_at ?? ''
+  };
+}
+
+async function getLicenseInstancesForKey(licenseId: string): Promise<PurchaseLicenseInstance[]> {
+  const query = new URLSearchParams({
+    'filter[license_key_id]': licenseId,
+    'page[size]': '100'
+  });
+
+  let response: JsonApiList<LemonLicenseInstanceAttributes>;
+  try {
+    response = await lemonApiRequest<JsonApiList<LemonLicenseInstanceAttributes>>(
+      `/license-key-instances?${query.toString()}`
+    );
+  } catch (error) {
+    return toPublicLemonError(error);
+  }
+
+  return response.data
+    .filter((instance) => toStringId(instance.attributes.license_key_id) === licenseId)
+    .map(toLicenseInstance)
+    .filter((instance): instance is PurchaseLicenseInstance => Boolean(instance));
+}
+
+async function requireOwnedLicenseResource(purchase: OwnedPurchase, licenseId: string) {
+  const licenses = await getOwnedLicenseResources(purchase);
+  const license = licenses.find((candidate) => candidate.id === licenseId);
+  if (!license) {
+    throw new EntitlementError('License not found.', 404, 'LICENSE_NOT_FOUND');
+  }
+
+  return license;
+}
+
+export async function getPurchaseLicenses(purchase: OwnedPurchase): Promise<PurchaseLicense[]> {
+  const licenses = await getOwnedLicenseResources(purchase);
+  if (licenses.length === 0) {
+    return [];
+  }
+
+  const [orderItems, instanceLists] = await Promise.all([
+    getOrderItems(purchase),
+    Promise.all(licenses.map((license) => getLicenseInstancesForKey(license.id)))
+  ]);
+  const orderItemsById = new Map(orderItems.map((item) => [item.id, item]));
+
+  return licenses.map((license, index) => {
+    const orderItemId = toStringId(license.attributes.order_item_id);
+    const orderItem = orderItemId ? orderItemsById.get(orderItemId) : undefined;
+
+    return {
       id: license.id,
-      orderItemId: toStringId(license.attributes.order_item_id),
+      orderItemId,
       productId: toStringId(license.attributes.product_id),
+      productName: orderItem?.attributes.product_name?.trim() || null,
+      variantName: orderItem?.attributes.variant_name?.trim() || null,
       key: license.attributes.key ?? '',
       keyShort: license.attributes.key_short ?? '',
       status: license.attributes.status ?? 'unknown',
       activationLimit: license.attributes.activation_limit ?? null,
       instancesCount: license.attributes.instances_count ?? 0,
+      instances: instanceLists[index],
       expiresAt: license.attributes.expires_at ?? null
-    }));
+    };
+  });
+}
+
+export async function getPurchaseLicenseInstances(
+  purchase: OwnedPurchase,
+  licenseId: string
+): Promise<PurchaseLicenseInstance[]> {
+  await requireOwnedLicenseResource(purchase, licenseId);
+  return getLicenseInstancesForKey(licenseId);
+}
+
+export async function deactivatePurchaseLicenseInstance(
+  purchase: OwnedPurchase,
+  licenseId: string,
+  instanceIdentifier: string
+): Promise<PurchaseLicenseInstance[]> {
+  const license = await requireOwnedLicenseResource(purchase, licenseId);
+  const instances = await getLicenseInstancesForKey(licenseId);
+  const instance = instances.find((candidate) => candidate.identifier === instanceIdentifier);
+
+  if (!instance) {
+    throw new EntitlementError('Device not found.', 404, 'INSTANCE_NOT_FOUND');
+  }
+
+  let response: LemonLicenseDeactivateResponse;
+  try {
+    response = await lemonLicenseApiRequest<LemonLicenseDeactivateResponse>('/licenses/deactivate', {
+      license_key: license.attributes.key ?? '',
+      instance_id: instance.identifier
+    });
+  } catch (error) {
+    if (error instanceof LemonApiError && [400, 404, 422].includes(error.status)) {
+      throw new EntitlementError(
+        'This device could not be deactivated. Refresh and try again.',
+        409,
+        'INSTANCE_DEACTIVATION_FAILED'
+      );
+    }
+    return toPublicLemonError(error);
+  }
+
+  const responseLicenseId = toStringId(response.license_key?.id);
+  const responseOrderId = toStringId(response.meta?.order_id);
+  if (!response.deactivated || responseLicenseId !== license.id || responseOrderId !== purchase.lemon_order_id) {
+    throw new EntitlementError(
+      'The device deactivation response could not be verified.',
+      409,
+      'INSTANCE_DEACTIVATION_MISMATCH'
+    );
+  }
+
+  return getLicenseInstancesForKey(licenseId);
 }
 
 async function getFilesForVariant(variantId: string) {
@@ -266,11 +419,46 @@ async function getFilesForVariant(variantId: string) {
   return response.data.filter((file) => toStringId(file.attributes.variant_id) === variantId);
 }
 
+function normalizeFileExtension(file: JsonApiResource<LemonFileAttributes>) {
+  const declaredExtension = file.attributes.extension?.trim().toLowerCase().replace(/^\./, '');
+  if (declaredExtension) {
+    return declaredExtension;
+  }
+
+  const fileName = (file.attributes.name ?? file.attributes.identifier ?? '').trim();
+  const extensionMatch = fileName.match(/\.([a-z0-9]+)$/i);
+  return extensionMatch?.[1]?.toLowerCase() ?? null;
+}
+
+function getDownloadCategory(extension: string | null): PurchaseDownloadCategory {
+  if (extension === 'pkg') {
+    return 'macos';
+  }
+  if (extension === 'exe') {
+    return 'windows';
+  }
+  if (extension === 'pdf') {
+    return 'manual';
+  }
+  return 'other';
+}
+
+function getDownloadDisplayName(name: string, extension: string | null) {
+  if (!extension || name.toLowerCase().endsWith(`.${extension}`)) {
+    return name;
+  }
+  return `${name}.${extension}`;
+}
+
 function toDownloadFile(file: JsonApiResource<LemonFileAttributes>): PurchaseDownloadFile {
+  const extension = normalizeFileExtension(file);
+  const name = (file.attributes.name ?? file.attributes.identifier ?? `File ${file.id}`).trim();
   return {
     id: file.id,
-    name: file.attributes.name ?? file.attributes.identifier ?? `File ${file.id}`,
-    extension: file.attributes.extension ?? null,
+    name,
+    displayName: getDownloadDisplayName(name, extension),
+    extension,
+    category: getDownloadCategory(extension),
     size: file.attributes.size ?? null,
     version: file.attributes.version ?? null
   };
@@ -319,7 +507,27 @@ export async function getPurchaseDownloadGroups(purchase: OwnedPurchase): Promis
     })
   );
 
-  return groups.filter((group): group is PurchaseDownloadGroup => Boolean(group));
+  const categoryOrder: Record<PurchaseDownloadCategory, number> = {
+    macos: 0,
+    windows: 1,
+    manual: 2,
+    other: 3
+  };
+
+  return groups
+    .filter((group): group is PurchaseDownloadGroup => Boolean(group))
+    .map((group) => ({
+      ...group,
+      files: [...group.files].sort((left, right) => {
+        return categoryOrder[left.category] - categoryOrder[right.category]
+          || left.displayName.localeCompare(right.displayName);
+      })
+    }))
+    .sort((left, right) => {
+      const leftIsPrimary = left.variantId === purchase.lemon_variant_id;
+      const rightIsPrimary = right.variantId === purchase.lemon_variant_id;
+      return Number(rightIsPrimary) - Number(leftIsPrimary);
+    });
 }
 
 export async function getFreshPurchaseDownload(

@@ -8,13 +8,18 @@ import {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+const PRIVATE_NO_STORE_HEADERS = { 'Cache-Control': 'private, no-store' };
+
 type RouteContext = {
   params: Promise<{ purchaseId: string }>;
 };
 
 function entitlementErrorResponse(error: unknown) {
   if (error instanceof EntitlementError) {
-    const headers = error.retryAfter ? { 'Retry-After': error.retryAfter } : undefined;
+    const headers = {
+      ...PRIVATE_NO_STORE_HEADERS,
+      ...(error.retryAfter ? { 'Retry-After': error.retryAfter } : {})
+    };
     return NextResponse.json(
       { ok: false, error: error.message, errorCode: error.code },
       { status: error.status, headers }
@@ -24,7 +29,7 @@ function entitlementErrorResponse(error: unknown) {
   console.error('[Purchase Licenses] Unexpected error.', error instanceof Error ? error.message : error);
   return NextResponse.json(
     { ok: false, error: 'Could not load license keys.', errorCode: 'UNEXPECTED_ERROR' },
-    { status: 500 }
+    { status: 500, headers: PRIVATE_NO_STORE_HEADERS }
   );
 }
 
@@ -36,7 +41,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     return NextResponse.json(
       { ok: true, licenses },
-      { headers: { 'Cache-Control': 'private, no-store' } }
+      { headers: PRIVATE_NO_STORE_HEADERS }
     );
   } catch (error) {
     return entitlementErrorResponse(error);

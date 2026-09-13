@@ -82,3 +82,53 @@ export async function lemonApiRequest<T>(path: string): Promise<T> {
     clearTimeout(timeoutId);
   }
 }
+
+export async function lemonLicenseApiRequest<T>(
+  path: string,
+  fields: Record<string, string>
+): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), LEMON_API_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${LEMON_API_BASE_URL}${normalizeApiPath(path)}`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams(fields).toString(),
+      cache: 'no-store',
+      signal: controller.signal
+    });
+
+    const payload = (await response.json().catch(() => null)) as T | null;
+    if (!response.ok) {
+      // License API responses can contain customer and key metadata. Do not include
+      // the response body in errors that may be logged by callers.
+      throw new LemonApiError(
+        `Lemon Squeezy license request failed with status ${response.status}.`,
+        response.status,
+        response.headers.get('retry-after')
+      );
+    }
+
+    if (!payload) {
+      throw new LemonApiError('Lemon Squeezy license API returned an empty response.', 502);
+    }
+
+    return payload;
+  } catch (error) {
+    if (error instanceof LemonApiError) {
+      throw error;
+    }
+
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new LemonApiError('Lemon Squeezy license request timed out.', 504);
+    }
+
+    throw new LemonApiError('Could not connect to Lemon Squeezy.', 502);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
