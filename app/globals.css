@@ -59,6 +59,11 @@ img {
   max-width: 100%;
 }
 
+.os-label-macos {
+  text-transform: none !important;
+  letter-spacing: 0.04em !important;
+}
+
 .grain-layer {
   position: fixed;
   inset: 0;

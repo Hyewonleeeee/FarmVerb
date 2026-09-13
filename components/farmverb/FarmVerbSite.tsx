@@ -1813,10 +1813,14 @@ function ProductSupportSections({
         <dl className="product-requirement-grid">
           {details.requirements.map((group) => (
             <div key={group.label} className="product-requirement-item">
-              <dt>{group.label}</dt>
+              <dt className={group.label.includes('macOS') ? 'os-label-macos' : undefined}>
+                {group.label}
+              </dt>
               <dd>
                 {group.items.map((item) => (
-                  <span key={item}>{item}</span>
+                  <span key={item} className={item.includes('macOS') ? 'os-label-macos' : undefined}>
+                    {item}
+                  </span>
                 ))}
               </dd>
             </div>

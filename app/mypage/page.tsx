@@ -1072,7 +1072,9 @@ export default function MyPage() {
                                               <div className="mypage-download-collection-body">
                                                 {installerGroups.map((downloadGroup) => (
                                                   <section key={downloadGroup.category} className="mypage-download-group is-nested">
-                                                    <h6>{downloadGroup.label}</h6>
+                                                    <h6 className={downloadGroup.category === 'macos' ? 'os-label-macos' : undefined}>
+                                                      {downloadGroup.label}
+                                                    </h6>
                                                     {renderDownloadFiles(downloadGroup.files)}
                                                   </section>
                                                 ))}
@@ -1095,7 +1097,9 @@ export default function MyPage() {
                                       ) : (
                                         categorizedDownloadGroups.map((downloadGroup) => (
                                           <section key={downloadGroup.category} className="mypage-download-group">
-                                            <h5>{downloadGroup.label}</h5>
+                                            <h5 className={downloadGroup.category === 'macos' ? 'os-label-macos' : undefined}>
+                                              {downloadGroup.label}
+                                            </h5>
                                             {renderDownloadFiles(downloadGroup.files)}
                                           </section>
                                         ))
