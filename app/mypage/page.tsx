@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
+import MyProductsAccordion from '@/components/account/MyProductsAccordion';
 import { getPaymentCopy, type PaymentApiErrorCode, type PaymentLocale } from '@/lib/i18n/payment';
 import type {
   AccountPurchase,
@@ -849,6 +850,67 @@ export default function MyPage() {
                           const categorizedDownloadGroups = categorizeDownloads(
                             entitlement?.downloadGroups ?? []
                           );
+                          const deviceCount = entitlement?.licenses.reduce(
+                            (total, license) => total + license.instances.length,
+                            0
+                          ) ?? 0;
+                          const isBundle = purchase.product_slug === 'nebula-series'
+                            || purchase.product_slug === 'organic-series'
+                            || purchase.product_name.trim().toLowerCase().endsWith('bundle');
+                          const bundleInstallerVariantId = entitlement?.downloadGroups[0]?.variantId ?? null;
+                          const installerGroups = categorizedDownloadGroups
+                            .filter((group) => group.category === 'macos' || group.category === 'windows')
+                            .map((group) => ({
+                              ...group,
+                              files: isBundle
+                                ? group.files.filter(({ group: fileGroup }) => (
+                                    fileGroup.variantId === bundleInstallerVariantId
+                                  ))
+                                : group.files
+                            }))
+                            .filter((group) => group.files.length > 0);
+                          const manualGroup = categorizedDownloadGroups.find(
+                            (group) => group.category === 'manual'
+                          );
+                          const otherGroup = categorizedDownloadGroups.find(
+                            (group) => group.category === 'other'
+                          );
+                          const downloadCount = isBundle
+                            ? installerGroups.reduce((total, group) => total + group.files.length, 0)
+                              + (manualGroup?.files.length ?? 0)
+                              + (otherGroup?.files.length ?? 0)
+                            : categorizedDownloadGroups.reduce(
+                                (total, group) => total + group.files.length,
+                                0
+                              );
+
+                          const renderDownloadFiles = (files: CategorizedDownload[]) => (
+                            <div className="mypage-download-group-files">
+                              {files.map(({ group, file }) => {
+                                const downloadId = `${purchase.id}:${file.id}`;
+                                return (
+                                  <div key={`${group.orderItemId}:${file.id}`} className="mypage-download-row">
+                                    <div className="mypage-download-copy">
+                                      <strong title={file.displayName}>{file.displayName}</strong>
+                                      {entitlement && entitlement.downloadGroups.length > 1 ? (
+                                        <span>{group.productName}</span>
+                                      ) : null}
+                                      {file.version ? <span>Version {file.version}</span> : null}
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="auth-submit mypage-small-button"
+                                      onClick={() => void handleLemonDownload(purchase.id, file.id)}
+                                      disabled={activeLemonDownloadId === downloadId}
+                                      aria-label={`Download ${file.displayName}`}
+                                    >
+                                      {activeLemonDownloadId === downloadId ? 'Preparing...' : 'Download'}
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
 
                           return (
                             <li key={purchase.id} className="mypage-list-item mypage-product-item">
@@ -867,8 +929,16 @@ export default function MyPage() {
                                 </div>
                                 <div className="mypage-meta-row">Order ID: {purchase.lemon_order_id}</div>
 
-                                <section className="mypage-entitlement-block" aria-label={`${purchase.product_name} license`}>
-                                  <h4 className="mypage-entitlement-title">License</h4>
+                                <div
+                                  className="mypage-entitlement-list"
+                                  role="group"
+                                  aria-label={`${purchase.product_name} product access`}
+                                >
+                                  <MyProductsAccordion
+                                    sectionId={`purchase-${purchase.id}-license`}
+                                    title="License"
+                                    defaultOpen
+                                  >
                                   {entitlement?.loading ? (
                                     <p className="mypage-entitlement-message">Checking your license...</p>
                                   ) : entitlement?.licenseError ? (
@@ -877,8 +947,6 @@ export default function MyPage() {
                                     <div className="mypage-license-list">
                                       {entitlement.licenses.map((license) => {
                                         const copyId = `${purchase.id}:${license.id}`;
-                                        const deviceMessageId = `${purchase.id}:${license.id}`;
-                                        const deviceMessage = deviceMessages[deviceMessageId];
                                         return (
                                           <article key={license.id} className="mypage-license-card">
                                             {entitlement.licenses.length > 1 && license.productName ? (
@@ -894,14 +962,42 @@ export default function MyPage() {
                                                 {copiedLicenseId === copyId ? paymentCopy.licenses.copied : paymentCopy.licenses.copy}
                                               </button>
                                             </div>
+                                          </article>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <p className="mypage-entitlement-message">License is being issued.</p>
+                                  )}
+                                  </MyProductsAccordion>
 
+                                  <MyProductsAccordion
+                                    sectionId={`purchase-${purchase.id}-devices`}
+                                    title="Manage Devices"
+                                    count={entitlement && !entitlement.loading && !entitlement.licenseError
+                                      ? deviceCount
+                                      : undefined}
+                                  >
+                                    {entitlement?.loading ? (
+                                      <p className="mypage-entitlement-message">Checking your devices...</p>
+                                    ) : entitlement?.licenseError ? (
+                                      <p className="mypage-entitlement-message is-error">{entitlement.licenseError}</p>
+                                    ) : entitlement?.licenses.length ? (
+                                      <div className="mypage-device-license-list">
+                                        {entitlement.licenses.map((license) => {
+                                          const deviceMessageId = `${purchase.id}:${license.id}`;
+                                          const deviceMessage = deviceMessages[deviceMessageId];
+                                          return (
                                             <section
+                                              key={license.id}
                                               className="mypage-device-section"
                                               aria-label={`Devices for ${license.productName ?? purchase.product_name}`}
                                             >
                                               <div className="mypage-device-head">
-                                                <h5>Manage Devices</h5>
-                                                <p>Devices associated with your license.</p>
+                                                {entitlement.licenses.length > 1 && license.productName ? (
+                                                  <h5>{license.productName}</h5>
+                                                ) : null}
+                                                <p>Devices associated with this license.</p>
                                               </div>
 
                                               {license.instances.length > 0 ? (
@@ -946,58 +1042,70 @@ export default function MyPage() {
                                                 </p>
                                               ) : null}
                                             </section>
-                                          </article>
-                                        );
-                                      })}
-                                    </div>
-                                  ) : (
-                                    <p className="mypage-entitlement-message">License is being issued.</p>
-                                  )}
-                                </section>
+                                          );
+                                        })}
+                                      </div>
+                                    ) : (
+                                      <p className="mypage-entitlement-message">License is being issued.</p>
+                                    )}
+                                  </MyProductsAccordion>
 
-                                <section className="mypage-entitlement-block" aria-label={`${purchase.product_name} downloads`}>
-                                  <h4 className="mypage-entitlement-title">Downloads</h4>
+                                  <MyProductsAccordion
+                                    sectionId={`purchase-${purchase.id}-downloads`}
+                                    title="Downloads"
+                                    count={entitlement && !entitlement.loading && !entitlement.downloadError
+                                      ? downloadCount
+                                      : undefined}
+                                    defaultOpen
+                                  >
                                   {entitlement?.loading ? (
                                     <p className="mypage-entitlement-message">Checking available files...</p>
                                   ) : entitlement?.downloadError ? (
                                     <p className="mypage-entitlement-message is-error">{entitlement.downloadError}</p>
-                                  ) : categorizedDownloadGroups.length > 0 ? (
+                                  ) : downloadCount > 0 ? (
                                     <div className="mypage-download-list">
-                                      {categorizedDownloadGroups.map((downloadGroup) => (
-                                        <section key={downloadGroup.category} className="mypage-download-group">
-                                          <h5>{downloadGroup.label}</h5>
-                                          <div className="mypage-download-group-files">
-                                            {downloadGroup.files.map(({ group, file }) => {
-                                              const downloadId = `${purchase.id}:${file.id}`;
-                                              return (
-                                                <div key={`${group.orderItemId}:${file.id}`} className="mypage-download-row">
-                                                  <div className="mypage-download-copy">
-                                                    <strong title={file.displayName}>{file.displayName}</strong>
-                                                    {entitlement.downloadGroups.length > 1 ? (
-                                                      <span>{group.productName}</span>
-                                                    ) : null}
-                                                    {file.version ? <span>Version {file.version}</span> : null}
-                                                  </div>
-                                                  <button
-                                                    type="button"
-                                                    className="auth-submit mypage-small-button"
-                                                    onClick={() => void handleLemonDownload(purchase.id, file.id)}
-                                                    disabled={activeLemonDownloadId === downloadId}
-                                                    aria-label={`Download ${file.displayName}`}
-                                                  >
-                                                    {activeLemonDownloadId === downloadId ? 'Preparing...' : 'Download'}
-                                                  </button>
-                                                </div>
-                                              );
-                                            })}
-                                          </div>
-                                        </section>
-                                      ))}
+                                      {isBundle ? (
+                                        <>
+                                          {installerGroups.length > 0 ? (
+                                            <section className="mypage-download-collection">
+                                              <h5>Installers</h5>
+                                              <div className="mypage-download-collection-body">
+                                                {installerGroups.map((downloadGroup) => (
+                                                  <section key={downloadGroup.category} className="mypage-download-group is-nested">
+                                                    <h6>{downloadGroup.label}</h6>
+                                                    {renderDownloadFiles(downloadGroup.files)}
+                                                  </section>
+                                                ))}
+                                              </div>
+                                            </section>
+                                          ) : null}
+                                          {manualGroup ? (
+                                            <section className="mypage-download-collection">
+                                              <h5>User Manuals</h5>
+                                              {renderDownloadFiles(manualGroup.files)}
+                                            </section>
+                                          ) : null}
+                                          {otherGroup ? (
+                                            <section className="mypage-download-collection">
+                                              <h5>Other Downloads</h5>
+                                              {renderDownloadFiles(otherGroup.files)}
+                                            </section>
+                                          ) : null}
+                                        </>
+                                      ) : (
+                                        categorizedDownloadGroups.map((downloadGroup) => (
+                                          <section key={downloadGroup.category} className="mypage-download-group">
+                                            <h5>{downloadGroup.label}</h5>
+                                            {renderDownloadFiles(downloadGroup.files)}
+                                          </section>
+                                        ))
+                                      )}
                                     </div>
                                   ) : (
                                     <p className="mypage-entitlement-message">Download is not available yet.</p>
                                   )}
-                                </section>
+                                  </MyProductsAccordion>
+                                </div>
 
                               </div>
                             </li>
