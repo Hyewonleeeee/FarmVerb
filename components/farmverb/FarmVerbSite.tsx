@@ -477,26 +477,7 @@ const NEBULA_REAL_IMAGES = {
   drums: '/Real/Drums.png'
 } as const;
 
-const STANDARD_NEBULA_PLUGIN_REQUIREMENTS: SupportRequirementGroup[] = [
-  {
-    label: 'macOS',
-    items: ['Run installer', 'Choose AU/VST3 locations', 'Rescan your DAW']
-  },
-  {
-    label: 'Windows',
-    items: ['Run installer', 'Confirm VST3 path', 'Rescan plugins in host']
-  },
-  {
-    label: 'Formats',
-    items: ['VST3', 'AU on macOS', 'AAX']
-  },
-  {
-    label: 'Troubleshooting',
-    items: ['Clear plugin cache', 'Run a full rescan']
-  }
-];
-
-const ORGANIC_COMPATIBILITY_REQUIREMENTS: SupportRequirementGroup[] = [
+const AUDIO_PLUGIN_COMPATIBILITY_REQUIREMENTS: SupportRequirementGroup[] = [
   {
     label: 'macOS',
     items: ['AU', 'VST3', 'AAX']
@@ -508,33 +489,13 @@ const ORGANIC_COMPATIBILITY_REQUIREMENTS: SupportRequirementGroup[] = [
   {
     label: 'Audio',
     items: ['Mono', 'Stereo', 'Matching input and output layouts']
-  }
-];
-
-const ORGANIC_PLUGIN_REQUIREMENTS: SupportRequirementGroup[] = [
-  ...ORGANIC_COMPATIBILITY_REQUIREMENTS,
-  {
-    label: 'Downloads',
-    items: ['macOS installer', 'Windows installer', 'Available in My Account']
-  }
-];
-
-const RIFT_REQUIREMENTS: SupportRequirementGroup[] = [
-  {
-    label: 'macOS VST3',
-    items: ['Install Nebula Rift.vst3 to ~/Library/Audio/Plug-Ins/VST3/']
   },
   {
-    label: 'macOS AU',
-    items: ['Install Nebula Rift.component to ~/Library/Audio/Plug-Ins/Components/']
-  },
-  {
-    label: 'Formats',
-    items: ['VST3', 'AU on macOS', 'AAX']
-  },
-  {
-    label: 'Host Scan',
-    items: ['Rescan plugins in your DAW', 'Clear host plugin cache if not visible']
+    label: 'Installation',
+    items: [
+      'Choose the plugin formats you use during installation',
+      'Restart or rescan your DAW if needed'
+    ]
   }
 ];
 
@@ -1040,18 +1001,14 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
   }
 };
 
-const PLUGIN_INSTALL_ANSWER =
-  'Run the product installer, select the formats used by your DAW, then rescan plugins in the host. On Windows, follow the locations provided by the Windows installer.';
-const PLUGIN_FORMAT_ANSWER =
-  'FarmVerb effect releases are provided in VST3, AU on macOS, and AAX formats. Use the format supported by your DAW.';
+const AUDIO_PLUGIN_INSTALL_ANSWER =
+  'Download and run the installer for your operating system. On macOS, select AU, VST3, and/or AAX. On Windows, select VST3 and/or AAX. Restart or rescan your DAW if needed.';
+const AUDIO_PLUGIN_FORMAT_ANSWER =
+  'AU, VST3, and AAX are included for macOS. VST3 and AAX are included for Windows.';
 const PRODUCT_ACCESS_ANSWER =
   'Sign in and open My Account to access verified purchases, available downloads, and license details. You can also use the order link provided with your purchase.';
 const PRODUCT_COMMERCIAL_USE_ANSWER =
   'The FarmVerb EULA permits use in personal and commercial music, sound design, and media projects. Product files, installers, license keys, presets, and raw content may not be redistributed or resold as standalone assets.';
-const ORGANIC_FORMAT_ANSWER =
-  'On macOS, Organic Series plugins are available in AU, VST3, and AAX formats. On Windows, they are available in VST3 and AAX formats. Mono and stereo layouts are supported with matching input and output channels.';
-const ORGANIC_INSTALL_ANSWER =
-  'Download the installer for your operating system from My Account. On macOS, select the AU, VST3, and/or AAX formats you use. On Windows, select the VST3 and/or AAX formats required by your DAW. After installation, rescan your plugins or restart your DAW if necessary.';
 const ORGANIC_ACCESS_ANSWER =
   'Sign in to My Account to view your purchase, download the installer for your operating system, and access your FarmVerb license.';
 const ORGANIC_LICENSE_ANSWER =
@@ -1063,24 +1020,7 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
   'Nebula Series Bundle': {
     title: 'Nebula Series Bundle Support',
     description: 'Manuals, system notes, and launch information for the Nebula bundle.',
-    requirements: [
-      {
-        label: 'Included FX',
-        items: ['Nebula Crush', 'Nebula Space', 'Nebula Drift', 'Nebula Rift']
-      },
-      {
-        label: 'Bonus Instrument',
-        items: ['Nebula Drums for Decent Sampler']
-      },
-      {
-        label: 'Plugin Formats',
-        items: ['VST3', 'AU on macOS', 'AAX']
-      },
-      {
-        label: 'Instrument Host',
-        items: ['Decent Sampler required for Nebula Drums']
-      }
-    ],
+    requirements: AUDIO_PLUGIN_COMPATIBILITY_REQUIREMENTS,
     manuals: [
       { label: 'Nebula Crush Manual', href: NEBULA_MANUALS.crush },
       { label: 'Nebula Space Manual', href: NEBULA_MANUALS.space },
@@ -1098,12 +1038,12 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
         answer: 'Yes. Install Decent Sampler 1.11.1 or later, with the latest version recommended. Nebula Drums is loaded by opening one of its .dspreset files inside Decent Sampler.'
       },
       {
-        question: 'Which formats are included?',
-        answer: 'The four Nebula effects are provided in VST3, AU on macOS, and AAX formats. Nebula Drums uses .dspreset files and requires Decent Sampler.'
+        question: 'Which plugin formats are included?',
+        answer: `${AUDIO_PLUGIN_FORMAT_ANSWER} Nebula Drums is a separate .dspreset instrument and requires Decent Sampler.`
       },
       {
         question: 'How do I install the bundle?',
-        answer: 'Run the installers for the four effects and rescan your DAW. Separately unzip Nebula Drums, keep its .dspreset, Samples, and Resources structure intact, and open a preset from Decent Sampler’s FILE… menu.'
+        answer: 'For the four effect plugins, download and run the installer for your operating system. On macOS, select AU, VST3, and/or AAX. On Windows, select VST3 and/or AAX. Restart or rescan your DAW if needed. Separately unzip Nebula Drums, keep its .dspreset, Samples, and Resources structure intact, and open a preset from Decent Sampler’s FILE… menu.'
       },
       {
         question: 'Where do I find downloads and license details?',
@@ -1119,16 +1059,16 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
   'Nebula Crush': {
     title: 'Nebula Crush Support',
     description: 'Musical saturation for drums, synths, buses, and creative tone shaping.',
-    requirements: STANDARD_NEBULA_PLUGIN_REQUIREMENTS,
+    requirements: AUDIO_PLUGIN_COMPATIBILITY_REQUIREMENTS,
     manuals: [{ label: 'Nebula Crush User Manual', href: NEBULA_MANUALS.crush }],
     faqs: [
       {
         question: 'How do I install it?',
-        answer: PLUGIN_INSTALL_ANSWER
+        answer: AUDIO_PLUGIN_INSTALL_ANSWER
       },
       {
         question: 'Which plugin formats are included?',
-        answer: PLUGIN_FORMAT_ANSWER
+        answer: AUDIO_PLUGIN_FORMAT_ANSWER
       },
       {
         question: 'Where do I find downloads and license details?',
@@ -1144,16 +1084,16 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
   'Nebula Space': {
     title: 'Nebula Space Support',
     description: 'Atmospheric reverb for depth, motion, and cinematic space shaping.',
-    requirements: STANDARD_NEBULA_PLUGIN_REQUIREMENTS,
+    requirements: AUDIO_PLUGIN_COMPATIBILITY_REQUIREMENTS,
     manuals: [{ label: 'Nebula Space User Manual', href: NEBULA_MANUALS.space }],
     faqs: [
       {
         question: 'How do I install it?',
-        answer: PLUGIN_INSTALL_ANSWER
+        answer: AUDIO_PLUGIN_INSTALL_ANSWER
       },
       {
         question: 'Which plugin formats are included?',
-        answer: PLUGIN_FORMAT_ANSWER
+        answer: AUDIO_PLUGIN_FORMAT_ANSWER
       },
       {
         question: 'What does Freeze do?',
@@ -1173,16 +1113,16 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
   'Nebula Drift': {
     title: 'Nebula Drift Support',
     description: 'Fluid modulation for movement, phase-like drift, and cinematic spatial motion.',
-    requirements: STANDARD_NEBULA_PLUGIN_REQUIREMENTS,
+    requirements: AUDIO_PLUGIN_COMPATIBILITY_REQUIREMENTS,
     manuals: [{ label: 'Nebula Drift User Manual', href: NEBULA_MANUALS.drift }],
     faqs: [
       {
         question: 'How do I install it?',
-        answer: PLUGIN_INSTALL_ANSWER
+        answer: AUDIO_PLUGIN_INSTALL_ANSWER
       },
       {
         question: 'Which plugin formats are included?',
-        answer: PLUGIN_FORMAT_ANSWER
+        answer: AUDIO_PLUGIN_FORMAT_ANSWER
       },
       {
         question: 'Where do I find downloads and license details?',
@@ -1198,16 +1138,16 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
   'Nebula Rift': {
     title: 'Nebula Rift Support',
     description: 'Experimental granular fracture for destructive texture, elastic tone motion, and cinematic rift worlds.',
-    requirements: RIFT_REQUIREMENTS,
+    requirements: AUDIO_PLUGIN_COMPATIBILITY_REQUIREMENTS,
     manuals: [{ label: 'Nebula Rift User Manual', href: NEBULA_MANUALS.rift }],
     faqs: [
       {
         question: 'How do I install it?',
-        answer: PLUGIN_INSTALL_ANSWER
+        answer: AUDIO_PLUGIN_INSTALL_ANSWER
       },
       {
         question: 'Which plugin formats are included?',
-        answer: PLUGIN_FORMAT_ANSWER
+        answer: AUDIO_PLUGIN_FORMAT_ANSWER
       },
       {
         question: 'What should I do if it does not appear in my DAW?',
@@ -1231,13 +1171,7 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
   'Organic Series Bundle': {
     title: 'Organic Series Bundle Support',
     description: 'Compatibility notes and manuals for all three Organic Series plugins.',
-    requirements: [
-      {
-        label: 'Included Plugins',
-        items: ['Jeju Citrus Air', 'Boseong Green Tea', 'Uiseong Garlic']
-      },
-      ...ORGANIC_COMPATIBILITY_REQUIREMENTS
-    ],
+    requirements: AUDIO_PLUGIN_COMPATIBILITY_REQUIREMENTS,
     manuals: [
       { label: 'Jeju Citrus Air User Manual', href: ORGANIC_MANUALS.jeju },
       { label: 'Boseong Green Tea User Manual', href: ORGANIC_MANUALS.boseong },
@@ -1250,11 +1184,11 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
       },
       {
         question: 'Which plugin formats are included?',
-        answer: ORGANIC_FORMAT_ANSWER
+        answer: AUDIO_PLUGIN_FORMAT_ANSWER
       },
       {
         question: 'How do I install the Organic Series plugins?',
-        answer: ORGANIC_INSTALL_ANSWER
+        answer: AUDIO_PLUGIN_INSTALL_ANSWER
       },
       {
         question: 'Where do I find downloads and license details?',
@@ -1274,16 +1208,16 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
   'Jeju Citrus Air': {
     title: 'Jeju Citrus Air Support',
     description: 'Compatibility, control guidance, and the product manual.',
-    requirements: ORGANIC_PLUGIN_REQUIREMENTS,
+    requirements: AUDIO_PLUGIN_COMPATIBILITY_REQUIREMENTS,
     manuals: [{ label: 'Jeju Citrus Air User Manual', href: ORGANIC_MANUALS.jeju }],
     faqs: [
       {
         question: 'Which plugin formats are included?',
-        answer: ORGANIC_FORMAT_ANSWER
+        answer: AUDIO_PLUGIN_FORMAT_ANSWER
       },
       {
         question: 'How do I install Jeju Citrus Air?',
-        answer: ORGANIC_INSTALL_ANSWER
+        answer: AUDIO_PLUGIN_INSTALL_ANSWER
       },
       {
         question: 'Where do I find my download and license?',
@@ -1315,16 +1249,16 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
   'Boseong Green Tea': {
     title: 'Boseong Green Tea Support',
     description: 'Compatibility, control guidance, and the product manual.',
-    requirements: ORGANIC_PLUGIN_REQUIREMENTS,
+    requirements: AUDIO_PLUGIN_COMPATIBILITY_REQUIREMENTS,
     manuals: [{ label: 'Boseong Green Tea User Manual', href: ORGANIC_MANUALS.boseong }],
     faqs: [
       {
         question: 'Which plugin formats are included?',
-        answer: ORGANIC_FORMAT_ANSWER
+        answer: AUDIO_PLUGIN_FORMAT_ANSWER
       },
       {
         question: 'How do I install Boseong Green Tea?',
-        answer: ORGANIC_INSTALL_ANSWER
+        answer: AUDIO_PLUGIN_INSTALL_ANSWER
       },
       {
         question: 'Where do I find my download and license?',
@@ -1352,16 +1286,16 @@ const PRODUCT_SUPPORT_DETAILS: Record<string, ProductSupportDetails> = {
   'Uiseong Garlic': {
     title: 'Uiseong Garlic Support',
     description: 'Compatibility, control guidance, and the product manual.',
-    requirements: ORGANIC_PLUGIN_REQUIREMENTS,
+    requirements: AUDIO_PLUGIN_COMPATIBILITY_REQUIREMENTS,
     manuals: [{ label: 'Uiseong Garlic User Manual', href: ORGANIC_MANUALS.uiseong }],
     faqs: [
       {
         question: 'Which plugin formats are included?',
-        answer: ORGANIC_FORMAT_ANSWER
+        answer: AUDIO_PLUGIN_FORMAT_ANSWER
       },
       {
         question: 'How do I install Uiseong Garlic?',
-        answer: ORGANIC_INSTALL_ANSWER
+        answer: AUDIO_PLUGIN_INSTALL_ANSWER
       },
       {
         question: 'Where do I find my download and license?',
