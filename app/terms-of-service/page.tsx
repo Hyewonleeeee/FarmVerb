@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import LegalDocumentPage from '@/components/farmverb/LegalDocumentPage';
 
 export const metadata: Metadata = {
@@ -22,7 +23,7 @@ export default function TermsOfServicePage() {
   return (
     <LegalDocumentPage
       title="FarmVerb Terms of Service"
-      lastUpdated="June 8, 2026"
+      lastUpdated="September 14, 2026"
       toc={toc}
       footerLines={['support@farmverb.com', 'farmverb.com']}
     >
@@ -56,6 +57,10 @@ export default function TermsOfServicePage() {
           Purchases, downloads, license issuance, and access conditions may be governed by product-specific details or
           policies presented at the time of purchase. FarmVerb may update operational rules as needed for reliability
           and security.
+        </p>
+        <p>
+          Refund requests and eligibility are governed by the FarmVerb{' '}
+          <Link href="/refund-policy">Refund Policy</Link>.
         </p>
       </section>
 

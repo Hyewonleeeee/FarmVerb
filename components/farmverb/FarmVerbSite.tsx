@@ -12,6 +12,7 @@ import AuthNav from '@/components/auth/AuthNav';
 import AudioPluginsMegaMenu from '@/components/farmverb/AudioPluginsMegaMenu';
 import MobileSiteNavigation from '@/components/farmverb/MobileSiteNavigation';
 import GlobalFooter from '@/components/farmverb/GlobalFooter';
+import PurchasePolicyNotice from '@/components/farmverb/PurchasePolicyNotice';
 import YouTubeDemo from '@/components/farmverb/YouTubeDemo';
 import { FARMVERB_SOCIAL_LINKS } from '@/lib/content/socialLinks';
 import {
@@ -1557,6 +1558,7 @@ function ExploreMoreProductsSection({
                   </>
                 ) : null}
               </div>
+              {checkoutReady ? <PurchasePolicyNotice /> : null}
             </article>
           );
         })}
@@ -1616,6 +1618,7 @@ function ProductCommercialSections({
                 </button>
               </div>
             ) : null}
+            {checkoutReady ? <PurchasePolicyNotice /> : null}
             {isOrganicProduct && !checkoutReady ? (
               <span className="checkout-coming-soon">Checkout link coming soon</span>
             ) : null}
@@ -2191,6 +2194,7 @@ export default function FarmVerbSite() {
             </button>
             {!checkoutReady ? <span className="checkout-coming-soon">Checkout link coming soon</span> : null}
           </div>
+          {checkoutReady ? <PurchasePolicyNotice /> : null}
         </div>
       </section>
     );
@@ -2254,6 +2258,7 @@ export default function FarmVerbSite() {
               </button>
               {!checkoutReady ? <span className="checkout-coming-soon">Checkout link coming soon</span> : null}
             </div>
+            {checkoutReady ? <PurchasePolicyNotice /> : null}
           </article>
         );
       })}
@@ -2612,6 +2617,7 @@ export default function FarmVerbSite() {
                           Add to Cart
                         </button>
                       </div>
+                      {isOrganicCard && checkoutReady ? <PurchasePolicyNotice /> : null}
                       {isOrganicCard && !checkoutReady ? (
                         <span className="checkout-coming-soon home-product-checkout-status">
                           Checkout link coming soon
@@ -2725,6 +2731,7 @@ export default function FarmVerbSite() {
                       <span className="checkout-coming-soon">Checkout link coming soon</span>
                     ) : null}
                   </div>
+                  {hasCheckoutUrl('Glitch Drum Pack Vol.1') ? <PurchasePolicyNotice /> : null}
                 </div>
 
                 <figure className="pack-art interactive-tilt sample-hero-art sample-hero-cover">

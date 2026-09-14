@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
+import PurchasePolicyNotice from '@/components/farmverb/PurchasePolicyNotice';
 import { getPaymentCopy, type PaymentLocale } from '@/lib/i18n/payment';
 import { getLemonBuyButtonLabel, getLemonCheckoutUrl, getLemonMyOrdersUrl } from '@/lib/checkout/lemonLinks';
 import {
@@ -235,6 +236,7 @@ export default function CartPage() {
                           >
                             {getLemonBuyButtonLabel(item.name)}
                           </button>
+                          {checkoutUrl ? <PurchasePolicyNotice /> : null}
                           {!checkoutUrl ? <p className="cart-page-checkout-note">Checkout link coming soon</p> : null}
                         </div>
 

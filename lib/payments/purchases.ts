@@ -6,6 +6,10 @@ export type PurchaseStatus =
   | 'partial_refund'
   | 'fraudulent';
 
+export function isEntitledPurchaseStatus(status: string) {
+  return status === 'paid' || status === 'partial_refund';
+}
+
 export type PurchaseRecord = {
   id: string;
   user_id: string | null;

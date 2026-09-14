@@ -32,17 +32,22 @@ function normalizeApiPath(path: string) {
   return path;
 }
 
-export async function lemonApiRequest<T>(path: string): Promise<T> {
+async function lemonMainApiRequest<T>(
+  path: string,
+  options: { method: 'GET' | 'PATCH'; body?: unknown }
+): Promise<T> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), LEMON_API_TIMEOUT_MS);
 
   try {
     const response = await fetch(`${LEMON_API_BASE_URL}${normalizeApiPath(path)}`, {
-      method: 'GET',
+      method: options.method,
       headers: {
         Accept: 'application/vnd.api+json',
+        ...(options.body === undefined ? {} : { 'Content-Type': 'application/vnd.api+json' }),
         Authorization: `Bearer ${getLemonApiKey()}`
       },
+      ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
       cache: 'no-store',
       signal: controller.signal
     });
@@ -81,6 +86,14 @@ export async function lemonApiRequest<T>(path: string): Promise<T> {
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+export async function lemonApiRequest<T>(path: string): Promise<T> {
+  return lemonMainApiRequest<T>(path, { method: 'GET' });
+}
+
+export async function lemonApiPatch<T>(path: string, body: unknown): Promise<T> {
+  return lemonMainApiRequest<T>(path, { method: 'PATCH', body });
 }
 
 export async function lemonLicenseApiRequest<T>(

@@ -1826,6 +1826,32 @@ img {
   opacity: 0.52;
 }
 
+.purchase-policy-notice {
+  margin: 0.15rem 0 0;
+  font-size: 0.7rem;
+  line-height: 1.55;
+  color: rgba(58, 77, 40, 0.74);
+}
+
+.purchase-policy-notice a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-block: -0.7rem;
+  color: inherit;
+  font: inherit;
+  font-weight: 760;
+  letter-spacing: normal;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-transform: none;
+  text-underline-offset: 0.18em;
+}
+
+.purchase-policy-notice a:hover {
+  color: rgba(43, 64, 27, 0.98);
+}
+
 .plugin-card.is-unavailable .plugin-card-media {
   filter: saturate(0.9);
   aspect-ratio: 16 / 7;
@@ -4611,6 +4637,14 @@ img {
   box-shadow: 0 12px 22px rgba(92, 54, 158, 0.34);
 }
 
+.farmverb-root.theme-nebula .purchase-policy-notice {
+  color: rgba(232, 240, 255, 0.68);
+}
+
+.farmverb-root.theme-nebula .purchase-policy-notice a:hover {
+  color: rgba(255, 255, 255, 0.96);
+}
+
 .farmverb-root.theme-nebula .product-story-copy h2,
 .farmverb-root.theme-nebula .product-section-kicker h3,
 .farmverb-root.theme-nebula .product-feature-card h4,
@@ -5228,6 +5262,14 @@ img {
 .farmverb-root.theme-glitch .footer-legal a:hover {
   color: rgba(8, 7, 6, 0.98);
   border-color: rgba(49, 43, 38, 0.42);
+}
+
+.farmverb-root.theme-glitch .purchase-policy-notice {
+  color: rgba(243, 238, 224, 0.7);
+}
+
+.farmverb-root.theme-glitch .purchase-policy-notice a:hover {
+  color: rgba(255, 255, 255, 0.96);
 }
 
 :focus-visible {

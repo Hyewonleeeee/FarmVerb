@@ -63,6 +63,10 @@ export default function GlobalFooter() {
         <span className="footer-legal-separator" aria-hidden="true">
           ·
         </span>
+        <Link href="/refund-policy">Refund Policy</Link>
+        <span className="footer-legal-separator" aria-hidden="true">
+          ·
+        </span>
         <a href="mailto:support@farmverb.com">Contact</a>
       </nav>
     </footer>

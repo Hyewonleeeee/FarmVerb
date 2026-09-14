@@ -8,6 +8,7 @@ import type {
   PurchaseLicenseInstance,
   PurchaseRecord
 } from '@/lib/payments/purchases';
+import { isEntitledPurchaseStatus } from '@/lib/payments/purchases';
 import {
   LemonApiError,
   lemonApiRequest,
@@ -167,7 +168,7 @@ async function getVerifiedLemonOrder(purchase: OwnedPurchase) {
     throw new EntitlementError('The Lemon Squeezy order does not match this purchase.', 409, 'ORDER_MISMATCH');
   }
 
-  if (order.attributes.status !== 'paid') {
+  if (!isEntitledPurchaseStatus(order.attributes.status ?? '')) {
     throw new EntitlementError('This order is not currently eligible for downloads.', 409, 'ORDER_NOT_PAID');
   }
 
@@ -227,7 +228,7 @@ export async function requireOwnedPurchase(request: Request, purchaseId: string)
   }
 
   const purchase = data as OwnedPurchase;
-  if (purchase.status !== 'paid') {
+  if (!isEntitledPurchaseStatus(purchase.status)) {
     throw new EntitlementError('This purchase is not currently eligible.', 409, 'PURCHASE_NOT_PAID');
   }
 

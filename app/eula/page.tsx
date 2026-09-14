@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import LegalDocumentPage from '@/components/farmverb/LegalDocumentPage';
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export default function EulaPage() {
   return (
     <LegalDocumentPage
       title="FarmVerb Software End User License Agreement (EULA)"
-      lastUpdated="June 8, 2026"
+      lastUpdated="September 14, 2026"
       toc={toc}
       footerLines={['support@farmverb.com', 'farmverb.com']}
     >
@@ -159,6 +160,10 @@ export default function EulaPage() {
         <p>
           Upon termination, you must stop using the product and delete or remove any copies of the product files that
           are no longer authorized for your use, except where retention is required by law.
+        </p>
+        <p>
+          Refund requests and approved-refund access changes are governed by the FarmVerb{' '}
+          <Link href="/refund-policy">Refund Policy</Link>.
         </p>
       </section>
 
