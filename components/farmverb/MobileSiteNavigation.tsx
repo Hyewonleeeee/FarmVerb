@@ -7,7 +7,7 @@ import {
   AUDIO_PLUGIN_NAVIGATION,
   type ProductNavigationItem
 } from '@/lib/ui/productNavigation';
-import { type PluginSectionKey, type RouteKey } from '@/lib/ui/farmVerbRoutes';
+import { buildRouteHref, type PluginSectionKey, type RouteKey } from '@/lib/ui/farmVerbRoutes';
 
 type MobileSiteNavigationProps = {
   currentRoute: RouteKey;
@@ -179,7 +179,7 @@ export default function MobileSiteNavigation({
 
             <div className="mobile-nav-primary-links">
               <Link
-                href="/instrument"
+                href={buildRouteHref('instrument')}
                 data-route="instrument"
                 className={currentRoute === 'instrument' ? 'is-active' : undefined}
                 aria-current={currentRoute === 'instrument' ? 'page' : undefined}
@@ -230,7 +230,7 @@ export default function MobileSiteNavigation({
               ) : null}
 
               <Link
-                href="/sample-pack"
+                href={buildRouteHref('sample-pack')}
                 data-route="sample-pack"
                 className={currentRoute === 'sample-pack' ? 'is-active' : undefined}
                 aria-current={currentRoute === 'sample-pack' ? 'page' : undefined}

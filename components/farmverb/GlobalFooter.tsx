@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { FARMVERB_SOCIAL_LINKS } from '@/lib/content/socialLinks';
+import { buildRouteHref } from '@/lib/ui/farmVerbRoutes';
 
 export default function GlobalFooter() {
   return (
@@ -14,13 +15,13 @@ export default function GlobalFooter() {
         <div className="footer-columns">
           <section className="footer-column" aria-label="Products links">
             <h2>Products</h2>
-            <Link href="/instrument" data-route="instrument">
+            <Link href={buildRouteHref('instrument')} data-route="instrument">
               Software Instrument
             </Link>
             <Link href="/plugins" data-route="plugins">
               Audio Plugins
             </Link>
-            <Link href="/sample-pack" data-route="sample-pack">
+            <Link href={buildRouteHref('sample-pack')} data-route="sample-pack">
               Sample Pack
             </Link>
           </section>

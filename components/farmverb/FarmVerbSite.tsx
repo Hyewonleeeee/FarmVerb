@@ -294,8 +294,9 @@ const HOME_FEATURE_CARDS: HomeFeatureCard[] = [
     name: 'Nebula Series Bundle',
     description: 'Four creative effects for saturation, space, motion, and fracture, with Nebula Drums included as a bonus.',
     image: '/Nebula%20Series/Main/Nebula%20Series.png',
-    href: buildRouteHref('plugins'),
+    href: buildRouteHref('plugins', 'series'),
     route: 'plugins',
+    pluginSection: 'series',
     productName: 'Nebula Series Bundle',
     ctaLabel: 'Explore Series'
   },
@@ -2391,14 +2392,14 @@ export default function FarmVerbSite() {
       <header className="site-header">
         <nav className="site-nav site-nav-desktop site-container" aria-label="Primary navigation">
           <div className="nav-group nav-left">
-            <Link href="/instrument" className="nav-link" data-route="instrument">
+            <Link href={buildRouteHref('instrument')} className="nav-link" data-route="instrument">
               Software Instrument
             </Link>
             <AudioPluginsMegaMenu
               currentRoute={currentRoute}
               activePluginSection={activePluginSection}
             />
-            <Link href="/sample-pack" className="nav-link" data-route="sample-pack">
+            <Link href={buildRouteHref('sample-pack')} className="nav-link" data-route="sample-pack">
               Sample Pack
             </Link>
           </div>
