@@ -70,17 +70,20 @@ const PRODUCT_DATA_BY_PRODUCT_NAME: Record<string, ProductData> = {
   'Jeju Citrus Air': {
     currency: 'USD',
     launchPrice: 29,
-    regularPrice: 39
+    regularPrice: 39,
+    youtubeVideoId: 'pX_6XCGelSE'
   },
   'Boseong Green Tea': {
     currency: 'USD',
     launchPrice: 29,
-    regularPrice: 39
+    regularPrice: 39,
+    youtubeVideoId: 'NyFvmaaXj3U'
   },
   'Uiseong Garlic': {
     currency: 'USD',
     launchPrice: 29,
-    regularPrice: 39
+    regularPrice: 39,
+    youtubeVideoId: 'NJwA6Ls9VSE'
   },
   'Organic Series Bundle': {
     currency: 'USD',
