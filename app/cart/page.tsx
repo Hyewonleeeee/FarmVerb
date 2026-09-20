@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
+import LemonCheckoutLink from '@/components/checkout/LemonCheckoutLink';
 import PurchasePolicyNotice from '@/components/farmverb/PurchasePolicyNotice';
 import { getPaymentCopy, type PaymentLocale } from '@/lib/i18n/payment';
-import { getLemonBuyButtonLabel, getLemonCheckoutUrl, getLemonMyOrdersUrl } from '@/lib/checkout/lemonLinks';
+import { getLemonCheckoutUrl, getLemonMyOrdersUrl } from '@/lib/checkout/lemonLinks';
 import {
   clearCartItems,
   getCatalogProductByName,
@@ -146,17 +147,6 @@ export default function CartPage() {
     setCartMessage('');
   };
 
-  const handleBuyItem = (item: CartItem) => {
-    const checkoutUrl = item.checkoutUrl ?? getLemonCheckoutUrl(item.slug);
-
-    if (!checkoutUrl) {
-      setCartMessage('Checkout link coming soon.');
-      return;
-    }
-
-    window.location.assign(checkoutUrl);
-  };
-
   const handleClearCart = () => {
     if (!cartUserId) {
       return;
@@ -217,7 +207,7 @@ export default function CartPage() {
                   {cartItems.map((item) => {
                     const catalogImage = getCatalogProductBySlug(item.slug)?.image ?? getCatalogProductByName(item.name)?.image ?? null;
                     const itemImage = catalogImage ?? item.image;
-                    const checkoutUrl = item.checkoutUrl ?? getLemonCheckoutUrl(item.slug);
+                    const checkoutUrl = getLemonCheckoutUrl(item.slug);
 
                     return (
                       <li key={item.slug} className="cart-page-line-item">
@@ -228,14 +218,12 @@ export default function CartPage() {
                         <div className="cart-page-line-main">
                           <div className="mypage-item-head">{item.name}</div>
                           <p className="cart-page-item-description">{item.description}</p>
-                          <button
-                            type="button"
+                          <LemonCheckoutLink
+                            productName={item.name}
                             className="auth-submit auth-submit-secondary cart-page-buy"
-                            onClick={() => handleBuyItem(item)}
-                            disabled={!checkoutUrl}
                           >
-                            {getLemonBuyButtonLabel(item.name)}
-                          </button>
+                            Buy Now
+                          </LemonCheckoutLink>
                           {checkoutUrl ? <PurchasePolicyNotice /> : null}
                           {!checkoutUrl ? <p className="cart-page-checkout-note">Checkout link coming soon</p> : null}
                         </div>

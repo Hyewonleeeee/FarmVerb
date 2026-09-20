@@ -1,5 +1,10 @@
 import { getMainProductPrice, getProductPricing } from '@/lib/pricing/products';
 import { getLemonCheckoutUrl } from '@/lib/checkout/lemonLinks';
+import {
+  getOfficialProductByName,
+  getOfficialProductBySlug,
+  OFFICIAL_PRODUCT_CATALOG
+} from '@/lib/products/catalog';
 
 export type CartItem = {
   slug: string;
@@ -15,6 +20,7 @@ export type CartItem = {
 type CatalogProduct = {
   slug: string;
   name: string;
+  aliases: readonly string[];
   description: string;
   price: number;
   currency: string;
@@ -30,109 +36,23 @@ function priceOf(productName: string, fallback = 0) {
   return pricing ? getMainProductPrice(pricing) : fallback;
 }
 
-const PRODUCT_CATALOG: CatalogProduct[] = [
-  {
-    slug: 'nebula-series',
-    name: 'Nebula Series Bundle',
-    description: 'Complete Nebula effects bundle',
-    price: priceOf('Nebula Series Bundle', 189),
-    currency: 'USD',
-    image: '/Nebula%20Series/Main/Nebula%20Series.png',
-    checkoutUrl: getLemonCheckoutUrl('nebula-series')
-  },
-  {
-    slug: 'nebula-crush',
-    name: 'Nebula Crush',
-    description: 'Dynamic crush processor',
-    price: priceOf('Nebula Crush', 39),
-    currency: 'USD',
-    image: '/Nebula%20Series/Main/1-Nebula%20Crush.png',
-    checkoutUrl: getLemonCheckoutUrl('nebula-crush')
-  },
-  {
-    slug: 'nebula-space',
-    name: 'Nebula Space',
-    description: 'Atmospheric space processor',
-    price: priceOf('Nebula Space', 59),
-    currency: 'USD',
-    image: '/Nebula%20Series/Main/2-Nebula%20Space.png',
-    checkoutUrl: getLemonCheckoutUrl('nebula-space')
-  },
-  {
-    slug: 'nebula-drift',
-    name: 'Nebula Drift',
-    description: 'Spectral motion processor',
-    price: priceOf('Nebula Drift', 49),
-    currency: 'USD',
-    image: '/Nebula%20Series/Main/3-Nebula%20Drift.png',
-    checkoutUrl: getLemonCheckoutUrl('nebula-drift')
-  },
-  {
-    slug: 'nebula-rift',
-    name: 'Nebula Rift',
-    description: 'Fractured digital processor',
-    price: priceOf('Nebula Rift', 59),
-    currency: 'USD',
-    image: '/Nebula%20Series/Main/4-Nebula%20Rift.png',
-    checkoutUrl: getLemonCheckoutUrl('nebula-rift')
-  },
-  {
-    slug: 'nebula-drums',
-    name: 'Nebula Drums',
-    description: 'Decent Sampler instrument',
-    price: priceOf('Nebula Drums', 49),
-    currency: 'USD',
-    image: '/Nebula%20Series/Main/5-Nebula%20Drums.png',
-    checkoutUrl: getLemonCheckoutUrl('nebula-drums')
-  },
-  {
-    slug: 'glitch-drum-pack-vol-1',
-    name: 'Glitch Drum Pack Vol.1',
-    description: 'Digital glitch drum sample pack',
-    price: priceOf('Glitch Drum Pack Vol.1', 49),
-    currency: 'USD',
-    image: '/GlitchDrum/GlitchDrum.png',
-    checkoutUrl: getLemonCheckoutUrl('glitch-drum-pack-vol-1')
-  },
-  {
-    slug: 'organic-series',
-    name: 'Organic Series Bundle',
-    description: 'Jeju Citrus Air, Boseong Green Tea, and Uiseong Garlic',
-    price: priceOf('Organic Series Bundle', 69),
-    currency: 'USD',
-    image: '/Organic%20Series/Organic%20Series%20Bundle.png',
-    checkoutUrl: getLemonCheckoutUrl('organic-series')
-  },
-  {
-    slug: 'jeju-citrus-air',
-    name: 'Jeju Citrus Air',
-    description: 'Octave-led shimmer reverb',
-    price: priceOf('Jeju Citrus Air', 29),
-    currency: 'USD',
-    image: '/Organic%20Series/Main-Jeju.png',
-    checkoutUrl: getLemonCheckoutUrl('jeju-citrus-air')
-  },
-  {
-    slug: 'boseong-green-tea',
-    name: 'Boseong Green Tea',
-    description: 'Focused richness processor',
-    price: priceOf('Boseong Green Tea', 29),
-    currency: 'USD',
-    image: '/Organic%20Series/Main-Boseong.png',
-    checkoutUrl: getLemonCheckoutUrl('boseong-green-tea')
-  },
-  {
-    slug: 'uiseong-garlic',
-    name: 'Uiseong Garlic',
-    description: 'Forward definition processor',
-    price: priceOf('Uiseong Garlic', 29),
-    currency: 'USD',
-    image: '/Organic%20Series/Main-Uiseong.png',
-    checkoutUrl: getLemonCheckoutUrl('uiseong-garlic')
-  }
-];
+const PRODUCT_CATALOG: CatalogProduct[] = OFFICIAL_PRODUCT_CATALOG.map((product) => ({
+  slug: product.slug,
+  name: product.name,
+  aliases: product.aliases,
+  description: product.description,
+  price: priceOf(product.pricingName, product.fallbackPrice),
+  currency: product.currency,
+  image: product.image,
+  checkoutUrl: getLemonCheckoutUrl(product.slug)
+}));
 
-const productByName = new Map(PRODUCT_CATALOG.map((product) => [product.name.toLowerCase(), product]));
+const productByName = new Map<string, CatalogProduct>();
+for (const product of PRODUCT_CATALOG) {
+  for (const name of [product.name, ...product.aliases]) {
+    productByName.set(name.toLowerCase(), product);
+  }
+}
 const productBySlug = new Map(PRODUCT_CATALOG.map((product) => [product.slug, product]));
 const legacyProductAliases = new Map<string, CatalogProduct>([
   ['nebula-series', productBySlug.get('nebula-series') as CatalogProduct],
@@ -174,6 +94,7 @@ function resolveProduct(productName: string): CatalogProduct {
   return {
     slug: slugify(productName) || `custom-${Date.now()}`,
     name: productName,
+    aliases: [],
     description: 'Digital audio product',
     price: 0,
     currency: 'USD',
@@ -383,11 +304,13 @@ export function getCartSubtotal(items: CartItem[]) {
 
 export function getCatalogProductBySlug(slug: string) {
   const normalizedSlug = slugify(slug);
-  return productBySlug.get(normalizedSlug) ?? legacyProductAliases.get(normalizedSlug) ?? null;
+  const product = productBySlug.get(normalizedSlug) ?? legacyProductAliases.get(normalizedSlug) ?? null;
+  return product && getOfficialProductBySlug(product.slug) ? product : null;
 }
 
 export function getCatalogProductByName(name: string) {
-  return productByName.get(name.toLowerCase().trim()) ?? null;
+  const officialProduct = getOfficialProductByName(name);
+  return officialProduct ? productBySlug.get(officialProduct.slug) ?? null : null;
 }
 
 export function subscribeToCart(userId: string, listener: () => void) {

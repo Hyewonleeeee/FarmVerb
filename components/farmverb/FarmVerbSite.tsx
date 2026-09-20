@@ -9,6 +9,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent
 } from 'react';
 import AuthNav from '@/components/auth/AuthNav';
+import LemonCheckoutLink from '@/components/checkout/LemonCheckoutLink';
 import AudioPluginsMegaMenu from '@/components/farmverb/AudioPluginsMegaMenu';
 import MobileSiteNavigation from '@/components/farmverb/MobileSiteNavigation';
 import GlobalFooter from '@/components/farmverb/GlobalFooter';
@@ -23,7 +24,7 @@ import {
   subscribeToCart,
   type CartItem
 } from '@/lib/cart/store';
-import { getLemonBuyButtonLabel, getLemonCheckoutUrlByProductName, getLemonMyOrdersUrl } from '@/lib/checkout/lemonLinks';
+import { getLemonCheckoutUrlByProductName, getLemonMyOrdersUrl } from '@/lib/checkout/lemonLinks';
 import {
   formatUsdPrice,
   getLimitedSalePrice,
@@ -1496,15 +1497,11 @@ function NebulaDrumsLoadSection() {
 function ExploreMoreProductsSection({
   cards,
   onAddToCart,
-  onBuyNow,
-  hasCheckoutUrl,
-  getBuyLabel
+  hasCheckoutUrl
 }: {
   cards: HomeFeatureCard[];
   onAddToCart: (productName: string) => void;
-  onBuyNow: (productName: string) => void;
   hasCheckoutUrl: (productName: string) => boolean;
-  getBuyLabel: (productName: string) => string;
 }) {
   if (cards.length === 0) {
     return null;
@@ -1542,13 +1539,12 @@ function ExploreMoreProductsSection({
                 </Link>
                 {checkoutReady ? (
                   <>
-                    <button
-                      type="button"
+                    <LemonCheckoutLink
+                      productName={card.productName}
                       className="plugin-action plugin-action-buy"
-                      onClick={() => onBuyNow(card.productName)}
                     >
-                      {getBuyLabel(card.productName)}
-                    </button>
+                      Buy Now
+                    </LemonCheckoutLink>
                     <button
                       type="button"
                       className="plugin-action plugin-action-cart"
@@ -1572,16 +1568,12 @@ function ProductCommercialSections({
   details,
   manuals,
   onAddToCart,
-  onBuyNow,
-  hasCheckoutUrl,
-  getBuyLabel
+  hasCheckoutUrl
 }: {
   details: ProductCommercialDetails;
   manuals: ManualDownloadItem[];
   onAddToCart: (productName: string) => void;
-  onBuyNow: (productName: string) => void;
   hasCheckoutUrl: (productName: string) => boolean;
-  getBuyLabel: (productName: string) => string;
 }) {
   const checkoutReady = hasCheckoutUrl(details.productName);
   const primaryManual = manuals[0] ?? null;
@@ -1608,15 +1600,13 @@ function ProductCommercialSections({
                 >
                   Add to Cart
                 </button>
-                <button
-                  type="button"
+                <LemonCheckoutLink
+                  productName={details.productName}
                   className="plugin-action plugin-action-buy"
-                  onClick={() => onBuyNow(details.productName)}
-                  disabled={!checkoutReady}
                   title={checkoutReady ? undefined : 'Checkout link coming soon'}
                 >
-                  {getBuyLabel(details.productName)}
-                </button>
+                  Buy Now
+                </LemonCheckoutLink>
               </div>
             ) : null}
             {checkoutReady ? <PurchasePolicyNotice /> : null}
@@ -1955,7 +1945,6 @@ export default function FarmVerbSite() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartUserId, setCartUserId] = useState<string | null>(null);
   const [cartAuthReady, setCartAuthReady] = useState(false);
-  const [buyNowNotice, setBuyNowNotice] = useState<string | null>(null);
   const [cartPreviewOpen, setCartPreviewOpen] = useState(false);
   const [cartFeedback, setCartFeedback] = useState<{ message: string; item: CartItem | null } | null>(null);
 
@@ -2048,18 +2037,6 @@ export default function FarmVerbSite() {
     syncCart();
     return subscribeToCart(cartUserId, syncCart);
   }, [cartUserId]);
-
-  useEffect(() => {
-    if (!buyNowNotice) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setBuyNowNotice(null);
-    }, 2200);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [buyNowNotice]);
 
   useEffect(() => {
     if (!cartFeedback) {
@@ -2184,15 +2161,13 @@ export default function FarmVerbSite() {
             >
               Add to Cart
             </button>
-            <button
-              type="button"
+            <LemonCheckoutLink
+              productName={selectedPluginProduct.name}
               className="plugin-action plugin-action-buy"
-              onClick={() => onBuyNow(selectedPluginProduct.name)}
-              disabled={!checkoutReady}
               title={checkoutReady ? undefined : 'Checkout link coming soon'}
             >
-              {getPlaceholderBuyLabel(selectedPluginProduct.name)}
-            </button>
+              Buy Now
+            </LemonCheckoutLink>
             {!checkoutReady ? <span className="checkout-coming-soon">Checkout link coming soon</span> : null}
           </div>
           {checkoutReady ? <PurchasePolicyNotice /> : null}
@@ -2248,15 +2223,13 @@ export default function FarmVerbSite() {
               >
                 Add to Cart
               </button>
-              <button
-                type="button"
+              <LemonCheckoutLink
+                productName={product.name}
                 className="plugin-action plugin-action-buy"
-                onClick={() => onBuyNow(product.name)}
-                disabled={!checkoutReady}
                 title={checkoutReady ? undefined : 'Checkout link coming soon'}
               >
-                {getPlaceholderBuyLabel(product.name)}
-              </button>
+                Buy Now
+              </LemonCheckoutLink>
               {!checkoutReady ? <span className="checkout-coming-soon">Checkout link coming soon</span> : null}
             </div>
             {checkoutReady ? <PurchasePolicyNotice /> : null}
@@ -2322,19 +2295,6 @@ export default function FarmVerbSite() {
     setCartPreviewOpen(true);
   };
 
-  const onBuyNow = (productName: string) => {
-    const checkoutUrl = getLemonCheckoutUrlByProductName(productName);
-
-    if (!checkoutUrl) {
-      setBuyNowNotice('Checkout link coming soon.');
-      return;
-    }
-
-    window.location.assign(checkoutUrl);
-  };
-
-  const getPlaceholderBuyLabel = (productName: string) => getLemonBuyButtonLabel(productName);
-
   const renderProductCommercial = (productName: string) => {
     const details = PRODUCT_COMMERCIAL_DETAILS[productName];
     const supportDetails = PRODUCT_SUPPORT_DETAILS[productName];
@@ -2348,9 +2308,7 @@ export default function FarmVerbSite() {
         details={details}
         manuals={supportDetails?.manuals ?? []}
         onAddToCart={addToCart}
-        onBuyNow={onBuyNow}
         hasCheckoutUrl={hasCheckoutUrl}
-        getBuyLabel={getPlaceholderBuyLabel}
       />
     );
   };
@@ -2366,9 +2324,7 @@ export default function FarmVerbSite() {
       <ExploreMoreProductsSection
         cards={cards}
         onAddToCart={addToCart}
-        onBuyNow={onBuyNow}
         hasCheckoutUrl={hasCheckoutUrl}
-        getBuyLabel={getPlaceholderBuyLabel}
       />
     );
   };
@@ -2591,15 +2547,13 @@ export default function FarmVerbSite() {
 
                       <div className="home-product-actions">
                         {isOrganicCard ? (
-                          <button
-                            type="button"
+                          <LemonCheckoutLink
+                            productName={card.productName}
                             className="section-action-btn section-action-buy"
-                            onClick={() => onBuyNow(card.productName)}
-                            disabled={!checkoutReady}
                             title={checkoutReady ? undefined : 'Checkout link coming soon'}
                           >
-                            {getPlaceholderBuyLabel(card.productName)}
-                          </button>
+                            Buy Now
+                          </LemonCheckoutLink>
                         ) : (
                           <Link
                             href={card.href}
@@ -2719,15 +2673,13 @@ export default function FarmVerbSite() {
                     >
                       Add to Cart
                     </button>
-                    <button
-                      type="button"
+                    <LemonCheckoutLink
+                      productName="Glitch Drum Pack Vol.1"
                       className="section-action-btn section-action-buy"
-                      onClick={() => onBuyNow('Glitch Drum Pack Vol.1')}
-                      disabled={!hasCheckoutUrl('Glitch Drum Pack Vol.1')}
                       title={hasCheckoutUrl('Glitch Drum Pack Vol.1') ? undefined : 'Checkout link coming soon'}
                     >
-                      {getPlaceholderBuyLabel('Glitch Drum Pack Vol.1')}
-                    </button>
+                      Buy Now
+                    </LemonCheckoutLink>
                     {!hasCheckoutUrl('Glitch Drum Pack Vol.1') ? (
                       <span className="checkout-coming-soon">Checkout link coming soon</span>
                     ) : null}
@@ -2925,11 +2877,6 @@ export default function FarmVerbSite() {
         </section>
       </main>
 
-      {buyNowNotice ? (
-        <div className="buy-now-toast" role="status" aria-live="polite">
-          {buyNowNotice}
-        </div>
-      ) : null}
     </div>
   );
 }

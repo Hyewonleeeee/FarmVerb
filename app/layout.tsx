@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import LemonCheckoutProvider from '@/components/checkout/LemonCheckoutProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -24,7 +25,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="font-vars">{children}</body>
+      <body className="font-vars">
+        <LemonCheckoutProvider>{children}</LemonCheckoutProvider>
+      </body>
     </html>
   );
 }

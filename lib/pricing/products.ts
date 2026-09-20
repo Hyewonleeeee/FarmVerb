@@ -62,11 +62,6 @@ const PRODUCT_DATA_BY_PRODUCT_NAME: Record<string, ProductData> = {
     regularPrice: 59,
     youtubeVideoId: '7rXF8HeFUkM'
   },
-  'Germinate': {
-    currency: 'USD',
-    launchPrice: 49,
-    regularPrice: 69
-  },
   'Jeju Citrus Air': {
     currency: 'USD',
     launchPrice: 29,

@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import MyProductsAccordion from '@/components/account/MyProductsAccordion';
-import { getPaymentCopy, type PaymentApiErrorCode, type PaymentLocale } from '@/lib/i18n/payment';
+import { getPaymentCopy, type PaymentLocale } from '@/lib/i18n/payment';
 import type {
   AccountPurchase,
   PurchaseDownloadCategory,
@@ -32,22 +32,6 @@ type Profile = {
   email: string | null;
   country: string | null;
   created_at: string | null;
-};
-
-type OrderLine = {
-  id: string;
-  order_id: string | null;
-  product_name: string | null;
-  amount: number | null;
-  created_at: string;
-};
-
-type License = {
-  id: string;
-  order_id: string | null;
-  product_name: string | null;
-  license_key: string;
-  created_at: string;
 };
 
 type PurchaseEntitlementState = {
@@ -140,18 +124,6 @@ function categorizeDownloads(downloadGroups: PurchaseDownloadGroup[]) {
     .filter((group) => group.files.length > 0);
 }
 
-const formatOrderAmount = (value: number | null | undefined) => {
-  if (typeof value !== 'number' || Number.isNaN(value)) {
-    return '-';
-  }
-
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0
-  }).format(value);
-};
-
 const formatCurrency = (value: number | null, currencyText: string | null | undefined, locale: PaymentLocale) => {
   if (value === null || Number.isNaN(value)) {
     return '-';
@@ -181,20 +153,6 @@ function normalizePaymentStatus(status: string | null) {
     .join(' ');
 }
 
-function toProductSlug(productName: string | null | undefined): string | null {
-  if (!productName) {
-    return null;
-  }
-
-  const normalized = productName
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
-  return normalized || null;
-}
-
 export default function MyPage() {
   const router = useRouter();
   const paymentLocale: PaymentLocale = 'en';
@@ -205,18 +163,11 @@ export default function MyPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [orders, setOrders] = useState<OrderLine[]>([]);
-  const [ordersMessage, setOrdersMessage] = useState('');
-
   const [purchases, setPurchases] = useState<AccountPurchase[]>([]);
   const [purchasesMessage, setPurchasesMessage] = useState('');
   const [purchaseEntitlements, setPurchaseEntitlements] = useState<Record<string, PurchaseEntitlementState>>({});
 
-  const [licenses, setLicenses] = useState<License[]>([]);
-  const [licensesMessage, setLicensesMessage] = useState('');
-
   const [downloadMessage, setDownloadMessage] = useState('');
-  const [isDownloading, setIsDownloading] = useState(false);
   const [activeLemonDownloadId, setActiveLemonDownloadId] = useState<string | null>(null);
   const [copiedLicenseId, setCopiedLicenseId] = useState<string | null>(null);
   const [activeDeviceActionId, setActiveDeviceActionId] = useState<string | null>(null);
@@ -226,7 +177,6 @@ export default function MyPage() {
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
-    const uiText = getPaymentCopy(paymentLocale);
     let mounted = true;
 
     const loadProfile = async (currentUser: User) => {
@@ -263,38 +213,6 @@ export default function MyPage() {
       };
 
       setProfile(loadedProfile);
-    };
-
-    const loadOrders = async (currentUser: User) => {
-      const { data: orderRows, error: ordersError } = await supabase
-        .from('orders')
-        .select('id, order_id, product_name, amount, created_at')
-        .eq('user_id', currentUser.id)
-        .order('created_at', { ascending: false });
-
-      if (!mounted) {
-        return;
-      }
-
-      if (ordersError) {
-        setOrders([]);
-        setOrdersMessage(uiText.orders.loadFailed);
-        return;
-      }
-
-      const normalizedOrders: OrderLine[] = (orderRows ?? []).map((row) => {
-        const parsedAmount = typeof row.amount === 'number' ? row.amount : Number(row.amount);
-        return {
-          id: row.id,
-          order_id: row.order_id ?? null,
-          product_name: row.product_name ?? null,
-          amount: Number.isNaN(parsedAmount) ? null : parsedAmount,
-          created_at: row.created_at
-        };
-      });
-
-      setOrders(normalizedOrders);
-      setOrdersMessage('');
     };
 
     const loadPurchaseEntitlements = async (purchaseRows: AccountPurchase[], accessToken: string) => {
@@ -413,41 +331,10 @@ export default function MyPage() {
       }
     };
 
-    const loadLicenses = async (currentUser: User) => {
-      const { data, error } = await supabase
-        .from('licenses')
-        .select('id, order_id, product_name, license_key, created_at')
-        .eq('user_id', currentUser.id)
-        .order('created_at', { ascending: false });
-
-      if (!mounted) {
-        return;
-      }
-
-      if (error) {
-        setLicenses([]);
-        setLicensesMessage(uiText.licenses.loadFailed);
-        return;
-      }
-
-      const normalizedLicenses: License[] = (data ?? []).map((row) => ({
-        id: row.id,
-        order_id: row.order_id ?? null,
-        product_name: row.product_name ?? null,
-        license_key: row.license_key,
-        created_at: row.created_at
-      }));
-
-      setLicenses(normalizedLicenses);
-      setLicensesMessage('');
-    };
-
     const loadDashboardData = async (currentUser: User, accessToken: string) => {
       await Promise.all([
         loadProfile(currentUser),
-        loadPurchases(currentUser, accessToken),
-        loadOrders(currentUser),
-        loadLicenses(currentUser)
+        loadPurchases(currentUser, accessToken)
       ]);
 
       if (mounted) {
@@ -483,8 +370,6 @@ export default function MyPage() {
         setProfile(null);
         setPurchases([]);
         setPurchaseEntitlements({});
-        setOrders([]);
-        setLicenses([]);
         router.replace(MY_PAGE_LOGIN_REDIRECT);
         return;
       }
@@ -498,53 +383,6 @@ export default function MyPage() {
       subscription.unsubscribe();
     };
   }, [router, paymentLocale]);
-
-  const handleDownload = async (productSlug: string) => {
-    setDownloadMessage('');
-    setIsDownloading(true);
-
-    const supabase = createBrowserSupabaseClient();
-    const {
-      data: { session }
-    } = await supabase.auth.getSession();
-
-    const accessToken = session?.access_token;
-    if (!accessToken) {
-      setDownloadMessage(paymentCopy.download.loginAgain);
-      setIsDownloading(false);
-      return;
-    }
-
-    const response = await fetch('/api/download', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ slug: productSlug })
-    });
-
-    const payload = (await response.json().catch(() => null)) as
-      | { downloadUrl?: string; error?: string; errorCode?: PaymentApiErrorCode }
-      | null;
-
-    if (!response.ok) {
-      const messageFromCode = payload?.errorCode ? paymentCopy.apiErrors[payload.errorCode] : '';
-      setDownloadMessage(messageFromCode || payload?.error || paymentCopy.download.failed);
-      setIsDownloading(false);
-      return;
-    }
-
-    if (!payload?.downloadUrl) {
-      setDownloadMessage(paymentCopy.download.urlMissing);
-      setIsDownloading(false);
-      return;
-    }
-
-    setDownloadMessage(paymentCopy.download.starting);
-    window.location.assign(payload.downloadUrl);
-    setIsDownloading(false);
-  };
 
   const handleLemonDownload = async (purchaseId: string, fileId: string) => {
     const downloadId = `${purchaseId}:${fileId}`;
@@ -703,27 +541,6 @@ export default function MyPage() {
 
   const accountJoinDate = profile?.created_at ?? user?.created_at ?? null;
 
-  const licensesByOrderId = useMemo(() => {
-    const map = new Map<string, License>();
-    licenses.forEach((license) => {
-      if (license.order_id) {
-        map.set(license.order_id, license);
-      }
-    });
-    return map;
-  }, [licenses]);
-
-  const licensesByProductName = useMemo(() => {
-    const map = new Map<string, License>();
-    licenses.forEach((license) => {
-      const key = (license.product_name ?? '').trim().toLowerCase();
-      if (key && !map.has(key)) {
-        map.set(key, license);
-      }
-    });
-    return map;
-  }, [licenses]);
-
   const activeAccountTabMeta = useMemo(() => {
     return accountTabs.find((tab) => tab.key === activeTab) ?? accountTabs[0];
   }, [activeTab]);
@@ -763,7 +580,7 @@ export default function MyPage() {
       <main className="auth-page-main">
         <section className="mypage-card mypage-dashboard" aria-label="FarmVerb account">
           <div className="mypage-dashboard-head">
-            <div>
+            <div className="mypage-heading-stack">
               <p className="auth-overline">My Account</p>
               <h1 className="auth-title">My Account</h1>
               <p className="auth-copy">Access your products, downloads, licenses, and account details.</p>
@@ -825,12 +642,14 @@ export default function MyPage() {
               {activeTab === 'products' ? (
                 <>
                   <section className="mypage-purchase-section" aria-labelledby="lemon-purchases-title">
-                    <h3 id="lemon-purchases-title" className="mypage-subsection-title">Purchased Products</h3>
-                    <p className="mypage-subsection-copy">Products verified through Lemon Squeezy appear here with their downloads and license details.</p>
+                    <header className="mypage-section-head">
+                      <h3 id="lemon-purchases-title" className="mypage-subsection-title">Purchased Products</h3>
+                      <p className="mypage-subsection-copy">Products verified through Lemon Squeezy appear here with their downloads and license details.</p>
+                    </header>
 
                     {purchasesMessage ? <p className="auth-message is-error">{purchasesMessage}</p> : null}
 
-                    {!purchasesMessage && purchases.length === 0 && orders.length === 0 ? (
+                    {!purchasesMessage && purchases.length === 0 ? (
                       <div className="mypage-empty-products">
                         <strong>You don&apos;t own any products yet.</strong>
                         <p>Your FarmVerb products will appear here after purchase.</p>
@@ -1118,74 +937,6 @@ export default function MyPage() {
                       </ul>
                     ) : null}
                   </section>
-
-                  {orders.length > 0 || ordersMessage || licensesMessage ? (
-                    <section className="mypage-purchase-section" aria-labelledby="legacy-orders-title">
-                      <h3 id="legacy-orders-title" className="mypage-subsection-title">Previous FarmVerb Products</h3>
-                      <p className="mypage-subsection-copy">Products purchased through the earlier FarmVerb order system.</p>
-
-                      {ordersMessage ? <p>{ordersMessage}</p> : null}
-                      {!ordersMessage && licensesMessage ? <p>{licensesMessage}</p> : null}
-
-                      {orders.length > 0 ? (
-                        <ul className="mypage-list">
-                          {orders.map((order) => {
-                            const byOrder = order.order_id ? licensesByOrderId.get(order.order_id) : undefined;
-                            const byProduct = licensesByProductName.get((order.product_name ?? '').trim().toLowerCase());
-                            const license = byOrder ?? byProduct ?? null;
-                            const productSlug = toProductSlug(order.product_name);
-                            const productImage = productSlug ? getCatalogProductBySlug(productSlug)?.image ?? null : null;
-
-                            return (
-                              <li key={order.id} className="mypage-list-item mypage-product-item">
-                                {productImage ? (
-                                  <figure className="mypage-product-media">
-                                    <img src={productImage} alt="" />
-                                  </figure>
-                                ) : null}
-                                <div className="mypage-product-copy">
-                                  <div className="mypage-item-head">{order.product_name ?? paymentCopy.orders.unknownProduct}</div>
-                                  <div className="mypage-meta-row">
-                                    Purchased · {formatDate(order.created_at)}
-                                  </div>
-                                  <div className="mypage-meta-row">
-                                    {formatOrderAmount(order.amount)} · Order ID: {order.order_id ?? '-'}
-                                  </div>
-
-                                  {license ? (
-                                    <div className="mypage-license-row">
-                                      <span className="mypage-meta-label">{paymentCopy.licenses.label}</span>
-                                      <code className="mypage-license-key">{license.license_key}</code>
-                                      <button
-                                        type="button"
-                                        className="auth-submit auth-submit-secondary mypage-small-button"
-                                        onClick={() => void handleCopyLicense(license.id, license.license_key)}
-                                      >
-                                        {copiedLicenseId === license.id ? paymentCopy.licenses.copied : paymentCopy.licenses.copy}
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <div className="mypage-meta-row">License is being issued.</div>
-                                  )}
-
-                                  {productSlug ? (
-                                    <button
-                                      type="button"
-                                      className="auth-submit mypage-small-button"
-                                      onClick={() => void handleDownload(productSlug)}
-                                      disabled={isDownloading}
-                                    >
-                                      {isDownloading ? paymentCopy.licenses.preparing : paymentCopy.licenses.download}
-                                    </button>
-                                  ) : null}
-                                </div>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      ) : null}
-                    </section>
-                  ) : null}
 
                   {lemonMyOrdersUrl ? (
                     <a

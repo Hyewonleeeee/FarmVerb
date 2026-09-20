@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getProductSlugByVariantId } from '@/lib/payments/lemonProducts.server';
 import type { AccountPurchase } from '@/lib/payments/purchases';
+import {
+  getOfficialProductForLivePurchase,
+  OFFICIAL_LIVE_VARIANT_IDS
+} from '@/lib/products/catalog';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
@@ -44,12 +47,16 @@ export async function GET(request: Request) {
   const verifiedEmail = user.email.trim().toLowerCase();
   const now = new Date().toISOString();
 
-  // Only a Supabase-verified email can claim an unlinked purchase with the exact same email.
+  // Only a paid Live purchase for the official catalog can be claimed. Historical
+  // Test Mode and unmapped product rows remain in the database for audit purposes.
   const { error: claimError } = await supabase
     .from('purchases')
     .update({ user_id: user.id, updated_at: now })
     .is('user_id', null)
-    .eq('buyer_email', verifiedEmail);
+    .eq('buyer_email', verifiedEmail)
+    .eq('status', 'paid')
+    .eq('test_mode', false)
+    .in('lemon_variant_id', [...OFFICIAL_LIVE_VARIANT_IDS]);
 
   if (claimError) {
     console.error('[Account Purchases] Failed to link purchases.', {
@@ -63,10 +70,12 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from('purchases')
     .select(
-      'id, product_slug, product_name, lemon_order_id, lemon_variant_id, total_cents, currency, purchased_at, status'
+      'id, product_name, lemon_order_id, lemon_variant_id, total_cents, currency, purchased_at, status, test_mode'
     )
     .eq('user_id', user.id)
     .eq('status', 'paid')
+    .eq('test_mode', false)
+    .in('lemon_variant_id', [...OFFICIAL_LIVE_VARIANT_IDS])
     .order('purchased_at', { ascending: false });
 
   if (error) {
@@ -78,18 +87,22 @@ export async function GET(request: Request) {
     return jsonError(500, 'Failed to load purchase history.');
   }
 
-  const purchases: AccountPurchase[] = (data ?? []).map((purchase) => {
-    const storedProductSlug = purchase.product_slug?.trim() || null;
-    return {
+  const purchases: AccountPurchase[] = (data ?? []).flatMap((purchase) => {
+    const product = getOfficialProductForLivePurchase(purchase);
+    if (!product) {
+      return [];
+    }
+
+    return [{
       id: purchase.id,
-      product_slug: getProductSlugByVariantId(purchase.lemon_variant_id) ?? storedProductSlug,
-      product_name: purchase.product_name,
+      product_slug: product.slug,
+      product_name: product.name,
       lemon_order_id: purchase.lemon_order_id,
       total_cents: purchase.total_cents,
       currency: purchase.currency,
       purchased_at: purchase.purchased_at,
       status: purchase.status
-    };
+    }];
   });
 
   return NextResponse.json(

@@ -9,6 +9,7 @@ import type {
   PurchaseRecord
 } from '@/lib/payments/purchases';
 import { isEntitledPurchaseStatus } from '@/lib/payments/purchases';
+import { getProductSlugByVariantId } from '@/lib/payments/lemonProducts.server';
 import {
   LemonApiError,
   lemonApiRequest,
@@ -211,6 +212,7 @@ export async function requireOwnedPurchase(request: Request, purchaseId: string)
     .select('id, user_id, product_slug, lemon_order_id, lemon_variant_id, status, test_mode')
     .eq('id', purchaseId)
     .eq('user_id', user.id)
+    .eq('test_mode', false)
     .maybeSingle();
 
   if (error) {
@@ -231,6 +233,13 @@ export async function requireOwnedPurchase(request: Request, purchaseId: string)
   if (!isEntitledPurchaseStatus(purchase.status)) {
     throw new EntitlementError('This purchase is not currently eligible.', 409, 'PURCHASE_NOT_PAID');
   }
+
+  const officialProductSlug = getProductSlugByVariantId(purchase.lemon_variant_id);
+  if (!officialProductSlug) {
+    throw new EntitlementError('Purchase not found.', 404, 'PURCHASE_NOT_FOUND');
+  }
+
+  purchase.product_slug = officialProductSlug;
 
   await getVerifiedLemonOrder(purchase);
   return purchase;

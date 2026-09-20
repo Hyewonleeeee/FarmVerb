@@ -30,17 +30,9 @@ class PurchasePersistenceError extends Error {
 async function persistPurchase(
   supabase: ReturnType<typeof createServerSupabaseClient>,
   order: ReturnType<typeof normalizeLemonOrder>,
-  status: string
+  status: string,
+  productSlug: NonNullable<ReturnType<typeof getProductSlugByVariantId>>
 ) {
-  const productSlug = getProductSlugByVariantId(order.lemonVariantId);
-  if (!productSlug) {
-    console.warn('[Lemon Webhook] Unmapped Lemon variant ID.', {
-      lemonOrderId: order.lemonOrderId,
-      lemonVariantId: order.lemonVariantId,
-      testMode: order.testMode
-    });
-  }
-
   const now = new Date().toISOString();
   const purchaseValues = {
     lemon_order_id: order.lemonOrderId,
@@ -53,7 +45,7 @@ async function persistPurchase(
     test_mode: order.testMode,
     purchased_at: order.purchasedAt,
     updated_at: now,
-    ...(productSlug ? { product_slug: productSlug } : {})
+    product_slug: productSlug
   };
 
   const { data, error } = await supabase
@@ -120,6 +112,20 @@ export async function POST(request: Request) {
     return jsonError(400, message);
   }
 
+  const productSlug = getProductSlugByVariantId(order.lemonVariantId);
+  if (order.testMode || !productSlug) {
+    console.warn('[Lemon Webhook] Ignored non-Live or unmapped purchase.', {
+      lemonOrderId: order.lemonOrderId,
+      lemonVariantId: order.lemonVariantId,
+      testMode: order.testMode
+    });
+    return NextResponse.json({
+      ok: true,
+      ignored: true,
+      reason: order.testMode ? 'test_mode' : 'unmapped_variant'
+    });
+  }
+
   let supabase: ReturnType<typeof createServerSupabaseClient>;
   try {
     supabase = createServerSupabaseClient();
@@ -131,7 +137,7 @@ export async function POST(request: Request) {
 
   if (headerEventName === 'order_created') {
     try {
-      const data = await persistPurchase(supabase, order, order.status);
+      const data = await persistPurchase(supabase, order, order.status, productSlug);
       return NextResponse.json({ ok: true, purchase: data });
     } catch {
       return jsonError(500, 'Failed to save purchase.');
@@ -150,7 +156,12 @@ export async function POST(request: Request) {
       {
         getOrder: (orderId) => lemonApiRequest(`/orders/${encodeURIComponent(orderId)}`),
         recordVerifiedRefund: async (kind) => {
-          purchase = await persistPurchase(supabase, order, getRefundPurchaseStatus(kind));
+          purchase = await persistPurchase(
+            supabase,
+            order,
+            getRefundPurchaseStatus(kind),
+            productSlug
+          );
         },
         listLicenseKeys: (orderId) => {
           const query = new URLSearchParams({
