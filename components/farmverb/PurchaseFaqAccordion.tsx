@@ -24,7 +24,7 @@ const PURCHASE_FAQ_ITEMS = [
     )
   },
   {
-    question: 'Where can I download my purchase?',
+    question: 'Where can I download my products?',
     answer: (
       <p>
         Go to My Account → My Products to find your installers, manuals, and license details.
@@ -32,7 +32,7 @@ const PURCHASE_FAQ_ITEMS = [
     )
   },
   {
-    question: 'Can I use a different payment email at checkout?',
+    question: 'Can I use a different email for payment?',
     answer: (
       <p>
         Yes. Lemon Squeezy sends the receipt to your payment email, while product access remains linked to
