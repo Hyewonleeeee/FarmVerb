@@ -869,8 +869,8 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
   'Boseong Green Tea': {
     productName: 'Boseong Green Tea',
     eyebrow: 'Focused richness processor',
-    headline: 'Smooth the edge. Keep the focus',
-    headlineLines: ['Smooth the edge.', 'Keep the focus'],
+    headline: 'Smooth the edge Keep the focus',
+    headlineLines: ['Smooth the edge', 'Keep the focus'],
     subhead: 'Turn thin or spiky sources into something smoother, denser, and creamier.',
     body: 'Boseong Green Tea centers its workflow on Grow, a macro that combines transient rounding, density, sustain, low-mid body, and placement. Body, Focus, and Air refine the result before final level matching.',
     image: '/Organic%20Series/Main-Boseong.png',
