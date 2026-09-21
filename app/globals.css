@@ -5889,6 +5889,51 @@ a.auth-submit {
   text-decoration: none;
 }
 
+.checkout-account-notice {
+  position: fixed;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 180;
+  width: min(420px, calc(100vw - 2rem));
+  box-sizing: border-box;
+  display: grid;
+  gap: 0.22rem;
+  padding: 0.78rem 0.92rem;
+  transform: translateX(-50%);
+  border: 1px solid rgba(221, 234, 184, 0.32);
+  border-radius: 14px;
+  background: rgba(20, 24, 19, 0.94);
+  box-shadow: 0 12px 34px rgba(12, 15, 11, 0.28);
+  color: rgba(247, 244, 229, 0.92);
+  pointer-events: none;
+  animation: checkout-account-notice-in 180ms ease-out both;
+}
+
+.checkout-account-notice span {
+  font-size: 0.67rem;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.checkout-account-notice strong {
+  font-size: 0.9rem;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  overflow-wrap: anywhere;
+}
+
+@keyframes checkout-account-notice-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
 .mypage-grid .mypage-panel > p {
   margin: 0.55rem 0 0;
   font-size: 0.86rem;
@@ -6281,6 +6326,36 @@ a.auth-submit {
 
 .mypage-empty-products .mypage-small-button {
   margin-top: 0.9rem;
+}
+
+.mypage-purchase-support {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(153, 183, 86, 0.24);
+  border-radius: 14px;
+  background: rgba(248, 252, 232, 0.66);
+}
+
+.mypage-purchase-support h4 {
+  margin: 0;
+  color: rgba(43, 65, 25, 0.94);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.mypage-purchase-support p {
+  max-width: 42rem;
+  margin: 0.35rem 0 0;
+  color: rgba(61, 84, 39, 0.8);
+  font-size: 0.78rem;
+  line-height: 1.58;
+}
+
+.mypage-purchase-support .mypage-small-button {
+  flex: 0 0 auto;
 }
 
 .mypage-manage-orders {
@@ -7812,6 +7887,15 @@ a.auth-submit {
 
   .mypage-panel-dashboard {
     padding: 1rem;
+  }
+
+  .mypage-purchase-support {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mypage-purchase-support .mypage-small-button {
+    width: 100%;
   }
 
   .mypage-product-item {

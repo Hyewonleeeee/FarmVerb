@@ -6,6 +6,8 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
+  useState,
   type ReactNode
 } from 'react';
 import {
@@ -18,10 +20,12 @@ const LEMON_SCRIPT_URL = 'https://app.lemonsqueezy.com/js/lemon.js';
 
 type LemonCheckoutContextValue = {
   openCheckout: (checkoutUrl: string) => boolean;
+  showAccountNotice: (maskedEmail: string) => void;
 };
 
 const LemonCheckoutContext = createContext<LemonCheckoutContextValue>({
-  openCheckout: () => false
+  openCheckout: () => false,
+  showAccountNotice: () => {}
 });
 
 function getLemonWindow() {
@@ -35,6 +39,9 @@ export function useLemonCheckout() {
 }
 
 export default function LemonCheckoutProvider({ children }: { children: ReactNode }) {
+  const [accountNotice, setAccountNotice] = useState<string | null>(null);
+  const accountNoticeTimerRef = useRef<number | null>(null);
+
   const initialize = useCallback(() => {
     initializeLemonSqueezy(getLemonWindow());
   }, []);
@@ -47,9 +54,38 @@ export default function LemonCheckoutProvider({ children }: { children: ReactNod
     return tryOpenLemonCheckout(checkoutUrl, getLemonWindow());
   }, []);
 
+  const showAccountNotice = useCallback((maskedEmail: string) => {
+    if (accountNoticeTimerRef.current !== null) {
+      window.clearTimeout(accountNoticeTimerRef.current);
+    }
+
+    setAccountNotice(maskedEmail);
+    accountNoticeTimerRef.current = window.setTimeout(() => {
+      setAccountNotice(null);
+      accountNoticeTimerRef.current = null;
+    }, 6000);
+  }, []);
+
+  useEffect(() => () => {
+    if (accountNoticeTimerRef.current !== null) {
+      window.clearTimeout(accountNoticeTimerRef.current);
+    }
+  }, []);
+
   return (
-    <LemonCheckoutContext.Provider value={{ openCheckout }}>
+    <LemonCheckoutContext.Provider value={{ openCheckout, showAccountNotice }}>
       {children}
+      {accountNotice ? (
+        <div
+          className="checkout-account-notice"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <span>Purchasing with your FarmVerb account</span>
+          <strong>{accountNotice}</strong>
+        </div>
+      ) : null}
       <Script
         id="farmverb-lemon-squeezy"
         src={LEMON_SCRIPT_URL}
