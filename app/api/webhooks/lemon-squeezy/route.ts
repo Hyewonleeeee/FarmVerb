@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
+import {
+  AccountClaimStorageError,
+  consumePurchaseAccountClaim
+} from '@/lib/checkout/accountClaim.server';
 import { getProductSlugByVariantId } from '@/lib/payments/lemonProducts.server';
 import {
+  getLemonAccountClaimToken,
   getLemonEventName,
   normalizeLemonOrder,
   verifyLemonWebhookSignature
@@ -31,7 +36,8 @@ async function persistPurchase(
   supabase: ReturnType<typeof createServerSupabaseClient>,
   order: ReturnType<typeof normalizeLemonOrder>,
   status: string,
-  productSlug: NonNullable<ReturnType<typeof getProductSlugByVariantId>>
+  productSlug: NonNullable<ReturnType<typeof getProductSlugByVariantId>>,
+  userId?: string
 ) {
   const now = new Date().toISOString();
   const purchaseValues = {
@@ -45,7 +51,8 @@ async function persistPurchase(
     test_mode: order.testMode,
     purchased_at: order.purchasedAt,
     updated_at: now,
-    product_slug: productSlug
+    product_slug: productSlug,
+    ...(userId ? { user_id: userId } : {})
   };
 
   const { data, error } = await supabase
@@ -71,8 +78,9 @@ function getRefundPurchaseStatus(kind: VerifiedRefundKind) {
 
 export async function POST(request: Request) {
   const webhookSecret = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET;
-  if (!webhookSecret) {
-    console.error('[Lemon Webhook] LEMON_SQUEEZY_WEBHOOK_SECRET is not configured.');
+  const configuredStoreId = process.env.LEMON_STORE_ID?.trim();
+  if (!webhookSecret || !configuredStoreId) {
+    console.error('[Lemon Webhook] Lemon webhook secret or store ID is not configured.');
     return jsonError(500, 'Webhook is not configured.');
   }
 
@@ -113,16 +121,26 @@ export async function POST(request: Request) {
   }
 
   const productSlug = getProductSlugByVariantId(order.lemonVariantId);
-  if (order.testMode || !productSlug) {
+  if (
+    order.testMode
+    || order.storeId !== configuredStoreId
+    || !order.lemonVariantId
+    || !productSlug
+  ) {
     console.warn('[Lemon Webhook] Ignored non-Live or unmapped purchase.', {
       lemonOrderId: order.lemonOrderId,
       lemonVariantId: order.lemonVariantId,
+      storeMatches: order.storeId === configuredStoreId,
       testMode: order.testMode
     });
     return NextResponse.json({
       ok: true,
       ignored: true,
-      reason: order.testMode ? 'test_mode' : 'unmapped_variant'
+      reason: order.testMode
+        ? 'test_mode'
+        : order.storeId !== configuredStoreId
+          ? 'store_mismatch'
+          : 'unmapped_variant'
     });
   }
 
@@ -136,8 +154,42 @@ export async function POST(request: Request) {
   }
 
   if (headerEventName === 'order_created') {
+    const claimToken = getLemonAccountClaimToken(payload);
+    let claimedUserId: string | undefined;
+
+    if (claimToken) {
+      try {
+        const claim = await consumePurchaseAccountClaim(supabase, {
+          token: claimToken,
+          orderId: order.lemonOrderId,
+          variantId: order.lemonVariantId
+        });
+
+        if (claim.status === 'linked') {
+          claimedUserId = claim.userId;
+        } else {
+          console.warn('[Lemon Webhook] Account claim was not accepted.', {
+            lemonOrderId: order.lemonOrderId,
+            reason: claim.status
+          });
+        }
+      } catch (error) {
+        console.error('[Lemon Webhook] Account claim verification failed.', {
+          lemonOrderId: order.lemonOrderId,
+          code: error instanceof AccountClaimStorageError ? error.code : 'UNKNOWN'
+        });
+        return jsonError(500, 'Failed to verify purchase account claim.');
+      }
+    }
+
     try {
-      const data = await persistPurchase(supabase, order, order.status, productSlug);
+      const data = await persistPurchase(
+        supabase,
+        order,
+        order.status,
+        productSlug,
+        claimedUserId
+      );
       return NextResponse.json({ ok: true, purchase: data });
     } catch {
       return jsonError(500, 'Failed to save purchase.');
@@ -151,7 +203,7 @@ export async function POST(request: Request) {
       {
         orderId: order.lemonOrderId,
         expectedTestMode: order.testMode,
-        configuredStoreId: process.env.LEMON_STORE_ID?.trim()
+        configuredStoreId
       },
       {
         getOrder: (orderId) => lemonApiRequest(`/orders/${encodeURIComponent(orderId)}`),

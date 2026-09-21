@@ -7,16 +7,17 @@ import type { User } from '@supabase/supabase-js';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import MyProductsAccordion from '@/components/account/MyProductsAccordion';
 import { getPaymentCopy, type PaymentLocale } from '@/lib/i18n/payment';
-import type {
-  AccountPurchase,
-  PurchaseDownloadCategory,
-  PurchaseDownloadFile,
-  PurchaseDownloadGroup,
-  PurchaseDownloadsResponse,
-  PurchaseDownloadUrlResponse,
-  PurchaseLicense,
-  PurchaseLicenseInstanceDeactivateResponse,
-  PurchaseLicensesResponse,
+import {
+  isEntitledPurchaseStatus,
+  type AccountPurchase,
+  type PurchaseDownloadCategory,
+  type PurchaseDownloadFile,
+  type PurchaseDownloadGroup,
+  type PurchaseDownloadsResponse,
+  type PurchaseDownloadUrlResponse,
+  type PurchaseLicense,
+  type PurchaseLicenseInstanceDeactivateResponse,
+  type PurchaseLicensesResponse,
 } from '@/lib/payments/purchases';
 import { getLemonMyOrdersUrl } from '@/lib/checkout/lemonLinks';
 import { getCatalogProductBySlug, removePurchasedCartItems } from '@/lib/cart/store';
@@ -216,7 +217,9 @@ export default function MyPage() {
     };
 
     const loadPurchaseEntitlements = async (purchaseRows: AccountPurchase[], accessToken: string) => {
-      const eligiblePurchases = purchaseRows.filter((purchase) => purchase.status === 'paid');
+      const eligiblePurchases = purchaseRows.filter((purchase) =>
+        isEntitledPurchaseStatus(purchase.status)
+      );
       if (eligiblePurchases.length === 0) {
         if (mounted) {
           setPurchaseEntitlements({});
@@ -317,7 +320,9 @@ export default function MyPage() {
         removePurchasedCartItems(
           currentUser.id,
           loadedPurchases
-            .filter((purchase) => purchase.status === 'paid' && Boolean(purchase.product_slug))
+            .filter((purchase) =>
+              isEntitledPurchaseStatus(purchase.status) && Boolean(purchase.product_slug)
+            )
             .map((purchase) => purchase.product_slug as string)
         );
         setPurchasesMessage('');

@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
-import type { AccountPurchase } from '@/lib/payments/purchases';
+import {
+  ENTITLED_PURCHASE_STATUSES,
+  type AccountPurchase
+} from '@/lib/payments/purchases';
 import {
   getOfficialProductForLivePurchase,
   OFFICIAL_LIVE_VARIANT_IDS
@@ -47,14 +50,14 @@ export async function GET(request: Request) {
   const verifiedEmail = user.email.trim().toLowerCase();
   const now = new Date().toISOString();
 
-  // Only a paid Live purchase for the official catalog can be claimed. Historical
-  // Test Mode and unmapped product rows remain in the database for audit purposes.
+  // Only an entitled Live purchase for the official catalog can be claimed.
+  // Historical Test Mode and unmapped product rows remain for audit purposes.
   const { error: claimError } = await supabase
     .from('purchases')
     .update({ user_id: user.id, updated_at: now })
     .is('user_id', null)
     .eq('buyer_email', verifiedEmail)
-    .eq('status', 'paid')
+    .in('status', [...ENTITLED_PURCHASE_STATUSES])
     .eq('test_mode', false)
     .in('lemon_variant_id', [...OFFICIAL_LIVE_VARIANT_IDS]);
 
@@ -73,7 +76,7 @@ export async function GET(request: Request) {
       'id, product_name, lemon_order_id, lemon_variant_id, total_cents, currency, purchased_at, status, test_mode'
     )
     .eq('user_id', user.id)
-    .eq('status', 'paid')
+    .in('status', [...ENTITLED_PURCHASE_STATUSES])
     .eq('test_mode', false)
     .in('lemon_variant_id', [...OFFICIAL_LIVE_VARIANT_IDS])
     .order('purchased_at', { ascending: false });

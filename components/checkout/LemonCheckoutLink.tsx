@@ -19,6 +19,12 @@ type LemonCheckoutLinkProps = {
   ariaLabel?: string;
 };
 
+type CheckoutSessionResponse = {
+  ok?: boolean;
+  checkoutUrl?: string;
+  error?: string;
+};
+
 export default function LemonCheckoutLink({
   productName,
   className,
@@ -60,19 +66,41 @@ export default function LemonCheckoutLink({
     try {
       const supabase = createBrowserSupabaseClient();
       const {
-        data: { user }
-      } = await supabase.auth.getUser();
+        data: { session }
+      } = await supabase.auth.getSession();
 
-      if (!user) {
+      if (!session?.access_token) {
         redirectToLogin();
         return;
       }
 
-      if (!openCheckout(checkoutUrl)) {
-        window.location.assign(checkoutUrl);
+      const response = await fetch('/api/checkout/session', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ productName }),
+        cache: 'no-store'
+      });
+      const payload = (await response.json().catch(() => null)) as CheckoutSessionResponse | null;
+
+      if (response.status === 401) {
+        redirectToLogin();
+        return;
+      }
+
+      const secureCheckoutUrl = payload?.checkoutUrl?.trim();
+      if (!response.ok || !secureCheckoutUrl) {
+        window.alert(payload?.error ?? 'Could not prepare secure checkout. Please try again.');
+        return;
+      }
+
+      if (!openCheckout(secureCheckoutUrl)) {
+        window.location.assign(secureCheckoutUrl);
       }
     } catch {
-      redirectToLogin();
+      window.alert('Could not connect to secure checkout. Please try again.');
     } finally {
       setIsCheckingAuth(false);
     }
