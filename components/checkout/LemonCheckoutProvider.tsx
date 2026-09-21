@@ -6,7 +6,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
   type ReactNode
 } from 'react';
@@ -15,18 +14,31 @@ import {
   tryOpenLemonCheckout,
   type LemonSqueezyBrowser
 } from '@/lib/checkout/lemonOverlay';
+import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 const LEMON_SCRIPT_URL = 'https://app.lemonsqueezy.com/js/lemon.js';
 
 type LemonCheckoutContextValue = {
   openCheckout: (checkoutUrl: string) => boolean;
-  showAccountNotice: (maskedEmail: string) => void;
+  maskedAccountEmail: string | null;
 };
 
 const LemonCheckoutContext = createContext<LemonCheckoutContextValue>({
   openCheckout: () => false,
-  showAccountNotice: () => {}
+  maskedAccountEmail: null
 });
+
+function maskAccountEmail(email: string | null | undefined) {
+  const normalizedEmail = email?.trim().toLowerCase() ?? '';
+  const separatorIndex = normalizedEmail.lastIndexOf('@');
+  if (separatorIndex <= 0 || separatorIndex === normalizedEmail.length - 1) {
+    return null;
+  }
+
+  const localPart = normalizedEmail.slice(0, separatorIndex);
+  const domain = normalizedEmail.slice(separatorIndex + 1);
+  return `${localPart.slice(0, 1)}***@${domain}`;
+}
 
 function getLemonWindow() {
   return typeof window === 'undefined'
@@ -39,8 +51,7 @@ export function useLemonCheckout() {
 }
 
 export default function LemonCheckoutProvider({ children }: { children: ReactNode }) {
-  const [accountNotice, setAccountNotice] = useState<string | null>(null);
-  const accountNoticeTimerRef = useRef<number | null>(null);
+  const [maskedAccountEmail, setMaskedAccountEmail] = useState<string | null>(null);
 
   const initialize = useCallback(() => {
     initializeLemonSqueezy(getLemonWindow());
@@ -50,42 +61,33 @@ export default function LemonCheckoutProvider({ children }: { children: ReactNod
     initialize();
   }, [initialize]);
 
+  useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+    let isMounted = true;
+
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      if (isMounted) {
+        setMaskedAccountEmail(maskAccountEmail(session?.user.email));
+      }
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setMaskedAccountEmail(maskAccountEmail(session?.user.email));
+    });
+
+    return () => {
+      isMounted = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
   const openCheckout = useCallback((checkoutUrl: string) => {
     return tryOpenLemonCheckout(checkoutUrl, getLemonWindow());
   }, []);
 
-  const showAccountNotice = useCallback((maskedEmail: string) => {
-    if (accountNoticeTimerRef.current !== null) {
-      window.clearTimeout(accountNoticeTimerRef.current);
-    }
-
-    setAccountNotice(maskedEmail);
-    accountNoticeTimerRef.current = window.setTimeout(() => {
-      setAccountNotice(null);
-      accountNoticeTimerRef.current = null;
-    }, 6000);
-  }, []);
-
-  useEffect(() => () => {
-    if (accountNoticeTimerRef.current !== null) {
-      window.clearTimeout(accountNoticeTimerRef.current);
-    }
-  }, []);
-
   return (
-    <LemonCheckoutContext.Provider value={{ openCheckout, showAccountNotice }}>
+    <LemonCheckoutContext.Provider value={{ openCheckout, maskedAccountEmail }}>
       {children}
-      {accountNotice ? (
-        <div
-          className="checkout-account-notice"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          <span>FarmVerb product access will be linked to</span>
-          <strong>{accountNotice}</strong>
-        </div>
-      ) : null}
       <Script
         id="farmverb-lemon-squeezy"
         src={LEMON_SCRIPT_URL}

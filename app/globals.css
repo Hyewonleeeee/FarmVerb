@@ -4666,6 +4666,10 @@ img {
   color: rgba(232, 240, 255, 0.68);
 }
 
+.farmverb-root.theme-nebula .checkout-account-inline {
+  color: rgba(232, 240, 255, 0.82);
+}
+
 .farmverb-root.theme-nebula .purchase-policy-notice a:hover {
   color: rgba(255, 255, 255, 0.96);
 }
@@ -5293,6 +5297,10 @@ img {
   color: rgba(243, 238, 224, 0.7);
 }
 
+.farmverb-root.theme-glitch .checkout-account-inline {
+  color: rgba(243, 238, 224, 0.82);
+}
+
 .farmverb-root.theme-glitch .purchase-policy-notice a:hover {
   color: rgba(255, 255, 255, 0.96);
 }
@@ -5914,49 +5922,27 @@ a.auth-submit {
   text-decoration: none;
 }
 
-.checkout-account-notice {
-  position: fixed;
-  left: 50%;
-  bottom: max(1rem, env(safe-area-inset-bottom));
-  z-index: 180;
-  width: min(420px, calc(100vw - 2rem));
-  box-sizing: border-box;
+.purchase-policy-stack {
   display: grid;
-  gap: 0.22rem;
-  padding: 0.78rem 0.92rem;
-  transform: translateX(-50%);
-  border: 1px solid rgba(221, 234, 184, 0.32);
-  border-radius: 14px;
-  background: rgba(20, 24, 19, 0.94);
-  box-shadow: 0 12px 34px rgba(12, 15, 11, 0.28);
-  color: rgba(247, 244, 229, 0.92);
-  pointer-events: none;
-  animation: checkout-account-notice-in 180ms ease-out both;
+  gap: 0.34rem;
 }
 
-.checkout-account-notice span {
-  font-size: 0.67rem;
-  line-height: 1.4;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.purchase-policy-stack .purchase-policy-notice {
+  margin-top: 0;
 }
 
-.checkout-account-notice strong {
-  font-size: 0.9rem;
-  line-height: 1.35;
-  letter-spacing: 0.01em;
+.checkout-account-inline {
+  margin: 0;
+  color: rgba(58, 77, 40, 0.82);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  letter-spacing: 0.012em;
+  opacity: 0.68;
   overflow-wrap: anywhere;
 }
 
-@keyframes checkout-account-notice-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 4px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
+.checkout-account-inline strong {
+  font-weight: 650;
 }
 
 .mypage-grid .mypage-panel > p {

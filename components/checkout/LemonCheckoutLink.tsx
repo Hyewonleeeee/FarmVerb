@@ -25,18 +25,6 @@ type CheckoutSessionResponse = {
   error?: string;
 };
 
-function maskAccountEmail(email: string | null | undefined) {
-  const normalizedEmail = email?.trim().toLowerCase() ?? '';
-  const separatorIndex = normalizedEmail.lastIndexOf('@');
-  if (separatorIndex <= 0 || separatorIndex === normalizedEmail.length - 1) {
-    return 'Signed-in account';
-  }
-
-  const localPart = normalizedEmail.slice(0, separatorIndex);
-  const domain = normalizedEmail.slice(separatorIndex + 1);
-  return `${localPart.slice(0, 1)}***@${domain}`;
-}
-
 export default function LemonCheckoutLink({
   productName,
   className,
@@ -44,7 +32,7 @@ export default function LemonCheckoutLink({
   title,
   ariaLabel
 }: LemonCheckoutLinkProps) {
-  const { openCheckout, showAccountNotice } = useLemonCheckout();
+  const { openCheckout } = useLemonCheckout();
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
   const checkoutUrl = getLemonCheckoutUrlByProductName(productName);
   const label = children ?? getLemonBuyButtonLabel(productName);
@@ -85,8 +73,6 @@ export default function LemonCheckoutLink({
         redirectToLogin();
         return;
       }
-
-      showAccountNotice(maskAccountEmail(session.user.email));
 
       const response = await fetch('/api/checkout/session', {
         method: 'POST',
