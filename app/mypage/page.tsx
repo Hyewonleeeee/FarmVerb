@@ -945,18 +945,19 @@ export default function MyPage() {
                     <aside className="mypage-purchase-support" aria-labelledby="purchase-support-title">
                       <div>
                         <h4 id="purchase-support-title">Can&apos;t find your purchase?</h4>
-                        <p>
-                          Purchases are linked to the FarmVerb account used when checkout was started.
-                          If you can&apos;t remember which account you used or need help finding a purchase,
-                          contact us.
-                        </p>
+                        <p>View common answers or contact us for help.</p>
                       </div>
-                      <a
-                        href="mailto:support@farmverb.com"
-                        className="auth-submit auth-submit-secondary mypage-small-button"
-                      >
-                        Contact Support
-                      </a>
+                      <div className="mypage-purchase-support-actions">
+                        <Link href="/faq" className="auth-submit auth-submit-secondary mypage-small-button">
+                          View FAQ
+                        </Link>
+                        <a
+                          href="mailto:support@farmverb.com"
+                          className="auth-submit auth-submit-secondary mypage-small-button"
+                        >
+                          Contact Support
+                        </a>
+                      </div>
                     </aside>
                   </section>
 

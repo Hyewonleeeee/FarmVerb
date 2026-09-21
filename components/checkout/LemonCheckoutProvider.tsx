@@ -82,7 +82,7 @@ export default function LemonCheckoutProvider({ children }: { children: ReactNod
           aria-live="polite"
           aria-atomic="true"
         >
-          <span>Purchasing with your FarmVerb account</span>
+          <span>FarmVerb product access will be linked to</span>
           <strong>{accountNotice}</strong>
         </div>
       ) : null}

@@ -6358,6 +6358,176 @@ a.auth-submit {
   flex: 0 0 auto;
 }
 
+.mypage-purchase-support-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex: 0 0 auto;
+}
+
+.mypage-purchase-support-actions .auth-submit {
+  margin-top: 0;
+}
+
+.faq-page-shell {
+  display: flex;
+  flex-direction: column;
+}
+
+.faq-page-main {
+  width: min(860px, 92vw);
+  margin: clamp(3.5rem, 8vw, 6.5rem) auto 0;
+}
+
+.faq-page-hero {
+  max-width: 650px;
+}
+
+.faq-page-hero > * {
+  margin: 0;
+}
+
+.faq-page-hero h1 {
+  margin-top: 0.65rem;
+  font-size: clamp(2.3rem, 6vw, 4.6rem);
+  line-height: 1;
+  letter-spacing: -0.045em;
+  color: rgba(43, 61, 31, 0.98);
+}
+
+.faq-page-hero h1 + p {
+  max-width: 38rem;
+  margin-top: 1rem;
+  font-size: clamp(0.95rem, 2vw, 1.08rem);
+  line-height: 1.72;
+  color: rgba(61, 82, 42, 0.84);
+}
+
+.purchase-faq-list {
+  margin-top: clamp(2rem, 5vw, 3rem);
+  display: grid;
+  gap: 0.72rem;
+}
+
+.purchase-faq-item {
+  overflow: hidden;
+  border: 1px solid rgba(153, 183, 86, 0.3);
+  border-radius: 16px;
+  background: rgba(248, 252, 232, 0.76);
+  box-shadow: 0 8px 18px rgba(174, 196, 105, 0.1);
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
+.purchase-faq-item.is-open {
+  border-color: rgba(137, 170, 67, 0.46);
+  background: rgba(249, 252, 236, 0.94);
+}
+
+.purchase-faq-item h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.purchase-faq-item button {
+  width: 100%;
+  min-height: 64px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgba(43, 65, 25, 0.96);
+  font: inherit;
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: left;
+  cursor: pointer;
+}
+
+.purchase-faq-item button:hover {
+  background: rgba(232, 243, 201, 0.38);
+}
+
+.purchase-faq-item button:focus-visible {
+  outline: 2px solid rgba(103, 141, 38, 0.82);
+  outline-offset: -3px;
+}
+
+.purchase-faq-icon {
+  flex: 0 0 auto;
+  color: rgba(74, 99, 43, 0.72);
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.purchase-faq-panel {
+  padding: 0 1.1rem 1.15rem;
+}
+
+.purchase-faq-panel[hidden] {
+  display: none;
+}
+
+.purchase-faq-panel p {
+  max-width: 47rem;
+  margin: 0;
+  color: rgba(57, 80, 37, 0.86);
+  font-size: 0.91rem;
+  line-height: 1.72;
+}
+
+.purchase-faq-panel a {
+  color: rgba(44, 72, 25, 0.98);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.faq-contact-card {
+  margin-top: clamp(1.5rem, 4vw, 2.2rem);
+  padding: 1.1rem 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem;
+  border: 1px solid rgba(153, 183, 86, 0.24);
+  border-radius: 16px;
+  background: rgba(248, 252, 232, 0.62);
+}
+
+.faq-contact-card h2,
+.faq-contact-card p {
+  margin: 0;
+}
+
+.faq-contact-card h2 {
+  color: rgba(43, 65, 25, 0.94);
+  font-size: 0.98rem;
+}
+
+.faq-contact-card p {
+  margin-top: 0.4rem;
+  color: rgba(61, 84, 39, 0.8);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.faq-contact-card .auth-submit {
+  flex: 0 0 auto;
+  margin-top: 0;
+}
+
+.faq-page-footer {
+  margin-top: clamp(4rem, 9vw, 7rem);
+  padding-bottom: 1.5rem;
+}
+
 .mypage-manage-orders {
   display: flex;
   align-items: center;
@@ -7895,6 +8065,35 @@ a.auth-submit {
   }
 
   .mypage-purchase-support .mypage-small-button {
+    width: 100%;
+  }
+
+  .mypage-purchase-support-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .faq-page-main {
+    width: min(100% - 2rem, 860px);
+    margin-top: 3rem;
+  }
+
+  .purchase-faq-item button {
+    min-height: 60px;
+    padding: 0.95rem;
+  }
+
+  .purchase-faq-panel {
+    padding: 0 0.95rem 1rem;
+  }
+
+  .faq-contact-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .faq-contact-card .auth-submit {
     width: 100%;
   }
 
