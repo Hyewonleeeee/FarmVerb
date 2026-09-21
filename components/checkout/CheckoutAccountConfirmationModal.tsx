@@ -12,6 +12,22 @@ type CheckoutAccountConfirmationModalProps = {
   onContinue: () => void;
 };
 
+type CheckoutAccountModalTheme = 'organic' | 'nebula' | 'glitch';
+
+function getCheckoutAccountModalTheme(): CheckoutAccountModalTheme {
+  const siteRoot = document.querySelector('.farmverb-root');
+
+  if (siteRoot?.classList.contains('theme-nebula')) {
+    return 'nebula';
+  }
+
+  if (siteRoot?.classList.contains('theme-glitch')) {
+    return 'glitch';
+  }
+
+  return 'organic';
+}
+
 export default function CheckoutAccountConfirmationModal({
   id,
   email,
@@ -84,9 +100,11 @@ export default function CheckoutAccountConfirmationModal({
     return null;
   }
 
+  const modalTheme = getCheckoutAccountModalTheme();
+
   return createPortal(
     <div
-      className="checkout-account-modal-backdrop"
+      className={`checkout-account-modal-backdrop checkout-account-modal-theme-${modalTheme}`}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !isPreparing) {
           onCancel();
