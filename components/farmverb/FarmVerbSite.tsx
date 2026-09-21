@@ -132,6 +132,7 @@ type ProductCommercialDetails = {
   productName: string;
   eyebrow: string;
   headline: string;
+  headlineLines?: readonly string[];
   subhead: string;
   body: string;
   image: string;
@@ -526,6 +527,7 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
     productName: 'Nebula Series Bundle',
     eyebrow: 'Nebula Series Bundle',
     headline: 'The Complete Nebula Collection',
+    headlineLines: ['The Complete', 'Nebula Collection'],
     subhead: 'Four effects for saturation, space, motion, and fracture. Nebula Drums included as a bonus.',
     body: 'Nebula Series Bundle brings the core Nebula processors together as one expandable collection: Crush for harmonic pressure, Space for cinematic ambience, Drift for fluid modulation, and Rift for granular fracture.',
     image: '/Nebula%20Series/Main/Nebula%20Series.png',
@@ -574,6 +576,7 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
     productName: 'Nebula Crush',
     eyebrow: 'Creative saturation',
     headline: 'Creative Multi-Mode Distortion',
+    headlineLines: ['Creative Multi-Mode', 'Distortion'],
     subhead: 'From subtle saturation to total destruction.',
     body: 'Nebula Crush is an energetic distortion plugin with a cinematic edge, designed for drums, synths, buses, and creative tone shaping.',
     image: NEBULA_REAL_IMAGES.crush,
@@ -622,6 +625,7 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
     productName: 'Nebula Space',
     eyebrow: 'Atmospheric reverb',
     headline: 'Experimental Algorithmic Reverb',
+    headlineLines: ['Experimental', 'Algorithmic Reverb'],
     subhead: 'Build impossible spaces.',
     body: 'Nebula Space is an atmospheric reverb plugin for width, depth, smooth cinematic tails, floating dimension, and ambient motion.',
     image: NEBULA_REAL_IMAGES.space,
@@ -670,6 +674,7 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
     productName: 'Nebula Drift',
     eyebrow: 'Fluid modulation',
     headline: 'Movement Without Delay',
+    headlineLines: ['Movement', 'Without Delay'],
     subhead: 'Create fluid motion, width, and evolving stereo space.',
     body: 'Nebula Drift is a flowing modulation plugin with atmospheric, phase-like movement for spatial drift, width, and cinematic motion.',
     image: NEBULA_REAL_IMAGES.drift,
@@ -718,11 +723,12 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
     productName: 'Nebula Rift',
     eyebrow: 'Granular fracture',
     headline: 'Granular Fracture Engine',
+    headlineLines: ['Granular Fracture', 'Engine'],
     subhead: 'Break audio into evolving textures.',
     body: 'Nebula Rift is a creative granular fracture effect that captures small fragments of incoming audio and rebuilds them as animated rift fields.',
     image: NEBULA_REAL_IMAGES.rift,
     imageAlt: 'Nebula Rift product photograph',
-    imageLayout: 'portrait',
+    imageLayout: 'square',
     valueItems: ['Soft Rift', 'Glass Crack', 'Deep Tear', 'Fold'],
     features: [
       {
@@ -766,6 +772,7 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
     productName: 'Organic Series Bundle',
     eyebrow: 'Organic Series Bundle',
     headline: 'Air, richness, and definition.',
+    headlineLines: ['Air, richness,', 'and definition.'],
     subhead: 'Three distinct tools for placing a sound exactly where the mix needs it.',
     body: 'Organic Series Bundle brings together Jeju Citrus Air, Boseong Green Tea, and Uiseong Garlic: an octave-led shimmer reverb, a focused richness processor, and a forward definition processor.',
     image: '/Organic%20Series/Organic%20Series%20Bundle.png',
@@ -814,6 +821,7 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
     productName: 'Jeju Citrus Air',
     eyebrow: 'Octave-led shimmer reverb',
     headline: 'Let the air open around the source.',
+    headlineLines: ['Let the air open', 'around the source.'],
     subhead: 'Keep vocals present or let instruments bloom into a wider late field.',
     body: 'Jeju Citrus Air blends airy octave shimmer, a quieter fifth, and a diffused stereo tail. Vocal and Ambient modes shift the balance between front-of-mix presence and a wider, longer space.',
     image: '/Organic%20Series/Main-Jeju.png',
@@ -862,6 +870,7 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
     productName: 'Boseong Green Tea',
     eyebrow: 'Focused richness processor',
     headline: 'Smooth the edge. Keep the focus.',
+    headlineLines: ['Smooth the edge.', 'Keep the focus.'],
     subhead: 'Turn thin or spiky sources into something smoother, denser, and creamier.',
     body: 'Boseong Green Tea centers its workflow on Grow, a macro that combines transient rounding, density, sustain, low-mid body, and placement. Body, Focus, and Air refine the result before final level matching.',
     image: '/Organic%20Series/Main-Boseong.png',
@@ -910,6 +919,7 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
     productName: 'Uiseong Garlic',
     eyebrow: 'Forward definition processor',
     headline: 'Bring buried sounds into focus.',
+    headlineLines: ['Bring buried sounds', 'into focus.'],
     subhead: 'Move a weak source forward without relying on volume alone.',
     body: 'Uiseong Garlic uses Bite to set the overall Definition amount, then Attack, Forward, and Tight to shape onset, front-to-back placement, and post-onset masking before final output level matching.',
     image: '/Organic%20Series/Main-Uiseong.png',
@@ -958,6 +968,7 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
     productName: 'Nebula Drums',
     eyebrow: 'Creative drum instrument',
     headline: 'Creative Drum Instrument for Decent Sampler',
+    headlineLines: ['Creative Drum', 'Instrument for', 'Decent Sampler'],
     subhead: 'Four drum worlds for electronic, cinematic, and experimental rhythm.',
     body: 'Nebula Drums combines four themed drum worlds with custom layered drum sounds created from royalty-free source recordings and original sound design processing.',
     image: NEBULA_REAL_IMAGES.drums,
@@ -1586,7 +1597,14 @@ function ProductCommercialSections({
       <section className={`product-story-stage product-story-stage-${details.imageLayout}`}>
         <div className="product-story-copy">
           <p className="section-overline">{details.eyebrow}</p>
-          <h2>{details.headline}</h2>
+          <h2>
+            {(details.headlineLines ?? [details.headline]).map((line, index, lines) => (
+              <span key={line} className="product-story-headline-line">
+                {line}
+                {index < lines.length - 1 ? ' ' : null}
+              </span>
+            ))}
+          </h2>
           <p className="product-story-subhead">{details.subhead}</p>
           <p className="product-story-body">{details.body}</p>
           <div className="product-story-commerce">
