@@ -1,14 +1,15 @@
 'use client';
 
 import {
-  type MouseEvent,
-  type ReactNode
+  type ReactNode,
+  useState
 } from 'react';
 import { useLemonCheckout } from '@/components/checkout/LemonCheckoutProvider';
 import {
   getLemonBuyButtonLabel,
   getLemonCheckoutUrlByProductName
 } from '@/lib/checkout/lemonLinks';
+import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 type LemonCheckoutLinkProps = {
   productName: string;
@@ -18,10 +19,6 @@ type LemonCheckoutLinkProps = {
   ariaLabel?: string;
 };
 
-function shouldUseNativeNavigation(event: MouseEvent<HTMLAnchorElement>) {
-  return event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
-}
-
 export default function LemonCheckoutLink({
   productName,
   className,
@@ -30,6 +27,7 @@ export default function LemonCheckoutLink({
   ariaLabel
 }: LemonCheckoutLinkProps) {
   const { openCheckout } = useLemonCheckout();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(false);
   const checkoutUrl = getLemonCheckoutUrlByProductName(productName);
   const label = children ?? getLemonBuyButtonLabel(productName);
 
@@ -47,26 +45,51 @@ export default function LemonCheckoutLink({
     );
   }
 
-  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (event.defaultPrevented || shouldUseNativeNavigation(event)) {
+  const redirectToLogin = () => {
+    const returnPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    window.location.assign(`/login?redirect=${encodeURIComponent(returnPath)}`);
+  };
+
+  const handleClick = async () => {
+    if (isCheckingAuth) {
       return;
     }
 
-    if (openCheckout(checkoutUrl)) {
-      event.preventDefault();
+    setIsCheckingAuth(true);
+
+    try {
+      const supabase = createBrowserSupabaseClient();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        redirectToLogin();
+        return;
+      }
+
+      if (!openCheckout(checkoutUrl)) {
+        window.location.assign(checkoutUrl);
+      }
+    } catch {
+      redirectToLogin();
+    } finally {
+      setIsCheckingAuth(false);
     }
   };
 
   return (
-    <a
-      href={checkoutUrl}
+    <button
+      type="button"
       className={className}
       title={title}
       aria-label={ariaLabel}
+      aria-busy={isCheckingAuth}
+      disabled={isCheckingAuth}
       data-lemon-checkout-product={productName}
-      onClick={handleClick}
+      onClick={() => void handleClick()}
     >
       {label}
-    </a>
+    </button>
   );
 }
