@@ -2,8 +2,11 @@
 
 import {
   type ReactNode,
+  useCallback,
+  useId,
   useState
 } from 'react';
+import CheckoutAccountConfirmationModal from '@/components/checkout/CheckoutAccountConfirmationModal';
 import { useLemonCheckout } from '@/components/checkout/LemonCheckoutProvider';
 import {
   getLemonBuyButtonLabel,
@@ -25,6 +28,8 @@ type CheckoutSessionResponse = {
   error?: string;
 };
 
+const CHECKOUT_PREPARATION_ERROR = 'Could not prepare secure checkout. Please try again.';
+
 export default function LemonCheckoutLink({
   productName,
   className,
@@ -33,35 +38,26 @@ export default function LemonCheckoutLink({
   ariaLabel
 }: LemonCheckoutLinkProps) {
   const { openCheckout } = useLemonCheckout();
+  const modalId = useId();
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
+  const [isPreparingCheckout, setIsPreparingCheckout] = useState(false);
+  const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const checkoutUrl = getLemonCheckoutUrlByProductName(productName);
   const label = children ?? getLemonBuyButtonLabel(productName);
 
-  if (!checkoutUrl) {
-    return (
-      <button
-        type="button"
-        className={className}
-        disabled
-        title={title ?? 'Checkout link coming soon'}
-        aria-label={ariaLabel}
-      >
-        {label}
-      </button>
-    );
-  }
-
-  const redirectToLogin = () => {
+  const redirectToLogin = useCallback(() => {
     const returnPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     window.location.assign(`/login?redirect=${encodeURIComponent(returnPath)}`);
-  };
+  }, []);
 
   const handleClick = async () => {
-    if (isCheckingAuth) {
+    if (isCheckingAuth || isPreparingCheckout) {
       return;
     }
 
     setIsCheckingAuth(true);
+    setCheckoutError(null);
 
     try {
       const supabase = createBrowserSupabaseClient();
@@ -69,8 +65,52 @@ export default function LemonCheckoutLink({
         data: { session }
       } = await supabase.auth.getSession();
 
-      if (!session?.access_token) {
+      const accountEmail = session?.user.email?.trim();
+      if (!session?.access_token || !accountEmail) {
         redirectToLogin();
+        return;
+      }
+
+      setConfirmationEmail(accountEmail);
+    } catch {
+      redirectToLogin();
+    } finally {
+      setIsCheckingAuth(false);
+    }
+  };
+
+  const closeConfirmation = useCallback(() => {
+    if (isPreparingCheckout) {
+      return;
+    }
+
+    setConfirmationEmail(null);
+    setCheckoutError(null);
+  }, [isPreparingCheckout]);
+
+  const continueToCheckout = async () => {
+    if (!confirmationEmail || isPreparingCheckout) {
+      return;
+    }
+
+    setIsPreparingCheckout(true);
+    setCheckoutError(null);
+
+    try {
+      const supabase = createBrowserSupabaseClient();
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+
+      const currentAccountEmail = session?.user.email?.trim();
+      if (!session?.access_token || !currentAccountEmail) {
+        redirectToLogin();
+        return;
+      }
+
+      if (currentAccountEmail.toLowerCase() !== confirmationEmail.toLowerCase()) {
+        setConfirmationEmail(currentAccountEmail);
+        setCheckoutError('Your signed-in FarmVerb account changed. Please review it and continue again.');
         return;
       }
 
@@ -92,32 +132,60 @@ export default function LemonCheckoutLink({
 
       const secureCheckoutUrl = payload?.checkoutUrl?.trim();
       if (!response.ok || !secureCheckoutUrl) {
-        window.alert(payload?.error ?? 'Could not prepare secure checkout. Please try again.');
+        setCheckoutError(CHECKOUT_PREPARATION_ERROR);
         return;
       }
 
+      setConfirmationEmail(null);
       if (!openCheckout(secureCheckoutUrl)) {
         window.location.assign(secureCheckoutUrl);
       }
     } catch {
-      window.alert('Could not connect to secure checkout. Please try again.');
+      setCheckoutError(CHECKOUT_PREPARATION_ERROR);
     } finally {
-      setIsCheckingAuth(false);
+      setIsPreparingCheckout(false);
     }
   };
 
+  if (!checkoutUrl) {
+    return (
+      <button
+        type="button"
+        className={className}
+        disabled
+        title={title ?? 'Checkout link coming soon'}
+        aria-label={ariaLabel}
+      >
+        {label}
+      </button>
+    );
+  }
+
   return (
-    <button
-      type="button"
-      className={className}
-      title={title}
-      aria-label={ariaLabel}
-      aria-busy={isCheckingAuth}
-      disabled={isCheckingAuth}
-      data-lemon-checkout-product={productName}
-      onClick={() => void handleClick()}
-    >
-      {label}
-    </button>
+    <>
+      <button
+        type="button"
+        className={className}
+        title={title}
+        aria-label={ariaLabel}
+        aria-haspopup="dialog"
+        aria-expanded={Boolean(confirmationEmail)}
+        aria-controls={confirmationEmail ? modalId : undefined}
+        aria-busy={isCheckingAuth || isPreparingCheckout}
+        disabled={isCheckingAuth || isPreparingCheckout}
+        data-lemon-checkout-product={productName}
+        onClick={() => void handleClick()}
+      >
+        {label}
+      </button>
+      <CheckoutAccountConfirmationModal
+        id={modalId}
+        email={confirmationEmail}
+        error={checkoutError}
+        isPreparing={isPreparingCheckout}
+        onCancel={closeConfirmation}
+        onContinue={() => void continueToCheckout()}
+      />
+    </>
   );
 }

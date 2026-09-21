@@ -771,8 +771,8 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
   'Organic Series Bundle': {
     productName: 'Organic Series Bundle',
     eyebrow: 'Organic Series Bundle',
-    headline: 'Air, richness, and definition.',
-    headlineLines: ['Air, richness,', 'and definition.'],
+    headline: 'Air, richness, and definition',
+    headlineLines: ['Air, richness,', 'and definition'],
     subhead: 'Three distinct tools for placing a sound exactly where the mix needs it.',
     body: 'Organic Series Bundle brings together Jeju Citrus Air, Boseong Green Tea, and Uiseong Garlic: an octave-led shimmer reverb, a focused richness processor, and a forward definition processor.',
     image: '/Organic%20Series/Organic%20Series%20Bundle.png',
@@ -820,8 +820,8 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
   'Jeju Citrus Air': {
     productName: 'Jeju Citrus Air',
     eyebrow: 'Octave-led shimmer reverb',
-    headline: 'Let the air open around the source.',
-    headlineLines: ['Let the air open', 'around the source.'],
+    headline: 'Let the air open around the source',
+    headlineLines: ['Let the air open', 'around the source'],
     subhead: 'Keep vocals present or let instruments bloom into a wider late field.',
     body: 'Jeju Citrus Air blends airy octave shimmer, a quieter fifth, and a diffused stereo tail. Vocal and Ambient modes shift the balance between front-of-mix presence and a wider, longer space.',
     image: '/Organic%20Series/Main-Jeju.png',
@@ -869,8 +869,8 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
   'Boseong Green Tea': {
     productName: 'Boseong Green Tea',
     eyebrow: 'Focused richness processor',
-    headline: 'Smooth the edge. Keep the focus.',
-    headlineLines: ['Smooth the edge.', 'Keep the focus.'],
+    headline: 'Smooth the edge. Keep the focus',
+    headlineLines: ['Smooth the edge.', 'Keep the focus'],
     subhead: 'Turn thin or spiky sources into something smoother, denser, and creamier.',
     body: 'Boseong Green Tea centers its workflow on Grow, a macro that combines transient rounding, density, sustain, low-mid body, and placement. Body, Focus, and Air refine the result before final level matching.',
     image: '/Organic%20Series/Main-Boseong.png',
@@ -918,8 +918,8 @@ const PRODUCT_COMMERCIAL_DETAILS: Record<string, ProductCommercialDetails> = {
   'Uiseong Garlic': {
     productName: 'Uiseong Garlic',
     eyebrow: 'Forward definition processor',
-    headline: 'Bring buried sounds into focus.',
-    headlineLines: ['Bring buried sounds', 'into focus.'],
+    headline: 'Bring buried sounds into focus',
+    headlineLines: ['Bring buried sounds', 'into focus'],
     subhead: 'Move a weak source forward without relying on volume alone.',
     body: 'Uiseong Garlic uses Bite to set the overall Definition amount, then Attack, Forward, and Tight to shape onset, front-to-back placement, and post-onset masking before final output level matching.',
     image: '/Organic%20Series/Main-Uiseong.png',
@@ -1402,6 +1402,27 @@ const ORGANIC_BUNDLE_INCLUDED_PRODUCT_NAMES = [
   'Uiseong Garlic'
 ] as const;
 
+type BundlePageConfig = {
+  demoProductNames: readonly string[];
+  contentsHeadline: string;
+  contentsDescription: string;
+};
+
+const BUNDLE_PAGE_CONFIG_BY_PRODUCT_NAME: Record<string, BundlePageConfig> = {
+  'Nebula Series Bundle': {
+    demoProductNames: BUNDLE_INCLUDED_PRODUCT_NAMES,
+    contentsHeadline: 'Four Nebula effects plus Nebula Drums as a bonus.',
+    contentsDescription:
+      'Nebula Series Bundle includes the core effect devices and the Decent Sampler drum instrument as a bonus.'
+  },
+  'Organic Series Bundle': {
+    demoProductNames: ORGANIC_BUNDLE_INCLUDED_PRODUCT_NAMES,
+    contentsHeadline: 'Three Organic Series plugins, each with a distinct purpose.',
+    contentsDescription:
+      'Move from airy space to focused richness and forward definition, then open any product for its full workflow and manual.'
+  }
+};
+
 const GLITCH_RELATED_PRODUCT_NAMES = [
   'Nebula Series Bundle',
   'Nebula Crush',
@@ -1591,6 +1612,7 @@ function ProductCommercialSections({
   const youtubeVideoId = getProductYoutubeVideoId(details.productName);
   const isOrganicBundle = details.productName === 'Organic Series Bundle';
   const isOrganicProduct = isOrganicProductName(details.productName);
+  const bundlePageConfig = BUNDLE_PAGE_CONFIG_BY_PRODUCT_NAME[details.productName] ?? null;
 
   return (
     <section className="product-commercial-stack" aria-label={`${details.eyebrow} product story`}>
@@ -1676,8 +1698,12 @@ function ProductCommercialSections({
         </figure>
       </section>
 
-      {details.productName === 'Nebula Series Bundle' ? (
-        <BundleVideoTabsSection />
+      {bundlePageConfig ? (
+        <BundleVideoTabsSection
+          key={`${details.productName}-demos`}
+          bundleName={details.productName}
+          productNames={bundlePageConfig.demoProductNames}
+        />
       ) : youtubeVideoId ? (
         <section className="product-demo-section" aria-label={`${details.productName} demo video`}>
           <div className="product-section-kicker">
@@ -1727,10 +1753,13 @@ function ProductCommercialSections({
 
       {details.productName === 'Nebula Drums' ? <NebulaDrumsLoadSection /> : null}
 
-      {details.productName === 'Nebula Series Bundle' ? (
-        <BundleContentsSection />
-      ) : details.productName === 'Organic Series Bundle' ? (
-        <OrganicBundleContentsSection />
+      {bundlePageConfig ? (
+        <BundleContentsSection
+          bundleName={details.productName}
+          productNames={bundlePageConfig.demoProductNames}
+          headline={bundlePageConfig.contentsHeadline}
+          description={bundlePageConfig.contentsDescription}
+        />
       ) : null}
     </section>
   );
@@ -1792,15 +1821,23 @@ function ProductSupportSections({
   );
 }
 
-function BundleVideoTabsSection() {
-  const includedCards = getRelatedProductCards(BUNDLE_INCLUDED_PRODUCT_NAMES);
-  const [activeProductName, setActiveProductName] = useState<string>(BUNDLE_INCLUDED_PRODUCT_NAMES[0]);
+function BundleVideoTabsSection({
+  bundleName,
+  productNames
+}: {
+  bundleName: string;
+  productNames: readonly string[];
+}) {
+  const includedCards = getRelatedProductCards(productNames);
+  const [activeProductName, setActiveProductName] = useState<string>(productNames[0] ?? '');
   const activeIndex = Math.max(
     0,
     includedCards.findIndex((card) => card.name === activeProductName)
   );
   const activeCard = includedCards[activeIndex] ?? includedCards[0] ?? null;
   const activeVideoId = activeCard ? getProductYoutubeVideoId(activeCard.productName) : null;
+  const idPrefix = bundleName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const panelId = `${idPrefix}-demo-panel`;
 
   const selectProductDemo = (productName: string) => {
     if (productName === activeProductName) {
@@ -1840,19 +1877,22 @@ function BundleVideoTabsSection() {
   };
 
   return (
-    <section className="bundle-includes-section bundle-video-tabs-section" aria-label="Nebula Series product demos">
-      <div className="bundle-demo-tabs" role="tablist" aria-label="Nebula Series product demos">
+    <section
+      className="bundle-includes-section bundle-video-tabs-section"
+      aria-label={`${bundleName} product demos`}
+    >
+      <div className="bundle-demo-tabs" role="tablist" aria-label={`${bundleName} product demos`}>
         {includedCards.map((card, index) => {
           const isActive = card.name === activeCard?.name;
 
           return (
             <button
               key={card.name}
-              id={`bundle-demo-tab-${index}`}
+              id={`${idPrefix}-demo-tab-${index}`}
               type="button"
               role="tab"
               aria-selected={isActive}
-              aria-controls="bundle-demo-panel"
+              aria-controls={panelId}
               tabIndex={isActive ? 0 : -1}
               className={`bundle-demo-tab ${isActive ? 'is-active' : ''}`}
               onClick={() => selectProductDemo(card.name)}
@@ -1866,10 +1906,10 @@ function BundleVideoTabsSection() {
 
       {activeCard && activeVideoId ? (
         <article
-          id="bundle-demo-panel"
+          id={panelId}
           className="bundle-demo-panel"
           role="tabpanel"
-          aria-labelledby={`bundle-demo-tab-${activeIndex}`}
+          aria-labelledby={`${idPrefix}-demo-tab-${activeIndex}`}
         >
           <YouTubeDemo videoId={activeVideoId} title={`${activeCard.name} product demo`} />
           <div className="bundle-demo-copy">
@@ -1894,49 +1934,32 @@ function BundleVideoTabsSection() {
   );
 }
 
-function BundleContentsSection() {
-  const includedCards = getRelatedProductCards(BUNDLE_INCLUDED_PRODUCT_NAMES);
+function BundleContentsSection({
+  bundleName,
+  productNames,
+  headline,
+  description
+}: {
+  bundleName: string;
+  productNames: readonly string[];
+  headline: string;
+  description: string;
+}) {
+  const includedCards = getRelatedProductCards(productNames);
 
   return (
-    <section className="bundle-includes-section" aria-label="Nebula Series Bundle contents">
+    <section className="bundle-includes-section" aria-label={`${bundleName} contents`}>
       <div className="product-support-head">
         <p className="section-overline">Bundle Includes</p>
-        <h2>Four Nebula effects plus Nebula Drums as a bonus.</h2>
-        <p>Nebula Series Bundle includes the core effect devices and the Decent Sampler drum instrument as a bonus.</p>
+        <h2>{headline}</h2>
+        <p>{description}</p>
       </div>
       <div className="bundle-includes-grid">
         {includedCards.map((card) => (
           <article key={card.name} className="bundle-include-card">
-            <figure>
-              <img src={card.image} alt={card.name} />
-            </figure>
-            <div>
-              <p>{card.eyebrow}</p>
-              <h3>{card.name}</h3>
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function OrganicBundleContentsSection() {
-  const includedCards = getRelatedProductCards(ORGANIC_BUNDLE_INCLUDED_PRODUCT_NAMES);
-
-  return (
-    <section className="bundle-includes-section organic-bundle-includes" aria-label="Organic Series Bundle contents">
-      <div className="product-support-head">
-        <p className="section-overline">Bundle Includes</p>
-        <h2>Three Organic Series plugins, each with a distinct purpose.</h2>
-        <p>Move from airy space to focused richness and forward definition, then open any product for its full workflow and manual.</p>
-      </div>
-      <div className="bundle-includes-grid organic-bundle-includes-grid">
-        {includedCards.map((card) => (
-          <article key={card.name} className="bundle-include-card organic-bundle-include-card">
             <Link
               href={card.href}
-              className="organic-bundle-include-link"
+              className="bundle-include-link"
               data-route={card.route}
               data-plugin-section={card.pluginSection}
             >
@@ -1946,7 +1969,6 @@ function OrganicBundleContentsSection() {
               <div>
                 <p>{card.eyebrow}</p>
                 <h3>{card.name}</h3>
-                <span>View plugin</span>
               </div>
             </Link>
           </article>
