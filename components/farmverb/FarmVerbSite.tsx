@@ -2560,8 +2560,6 @@ export default function FarmVerbSite() {
 
               <div className="home-product-grid">
                 {HOME_PRODUCT_GRID_CARDS.map((card) => {
-                  const checkoutReady = hasCheckoutUrl(card.productName);
-
                   return (
                     <article
                       key={card.name}
@@ -2588,13 +2586,14 @@ export default function FarmVerbSite() {
                       </div>
 
                       <div className="home-product-actions">
-                        <LemonCheckoutLink
-                          productName={card.productName}
+                        <Link
+                          href={card.href}
                           className="section-action-btn section-action-buy"
-                          title={checkoutReady ? undefined : 'Checkout link coming soon'}
+                          data-route={card.route}
+                          data-plugin-section={card.pluginSection}
                         >
-                          Buy Now
-                        </LemonCheckoutLink>
+                          Explore
+                        </Link>
                         <button
                           type="button"
                           className="section-action-btn section-action-cart"
