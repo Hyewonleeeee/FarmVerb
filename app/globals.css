@@ -2408,6 +2408,16 @@ img {
   gap: var(--panel-gap);
 }
 
+.product-demo-section .product-section-kicker,
+.product-demo-section .product-section-kicker h3 {
+  max-width: none;
+}
+
+.product-demo-heading-name,
+.product-demo-heading-suffix {
+  white-space: nowrap;
+}
+
 .product-youtube-frame {
   position: relative;
   width: 100%;

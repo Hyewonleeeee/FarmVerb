@@ -1708,7 +1708,10 @@ function ProductCommercialSections({
         <section className="product-demo-section" aria-label={`${details.productName} demo video`}>
           <div className="product-section-kicker">
             <p className="section-overline">Product Demo</p>
-            <h3>{details.productName} in motion.</h3>
+            <h3>
+              <span className="product-demo-heading-name">{details.productName}</span>{' '}
+              <span className="product-demo-heading-suffix">in motion.</span>
+            </h3>
           </div>
           <YouTubeDemo videoId={youtubeVideoId} title={`${details.productName} product demo`} />
         </section>

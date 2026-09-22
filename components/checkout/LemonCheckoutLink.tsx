@@ -137,7 +137,7 @@ export default function LemonCheckoutLink({
       }
 
       setConfirmationEmail(null);
-      if (!openCheckout(secureCheckoutUrl)) {
+      if (!openCheckout(secureCheckoutUrl, productName)) {
         window.location.assign(secureCheckoutUrl);
       }
     } catch {

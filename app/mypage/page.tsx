@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import MyProductsAccordion from '@/components/account/MyProductsAccordion';
@@ -20,6 +20,12 @@ import {
   type PurchaseLicensesResponse,
 } from '@/lib/payments/purchases';
 import { getLemonMyOrdersUrl } from '@/lib/checkout/lemonLinks';
+import {
+  CHECKOUT_CONFIRMATION_BACKOFF_MS,
+  CHECKOUT_SUCCESS_STORAGE_KEY,
+  hasConfirmedCheckoutPurchase,
+  parseCheckoutSuccessMarker
+} from '@/lib/checkout/lemonOverlay';
 import { getCatalogProductBySlug, removePurchasedCartItems } from '@/lib/cart/store';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
@@ -58,6 +64,8 @@ type DeviceMessage = {
   text: string;
   isError: boolean;
 };
+
+type CheckoutConfirmationStatus = 'idle' | 'confirming' | 'delayed';
 
 const downloadCategoryMeta: Array<{
   category: PurchaseDownloadCategory;
@@ -167,6 +175,8 @@ export default function MyPage() {
   const [purchases, setPurchases] = useState<AccountPurchase[]>([]);
   const [purchasesMessage, setPurchasesMessage] = useState('');
   const [purchaseEntitlements, setPurchaseEntitlements] = useState<Record<string, PurchaseEntitlementState>>({});
+  const [checkoutConfirmationStatus, setCheckoutConfirmationStatus] = useState<CheckoutConfirmationStatus>('idle');
+  const checkoutConfirmationStartedRef = useRef(false);
 
   const [downloadMessage, setDownloadMessage] = useState('');
   const [activeLemonDownloadId, setActiveLemonDownloadId] = useState<string | null>(null);
@@ -179,6 +189,7 @@ export default function MyPage() {
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
     let mounted = true;
+    let checkoutPollTimeoutId: number | null = null;
 
     const loadProfile = async (currentUser: User) => {
       const { data, error } = await supabase
@@ -291,7 +302,13 @@ export default function MyPage() {
       }
     };
 
-    const loadPurchases = async (currentUser: User, accessToken: string) => {
+    const loadPurchases = async (
+      currentUser: User,
+      accessToken: string,
+      options: { loadEntitlements?: boolean; surfaceErrors?: boolean } = {}
+    ): Promise<AccountPurchase[] | null> => {
+      const { loadEntitlements = true, surfaceErrors = true } = options;
+
       try {
         const response = await fetch('/api/account/purchases', {
           method: 'GET',
@@ -306,13 +323,15 @@ export default function MyPage() {
           | null;
 
         if (!mounted) {
-          return;
+          return null;
         }
 
         if (!response.ok) {
-          setPurchases([]);
-          setPurchasesMessage(payload?.error ?? 'Failed to load Lemon Squeezy purchases.');
-          return;
+          if (surfaceErrors) {
+            setPurchases([]);
+            setPurchasesMessage(payload?.error ?? 'Failed to load Lemon Squeezy purchases.');
+          }
+          return null;
         }
 
         const loadedPurchases = payload?.purchases ?? [];
@@ -326,24 +345,98 @@ export default function MyPage() {
             .map((purchase) => purchase.product_slug as string)
         );
         setPurchasesMessage('');
-        void loadPurchaseEntitlements(loadedPurchases, accessToken);
+        if (loadEntitlements) {
+          void loadPurchaseEntitlements(loadedPurchases, accessToken);
+        }
+        return loadedPurchases;
       } catch {
-        if (mounted) {
+        if (mounted && surfaceErrors) {
           setPurchases([]);
           setPurchaseEntitlements({});
           setPurchasesMessage('Failed to load Lemon Squeezy purchases.');
         }
+        return null;
+      }
+    };
+
+    const waitForCheckoutPoll = (delay: number) => new Promise<void>((resolve) => {
+      checkoutPollTimeoutId = window.setTimeout(() => {
+        checkoutPollTimeoutId = null;
+        resolve();
+      }, delay);
+    });
+
+    const confirmCheckoutPurchase = async (
+      currentUser: User,
+      accessToken: string,
+      initialPurchases: AccountPurchase[]
+    ) => {
+      let marker: ReturnType<typeof parseCheckoutSuccessMarker> = null;
+      try {
+        marker = parseCheckoutSuccessMarker(
+          window.sessionStorage.getItem(CHECKOUT_SUCCESS_STORAGE_KEY)
+        );
+      } catch {
+        marker = null;
+      }
+
+      const finishConfirmation = () => {
+        try {
+          window.sessionStorage.removeItem(CHECKOUT_SUCCESS_STORAGE_KEY);
+        } catch {
+          // Storage availability does not affect the verified purchase response.
+        }
+        window.history.replaceState(window.history.state, '', '/mypage');
+        setCheckoutConfirmationStatus('idle');
+      };
+
+      if (hasConfirmedCheckoutPurchase(initialPurchases, marker)) {
+        finishConfirmation();
+        return;
+      }
+
+      for (const delay of CHECKOUT_CONFIRMATION_BACKOFF_MS) {
+        await waitForCheckoutPoll(delay);
+        if (!mounted) {
+          return;
+        }
+
+        const latestPurchases = await loadPurchases(currentUser, accessToken, {
+          loadEntitlements: false,
+          surfaceErrors: false
+        });
+        if (latestPurchases && hasConfirmedCheckoutPurchase(latestPurchases, marker)) {
+          finishConfirmation();
+          void loadPurchaseEntitlements(latestPurchases, accessToken);
+          return;
+        }
+      }
+
+      if (mounted) {
+        setCheckoutConfirmationStatus('delayed');
       }
     };
 
     const loadDashboardData = async (currentUser: User, accessToken: string) => {
-      await Promise.all([
+      const shouldConfirmCheckout = !checkoutConfirmationStartedRef.current
+        && new URLSearchParams(window.location.search).get('checkout') === 'success';
+      if (shouldConfirmCheckout) {
+        checkoutConfirmationStartedRef.current = true;
+        setActiveTab('products');
+        setCheckoutConfirmationStatus('confirming');
+      }
+
+      const [, loadedPurchases] = await Promise.all([
         loadProfile(currentUser),
         loadPurchases(currentUser, accessToken)
       ]);
 
       if (mounted) {
         setIsLoading(false);
+      }
+
+      if (shouldConfirmCheckout) {
+        void confirmCheckoutPurchase(currentUser, accessToken, loadedPurchases ?? []);
       }
     };
 
@@ -385,6 +478,9 @@ export default function MyPage() {
 
     return () => {
       mounted = false;
+      if (checkoutPollTimeoutId !== null) {
+        window.clearTimeout(checkoutPollTimeoutId);
+      }
       subscription.unsubscribe();
     };
   }, [router, paymentLocale]);
@@ -652,9 +748,42 @@ export default function MyPage() {
                       <p className="mypage-subsection-copy">Products verified through Lemon Squeezy appear here with their downloads and license details.</p>
                     </header>
 
+                    {checkoutConfirmationStatus === 'confirming' ? (
+                      <aside className="mypage-purchase-support" role="status" aria-live="polite">
+                        <div>
+                          <h4>Confirming your purchase…</h4>
+                          <p>Your payment was completed. We&apos;re waiting for the verified order to appear in My Products.</p>
+                        </div>
+                      </aside>
+                    ) : null}
+
+                    {checkoutConfirmationStatus === 'delayed' ? (
+                      <aside className="mypage-purchase-support" aria-labelledby="checkout-confirmation-delay-title">
+                        <div>
+                          <h4 id="checkout-confirmation-delay-title">Your purchase is still being confirmed.</h4>
+                          <p>It can take a little longer for a verified order to appear. Refresh in a moment, or contact us if you need help.</p>
+                        </div>
+                        <div className="mypage-purchase-support-actions">
+                          <button
+                            type="button"
+                            className="auth-submit auth-submit-secondary mypage-small-button"
+                            onClick={() => window.location.reload()}
+                          >
+                            Refresh
+                          </button>
+                          <a
+                            href="mailto:support@farmverb.com"
+                            className="auth-submit auth-submit-secondary mypage-small-button"
+                          >
+                            Contact Support
+                          </a>
+                        </div>
+                      </aside>
+                    ) : null}
+
                     {purchasesMessage ? <p className="auth-message is-error">{purchasesMessage}</p> : null}
 
-                    {!purchasesMessage && purchases.length === 0 ? (
+                    {!purchasesMessage && purchases.length === 0 && checkoutConfirmationStatus === 'idle' ? (
                       <div className="mypage-empty-products">
                         <strong>You don&apos;t own any products yet.</strong>
                         <p>Your FarmVerb products will appear here after purchase.</p>
