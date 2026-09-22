@@ -2560,13 +2560,12 @@ export default function FarmVerbSite() {
 
               <div className="home-product-grid">
                 {HOME_PRODUCT_GRID_CARDS.map((card) => {
-                  const isOrganicCard = isOrganicProductName(card.productName);
                   const checkoutReady = hasCheckoutUrl(card.productName);
 
                   return (
                     <article
                       key={card.name}
-                      className={`home-product-card interactive-tilt ${isOrganicCard ? 'home-product-card-organic' : ''}`}
+                      className="home-product-card interactive-tilt"
                     >
                       <figure className="home-product-media">
                         <img src={card.image} alt={card.name} />
@@ -2589,24 +2588,13 @@ export default function FarmVerbSite() {
                       </div>
 
                       <div className="home-product-actions">
-                        {isOrganicCard ? (
-                          <LemonCheckoutLink
-                            productName={card.productName}
-                            className="section-action-btn section-action-buy"
-                            title={checkoutReady ? undefined : 'Checkout link coming soon'}
-                          >
-                            Buy Now
-                          </LemonCheckoutLink>
-                        ) : (
-                          <Link
-                            href={card.href}
-                            className="section-action-btn section-action-buy home-product-link"
-                            data-route={card.route}
-                            data-plugin-section={card.pluginSection}
-                          >
-                            {card.ctaLabel}
-                          </Link>
-                        )}
+                        <LemonCheckoutLink
+                          productName={card.productName}
+                          className="section-action-btn section-action-buy"
+                          title={checkoutReady ? undefined : 'Checkout link coming soon'}
+                        >
+                          Buy Now
+                        </LemonCheckoutLink>
                         <button
                           type="button"
                           className="section-action-btn section-action-cart"
@@ -2615,12 +2603,6 @@ export default function FarmVerbSite() {
                           Add to Cart
                         </button>
                       </div>
-                      {isOrganicCard && checkoutReady ? <PurchasePolicyNotice /> : null}
-                      {isOrganicCard && !checkoutReady ? (
-                        <span className="checkout-coming-soon home-product-checkout-status">
-                          Checkout link coming soon
-                        </span>
-                      ) : null}
                     </article>
                   );
                 })}

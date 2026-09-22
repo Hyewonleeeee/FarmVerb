@@ -1455,17 +1455,6 @@ img {
   line-height: 1.1;
 }
 
-.home-product-checkout-status {
-  margin-top: -0.22rem;
-  text-align: center;
-}
-
-.home-product-link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .page-plugins {
   background:
     radial-gradient(circle at 14% -8%, rgba(214, 239, 143, 0.44) 0%, transparent 58%),
