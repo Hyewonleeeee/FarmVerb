@@ -5,6 +5,7 @@ import LemonCheckoutProvider from '@/components/checkout/LemonCheckoutProvider';
 import './globals.css';
 
 const GA4_MEASUREMENT_ID = 'G-LN0R5YFY78';
+const GOOGLE_ADS_ID = 'AW-18467889732';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://farmverb.com'),
@@ -43,6 +44,7 @@ export default function RootLayout({
             window.gtag = gtag;
             gtag('js', new Date());
             gtag('config', '${GA4_MEASUREMENT_ID}', { send_page_view: false });
+            gtag('config', '${GOOGLE_ADS_ID}');
             window.dispatchEvent(new Event('farmverb-ga-ready'));
           `}
         </Script>
