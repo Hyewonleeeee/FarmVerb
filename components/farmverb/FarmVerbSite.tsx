@@ -2534,7 +2534,9 @@ export default function FarmVerbSite() {
                 </figure>
                 <div className="home-story-feature-copy">
                   <p className="section-overline">{HOME_STORY_CARDS[0].eyebrow}</p>
-                  <h2>{HOME_STORY_CARDS[0].title}</h2>
+                  <h2>
+                    In a f<span className="home-story-fi-gap">i</span>eld of noise, make music that matters.
+                  </h2>
                   <p>{HOME_STORY_CARDS[0].description}</p>
                   <Link
                     href={HOME_STORY_CARDS[0].href}

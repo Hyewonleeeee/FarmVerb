@@ -1164,6 +1164,11 @@ img {
   color: #f6f0de;
 }
 
+.home-story-fi-gap {
+  display: inline-block;
+  margin-inline-start: 0.055em;
+}
+
 .home-ending-copy h3 {
   margin: 0;
   font-family: var(--font-display);
