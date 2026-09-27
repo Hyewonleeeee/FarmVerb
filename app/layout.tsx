@@ -2,10 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import GoogleAnalyticsPageViews from '@/components/analytics/GoogleAnalyticsPageViews';
 import LemonCheckoutProvider from '@/components/checkout/LemonCheckoutProvider';
+import { GA4_MEASUREMENT_ID, GOOGLE_ADS_ID } from '@/lib/analytics/config';
 import './globals.css';
-
-const GA4_MEASUREMENT_ID = 'G-LN0R5YFY78';
-const GOOGLE_ADS_ID = 'AW-18467889732';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://farmverb.com'),

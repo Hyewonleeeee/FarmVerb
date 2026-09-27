@@ -80,15 +80,15 @@ export function parseCheckoutSuccessMarker(value: string | null): CheckoutSucces
   }
 }
 
-export function hasConfirmedCheckoutPurchase(
-  purchases: readonly ConfirmablePurchase[],
+export function getConfirmedCheckoutPurchase<TPurchase extends ConfirmablePurchase>(
+  purchases: readonly TPurchase[],
   marker: CheckoutSuccessMarker | null
 ) {
   if (!marker) {
-    return false;
+    return null;
   }
 
-  return purchases.some((purchase) => {
+  return purchases.find((purchase) => {
     if (purchase.status !== 'paid' && purchase.status !== 'partial_refund') {
       return false;
     }
@@ -101,7 +101,14 @@ export function hasConfirmedCheckoutPurchase(
     return normalizeProductName(purchase.product_name) === normalizeProductName(marker.productName)
       && Number.isFinite(purchasedAt)
       && purchasedAt >= marker.openedAt - RECENT_PURCHASE_TOLERANCE_MS;
-  });
+  }) ?? null;
+}
+
+export function hasConfirmedCheckoutPurchase(
+  purchases: readonly ConfirmablePurchase[],
+  marker: CheckoutSuccessMarker | null
+) {
+  return Boolean(getConfirmedCheckoutPurchase(purchases, marker));
 }
 
 export function initializeLemonSqueezy(

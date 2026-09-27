@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --experimental-strip-types --test lib/products/catalog.test.mjs lib/checkout/lemonOverlay.test.mjs lib/checkout/accountClaim.test.mjs lib/payments/lemonWebhook.test.mjs lib/payments/lemonRefund.test.mjs",
+    "test": "node --experimental-strip-types --test lib/products/catalog.test.mjs lib/analytics/ecommerce.test.mjs lib/checkout/lemonOverlay.test.mjs lib/checkout/accountClaim.test.mjs lib/payments/lemonWebhook.test.mjs lib/payments/lemonRefund.test.mjs",
     "test:refund": "node --experimental-strip-types --test lib/payments/lemonRefund.test.mjs",
     "typecheck": "tsc --noEmit"
   },

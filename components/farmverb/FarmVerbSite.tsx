@@ -10,6 +10,8 @@ import {
 } from 'react';
 import AuthNav from '@/components/auth/AuthNav';
 import LemonCheckoutLink from '@/components/checkout/LemonCheckoutLink';
+import { trackAddToCart } from '@/lib/analytics/ecommerce';
+import { getAnalyticsProductByName } from '@/lib/analytics/products';
 import AudioPluginsMegaMenu from '@/components/farmverb/AudioPluginsMegaMenu';
 import MobileSiteNavigation from '@/components/farmverb/MobileSiteNavigation';
 import GlobalFooter from '@/components/farmverb/GlobalFooter';
@@ -2299,6 +2301,11 @@ export default function FarmVerbSite() {
   };
 
   const addToCart = async (productName: string) => {
+    const analyticsProduct = getAnalyticsProductByName(productName);
+    if (analyticsProduct) {
+      trackAddToCart(analyticsProduct);
+    }
+
     let userId = cartUserId;
 
     if (!userId && ACCOUNT_UI_ENABLED) {

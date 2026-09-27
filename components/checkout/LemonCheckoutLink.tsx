@@ -8,6 +8,8 @@ import {
 } from 'react';
 import CheckoutAccountConfirmationModal from '@/components/checkout/CheckoutAccountConfirmationModal';
 import { useLemonCheckout } from '@/components/checkout/LemonCheckoutProvider';
+import { trackBeginCheckout, trackBuyNowClick } from '@/lib/analytics/ecommerce';
+import { getAnalyticsProductByName } from '@/lib/analytics/products';
 import {
   getLemonBuyButtonLabel,
   getLemonCheckoutUrlByProductName
@@ -44,6 +46,7 @@ export default function LemonCheckoutLink({
   const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const checkoutUrl = getLemonCheckoutUrlByProductName(productName);
+  const analyticsProduct = getAnalyticsProductByName(productName);
   const label = children ?? getLemonBuyButtonLabel(productName);
 
   const redirectToLogin = useCallback(() => {
@@ -54,6 +57,10 @@ export default function LemonCheckoutLink({
   const handleClick = async () => {
     if (isCheckingAuth || isPreparingCheckout) {
       return;
+    }
+
+    if (analyticsProduct) {
+      trackBuyNowClick(analyticsProduct);
     }
 
     setIsCheckingAuth(true);
@@ -137,6 +144,9 @@ export default function LemonCheckoutLink({
       }
 
       setConfirmationEmail(null);
+      if (analyticsProduct) {
+        trackBeginCheckout(analyticsProduct);
+      }
       if (!openCheckout(secureCheckoutUrl, productName)) {
         window.location.assign(secureCheckoutUrl);
       }

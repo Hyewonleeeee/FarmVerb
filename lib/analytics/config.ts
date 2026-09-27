@@ -1,0 +1,2 @@
+export const GA4_MEASUREMENT_ID = 'G-LN0R5YFY78';
+export const GOOGLE_ADS_ID = 'AW-18467889732';

@@ -6,6 +6,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import MyProductsAccordion from '@/components/account/MyProductsAccordion';
+import { trackPurchase } from '@/lib/analytics/ecommerce';
+import { getAnalyticsProductBySlug } from '@/lib/analytics/products';
 import { getPaymentCopy, type PaymentLocale } from '@/lib/i18n/payment';
 import {
   isEntitledPurchaseStatus,
@@ -23,7 +25,7 @@ import { getLemonMyOrdersUrl } from '@/lib/checkout/lemonLinks';
 import {
   CHECKOUT_CONFIRMATION_BACKOFF_MS,
   CHECKOUT_SUCCESS_STORAGE_KEY,
-  hasConfirmedCheckoutPurchase,
+  getConfirmedCheckoutPurchase,
   parseCheckoutSuccessMarker
 } from '@/lib/checkout/lemonOverlay';
 import { getCatalogProductBySlug, removePurchasedCartItems } from '@/lib/cart/store';
@@ -380,7 +382,18 @@ export default function MyPage() {
         marker = null;
       }
 
-      const finishConfirmation = () => {
+      const finishConfirmation = (confirmedPurchase: AccountPurchase) => {
+        const analyticsProduct = confirmedPurchase.product_slug
+          ? getAnalyticsProductBySlug(confirmedPurchase.product_slug)
+          : null;
+        if (analyticsProduct) {
+          trackPurchase(analyticsProduct, {
+            transactionId: confirmedPurchase.lemon_order_id,
+            value: confirmedPurchase.total_cents / 100,
+            currency: confirmedPurchase.currency
+          });
+        }
+
         try {
           window.sessionStorage.removeItem(CHECKOUT_SUCCESS_STORAGE_KEY);
         } catch {
@@ -390,8 +403,9 @@ export default function MyPage() {
         setCheckoutConfirmationStatus('idle');
       };
 
-      if (hasConfirmedCheckoutPurchase(initialPurchases, marker)) {
-        finishConfirmation();
+      const initialConfirmedPurchase = getConfirmedCheckoutPurchase(initialPurchases, marker);
+      if (initialConfirmedPurchase) {
+        finishConfirmation(initialConfirmedPurchase);
         return;
       }
 
@@ -405,8 +419,11 @@ export default function MyPage() {
           loadEntitlements: false,
           surfaceErrors: false
         });
-        if (latestPurchases && hasConfirmedCheckoutPurchase(latestPurchases, marker)) {
-          finishConfirmation();
+        const confirmedPurchase = latestPurchases
+          ? getConfirmedCheckoutPurchase(latestPurchases, marker)
+          : null;
+        if (confirmedPurchase && latestPurchases) {
+          finishConfirmation(confirmedPurchase);
           void loadPurchaseEntitlements(latestPurchases, accessToken);
           return;
         }
