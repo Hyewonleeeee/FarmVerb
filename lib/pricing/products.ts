@@ -42,7 +42,7 @@ const PRODUCT_DATA_BY_PRODUCT_NAME: Record<string, ProductData> = {
     currency: 'USD',
     launchPrice: 59,
     regularPrice: 79,
-    youtubeVideoId: 'Jut9LH1BAXo'
+    youtubeVideoId: 'O9EARxyILy0'
   },
   'Nebula Drift': {
     currency: 'USD',
