@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import { flushPendingGa4ProductEvent } from '@/lib/analytics/ecommerce';
 
 const FARMVERB_ROUTE_CHANGE_EVENT = 'farmverb-routechange';
 const GOOGLE_ANALYTICS_READY_EVENT = 'farmverb-ga-ready';
@@ -24,6 +25,8 @@ export default function GoogleAnalyticsPageViews({
     if (typeof window.gtag !== 'function') {
       return;
     }
+
+    flushPendingGa4ProductEvent(measurementId);
 
     const pagePath = `${window.location.pathname}${window.location.search}`;
     if (lastTrackedLocationRef.current === pagePath) {

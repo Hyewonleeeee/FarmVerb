@@ -9,7 +9,11 @@ import {
 import CheckoutAccountConfirmationModal from '@/components/checkout/CheckoutAccountConfirmationModal';
 import { useLemonCheckout } from '@/components/checkout/LemonCheckoutProvider';
 import { GA4_MEASUREMENT_ID } from '@/lib/analytics/config';
-import { trackBeginCheckout, trackBuyNowClickAndWait } from '@/lib/analytics/ecommerce';
+import {
+  queueBuyNowClickForNextPage,
+  trackBeginCheckout,
+  trackBuyNowClick
+} from '@/lib/analytics/ecommerce';
 import { getAnalyticsProductByName } from '@/lib/analytics/products';
 import {
   getLemonBuyButtonLabel,
@@ -60,10 +64,6 @@ export default function LemonCheckoutLink({
       return;
     }
 
-    const analyticsDelivery = analyticsProduct
-      ? trackBuyNowClickAndWait(analyticsProduct, GA4_MEASUREMENT_ID)
-      : Promise.resolve(false);
-
     setIsCheckingAuth(true);
     setCheckoutError(null);
 
@@ -75,14 +75,21 @@ export default function LemonCheckoutLink({
 
       const accountEmail = session?.user.email?.trim();
       if (!session?.access_token || !accountEmail) {
-        await analyticsDelivery;
+        if (analyticsProduct && !queueBuyNowClickForNextPage(analyticsProduct)) {
+          trackBuyNowClick(analyticsProduct, GA4_MEASUREMENT_ID);
+        }
         redirectToLogin();
         return;
       }
 
+      if (analyticsProduct) {
+        trackBuyNowClick(analyticsProduct, GA4_MEASUREMENT_ID);
+      }
       setConfirmationEmail(accountEmail);
     } catch {
-      await analyticsDelivery;
+      if (analyticsProduct && !queueBuyNowClickForNextPage(analyticsProduct)) {
+        trackBuyNowClick(analyticsProduct, GA4_MEASUREMENT_ID);
+      }
       redirectToLogin();
     } finally {
       setIsCheckingAuth(false);

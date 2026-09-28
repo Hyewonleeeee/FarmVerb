@@ -52,7 +52,13 @@ declare global {
 
 const PURCHASE_STORAGE_PREFIX = 'farmverb.ga4.purchase.v1';
 const GOOGLE_ADS_PURCHASE_STORAGE_PREFIX = 'farmverb.google-ads.purchase.v1';
+const PENDING_GA4_PRODUCT_EVENT_KEY = 'farmverb.ga4.pending-product-event.v1';
+const PENDING_GA4_PRODUCT_EVENT_MAX_AGE_MS = 5 * 60 * 1000;
 const GOOGLE_ADS_PRODUCTION_HOSTS = new Set(['farmverb.com', 'www.farmverb.com']);
+
+function isProductEventName(value: unknown): value is ProductEventName {
+  return value === 'buy_now_click' || value === 'add_to_cart' || value === 'begin_checkout';
+}
 
 function getPageContext() {
   return {
@@ -126,40 +132,6 @@ export function sendGa4Event(
   });
 }
 
-export function sendGa4EventAndWait(
-  eventName: string,
-  parameters: Record<string, unknown>,
-  measurementId: string,
-  timeoutMs = 800
-) {
-  if (typeof window === 'undefined' || !measurementId.trim()) {
-    return Promise.resolve(false);
-  }
-
-  return new Promise<boolean>((resolve) => {
-    let completed = false;
-    const finish = (sent: boolean) => {
-      if (completed) {
-        return;
-      }
-      completed = true;
-      window.clearTimeout(timeoutId);
-      resolve(sent);
-    };
-    const timeoutId = window.setTimeout(() => finish(true), timeoutMs);
-    const sent = sendGoogleTagEvent(eventName, {
-      ...parameters,
-      send_to: measurementId.trim(),
-      event_callback: () => finish(true),
-      event_timeout: timeoutMs
-    });
-
-    if (!sent) {
-      finish(false);
-    }
-  });
-}
-
 function trackProductEvent(
   eventName: ProductEventName,
   product: AnalyticsProduct,
@@ -172,24 +144,88 @@ export function trackBuyNowClick(product: AnalyticsProduct, measurementId: strin
   return trackProductEvent('buy_now_click', product, measurementId);
 }
 
-export function trackBuyNowClickAndWait(product: AnalyticsProduct, measurementId: string) {
-  return sendGa4EventAndWait(
-    'buy_now_click',
-    buildProductEventParams(product),
-    measurementId
-  );
-}
-
 export function trackAddToCart(product: AnalyticsProduct, measurementId: string) {
   return trackProductEvent('add_to_cart', product, measurementId);
 }
 
-export function trackAddToCartAndWait(product: AnalyticsProduct, measurementId: string) {
-  return sendGa4EventAndWait(
-    'add_to_cart',
-    buildProductEventParams(product),
-    measurementId
-  );
+function queueProductEventForNextPage(eventName: ProductEventName, product: AnalyticsProduct) {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  try {
+    window.sessionStorage.setItem(PENDING_GA4_PRODUCT_EVENT_KEY, JSON.stringify({
+      eventName,
+      parameters: buildProductEventParams(product),
+      createdAt: Date.now()
+    }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function queueBuyNowClickForNextPage(product: AnalyticsProduct) {
+  return queueProductEventForNextPage('buy_now_click', product);
+}
+
+export function queueAddToCartForNextPage(product: AnalyticsProduct) {
+  return queueProductEventForNextPage('add_to_cart', product);
+}
+
+export function flushPendingGa4ProductEvent(measurementId: string) {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  let rawEvent: string | null = null;
+  try {
+    rawEvent = window.sessionStorage.getItem(PENDING_GA4_PRODUCT_EVENT_KEY);
+  } catch {
+    return false;
+  }
+
+  if (!rawEvent) {
+    return false;
+  }
+
+  try {
+    const pendingEvent = JSON.parse(rawEvent) as {
+      eventName?: unknown;
+      parameters?: unknown;
+      createdAt?: unknown;
+    };
+    const isSupportedEvent = pendingEvent.eventName === 'buy_now_click'
+      || pendingEvent.eventName === 'add_to_cart';
+    const isFresh = typeof pendingEvent.createdAt === 'number'
+      && Number.isFinite(pendingEvent.createdAt)
+      && Date.now() - pendingEvent.createdAt <= PENDING_GA4_PRODUCT_EVENT_MAX_AGE_MS;
+    const hasParameters = Boolean(pendingEvent.parameters)
+      && typeof pendingEvent.parameters === 'object'
+      && !Array.isArray(pendingEvent.parameters);
+
+    if (!isSupportedEvent || !isProductEventName(pendingEvent.eventName) || !isFresh || !hasParameters) {
+      window.sessionStorage.removeItem(PENDING_GA4_PRODUCT_EVENT_KEY);
+      return false;
+    }
+
+    const sent = sendGa4Event(
+      pendingEvent.eventName,
+      pendingEvent.parameters as Record<string, unknown>,
+      measurementId
+    );
+    if (sent) {
+      window.sessionStorage.removeItem(PENDING_GA4_PRODUCT_EVENT_KEY);
+    }
+    return sent;
+  } catch {
+    try {
+      window.sessionStorage.removeItem(PENDING_GA4_PRODUCT_EVENT_KEY);
+    } catch {
+      // Invalid pending analytics state can be ignored if storage is unavailable.
+    }
+    return false;
+  }
 }
 
 export function trackBeginCheckout(product: AnalyticsProduct, measurementId: string) {

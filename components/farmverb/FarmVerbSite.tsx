@@ -11,7 +11,10 @@ import {
 import AuthNav from '@/components/auth/AuthNav';
 import LemonCheckoutLink from '@/components/checkout/LemonCheckoutLink';
 import { GA4_MEASUREMENT_ID } from '@/lib/analytics/config';
-import { trackAddToCartAndWait } from '@/lib/analytics/ecommerce';
+import {
+  queueAddToCartForNextPage,
+  trackAddToCart
+} from '@/lib/analytics/ecommerce';
 import { getAnalyticsProductByName } from '@/lib/analytics/products';
 import AudioPluginsMegaMenu from '@/components/farmverb/AudioPluginsMegaMenu';
 import MobileSiteNavigation from '@/components/farmverb/MobileSiteNavigation';
@@ -2303,9 +2306,6 @@ export default function FarmVerbSite() {
 
   const addToCart = async (productName: string) => {
     const analyticsProduct = getAnalyticsProductByName(productName);
-    const analyticsDelivery = analyticsProduct
-      ? trackAddToCartAndWait(analyticsProduct, GA4_MEASUREMENT_ID)
-      : Promise.resolve(false);
 
     let userId = cartUserId;
 
@@ -2326,9 +2326,15 @@ export default function FarmVerbSite() {
     }
 
     if (!userId) {
-      await analyticsDelivery;
+      if (analyticsProduct && !queueAddToCartForNextPage(analyticsProduct)) {
+        trackAddToCart(analyticsProduct, GA4_MEASUREMENT_ID);
+      }
       redirectToLogin();
       return;
+    }
+
+    if (analyticsProduct) {
+      trackAddToCart(analyticsProduct, GA4_MEASUREMENT_ID);
     }
 
     const catalogProduct = getCatalogProductByName(productName);
