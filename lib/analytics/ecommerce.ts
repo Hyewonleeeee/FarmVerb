@@ -126,6 +126,40 @@ export function sendGa4Event(
   });
 }
 
+export function sendGa4EventAndWait(
+  eventName: string,
+  parameters: Record<string, unknown>,
+  measurementId: string,
+  timeoutMs = 800
+) {
+  if (typeof window === 'undefined' || !measurementId.trim()) {
+    return Promise.resolve(false);
+  }
+
+  return new Promise<boolean>((resolve) => {
+    let completed = false;
+    const finish = (sent: boolean) => {
+      if (completed) {
+        return;
+      }
+      completed = true;
+      window.clearTimeout(timeoutId);
+      resolve(sent);
+    };
+    const timeoutId = window.setTimeout(() => finish(true), timeoutMs);
+    const sent = sendGoogleTagEvent(eventName, {
+      ...parameters,
+      send_to: measurementId.trim(),
+      event_callback: () => finish(true),
+      event_timeout: timeoutMs
+    });
+
+    if (!sent) {
+      finish(false);
+    }
+  });
+}
+
 function trackProductEvent(
   eventName: ProductEventName,
   product: AnalyticsProduct,
@@ -138,8 +172,24 @@ export function trackBuyNowClick(product: AnalyticsProduct, measurementId: strin
   return trackProductEvent('buy_now_click', product, measurementId);
 }
 
+export function trackBuyNowClickAndWait(product: AnalyticsProduct, measurementId: string) {
+  return sendGa4EventAndWait(
+    'buy_now_click',
+    buildProductEventParams(product),
+    measurementId
+  );
+}
+
 export function trackAddToCart(product: AnalyticsProduct, measurementId: string) {
   return trackProductEvent('add_to_cart', product, measurementId);
+}
+
+export function trackAddToCartAndWait(product: AnalyticsProduct, measurementId: string) {
+  return sendGa4EventAndWait(
+    'add_to_cart',
+    buildProductEventParams(product),
+    measurementId
+  );
 }
 
 export function trackBeginCheckout(product: AnalyticsProduct, measurementId: string) {
