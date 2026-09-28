@@ -13,6 +13,11 @@ export type PurchaseAnalyticsDetails = {
   currency: string;
 };
 
+export type GoogleAdsPurchaseDetails = PurchaseAnalyticsDetails & {
+  status: string;
+  testMode: boolean;
+};
+
 type ProductEventName = 'buy_now_click' | 'add_to_cart' | 'begin_checkout';
 
 type ProductEventParams = {
@@ -46,6 +51,8 @@ declare global {
 }
 
 const PURCHASE_STORAGE_PREFIX = 'farmverb.ga4.purchase.v1';
+const GOOGLE_ADS_PURCHASE_STORAGE_PREFIX = 'farmverb.google-ads.purchase.v1';
+const GOOGLE_ADS_PRODUCTION_HOSTS = new Set(['farmverb.com', 'www.farmverb.com']);
 
 function getPageContext() {
   return {
@@ -144,6 +151,56 @@ export function trackPurchase(product: AnalyticsProduct, purchase: PurchaseAnaly
       window.localStorage.setItem(storageKey, 'sent');
     } catch {
       // The GA event was queued even if the de-duplication marker could not be stored.
+    }
+  }
+
+  return sent;
+}
+
+export function isGoogleAdsPurchaseEligible(purchase: GoogleAdsPurchaseDetails) {
+  return purchase.status === 'paid'
+    && purchase.testMode === false
+    && Boolean(purchase.transactionId.trim())
+    && Number.isFinite(purchase.value)
+    && purchase.value >= 0
+    && /^[A-Za-z]{3}$/.test(purchase.currency.trim());
+}
+
+export function trackGoogleAdsPurchase(
+  purchase: GoogleAdsPurchaseDetails,
+  conversionDestination: string
+) {
+  if (
+    typeof window === 'undefined'
+    || !GOOGLE_ADS_PRODUCTION_HOSTS.has(window.location.hostname.toLowerCase())
+    || !isGoogleAdsPurchaseEligible(purchase)
+    || !conversionDestination.trim()
+  ) {
+    return false;
+  }
+
+  const transactionId = purchase.transactionId.trim();
+  const storageKey = `${GOOGLE_ADS_PURCHASE_STORAGE_PREFIX}:${transactionId}`;
+  try {
+    if (window.localStorage.getItem(storageKey) === 'sent') {
+      return false;
+    }
+  } catch {
+    // Google Ads also de-duplicates this conversion action by transaction_id.
+  }
+
+  const sent = sendGa4Event('conversion', {
+    send_to: conversionDestination.trim(),
+    value: purchase.value,
+    currency: purchase.currency.trim().toUpperCase(),
+    transaction_id: transactionId
+  });
+
+  if (sent) {
+    try {
+      window.localStorage.setItem(storageKey, 'sent');
+    } catch {
+      // The conversion was queued even if the local de-duplication marker could not be stored.
     }
   }
 

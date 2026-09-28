@@ -39,6 +39,7 @@ export type AccountPurchase = Pick<
   | 'lemon_order_id'
   | 'total_cents'
   | 'currency'
+  | 'test_mode'
   | 'purchased_at'
   | 'status'
 >;

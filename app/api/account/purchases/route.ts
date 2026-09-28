@@ -103,6 +103,7 @@ export async function GET(request: Request) {
       lemon_order_id: purchase.lemon_order_id,
       total_cents: purchase.total_cents,
       currency: purchase.currency,
+      test_mode: purchase.test_mode,
       purchased_at: purchase.purchased_at,
       status: purchase.status
     }];

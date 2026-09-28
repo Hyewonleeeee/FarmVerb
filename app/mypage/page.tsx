@@ -6,7 +6,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import MyProductsAccordion from '@/components/account/MyProductsAccordion';
-import { trackPurchase } from '@/lib/analytics/ecommerce';
+import { trackGoogleAdsPurchase, trackPurchase } from '@/lib/analytics/ecommerce';
+import { GOOGLE_ADS_PURCHASE_SEND_TO } from '@/lib/analytics/config';
 import { getAnalyticsProductBySlug } from '@/lib/analytics/products';
 import { getPaymentCopy, type PaymentLocale } from '@/lib/i18n/payment';
 import {
@@ -393,6 +394,14 @@ export default function MyPage() {
             currency: confirmedPurchase.currency
           });
         }
+
+        trackGoogleAdsPurchase({
+          transactionId: confirmedPurchase.lemon_order_id,
+          value: confirmedPurchase.total_cents / 100,
+          currency: confirmedPurchase.currency,
+          status: confirmedPurchase.status,
+          testMode: confirmedPurchase.test_mode
+        }, GOOGLE_ADS_PURCHASE_SEND_TO);
 
         try {
           window.sessionStorage.removeItem(CHECKOUT_SUCCESS_STORAGE_KEY);
