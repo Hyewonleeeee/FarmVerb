@@ -7,7 +7,7 @@ import type { User } from '@supabase/supabase-js';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import MyProductsAccordion from '@/components/account/MyProductsAccordion';
 import { trackGoogleAdsPurchase, trackPurchase } from '@/lib/analytics/ecommerce';
-import { GOOGLE_ADS_PURCHASE_SEND_TO } from '@/lib/analytics/config';
+import { GA4_MEASUREMENT_ID, GOOGLE_ADS_PURCHASE_SEND_TO } from '@/lib/analytics/config';
 import { getAnalyticsProductBySlug } from '@/lib/analytics/products';
 import { getPaymentCopy, type PaymentLocale } from '@/lib/i18n/payment';
 import {
@@ -392,7 +392,7 @@ export default function MyPage() {
             transactionId: confirmedPurchase.lemon_order_id,
             value: confirmedPurchase.total_cents / 100,
             currency: confirmedPurchase.currency
-          });
+          }, GA4_MEASUREMENT_ID);
         }
 
         trackGoogleAdsPurchase({

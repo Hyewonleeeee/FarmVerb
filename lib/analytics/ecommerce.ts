@@ -93,7 +93,7 @@ export function buildProductEventParams(
   };
 }
 
-export function sendGa4Event(eventName: string, parameters: Record<string, unknown>) {
+function sendGoogleTagEvent(eventName: string, parameters: Record<string, unknown>) {
   if (typeof window === 'undefined') {
     return false;
   }
@@ -111,23 +111,46 @@ export function sendGa4Event(eventName: string, parameters: Record<string, unkno
   return true;
 }
 
-function trackProductEvent(eventName: ProductEventName, product: AnalyticsProduct) {
-  return sendGa4Event(eventName, buildProductEventParams(product));
+export function sendGa4Event(
+  eventName: string,
+  parameters: Record<string, unknown>,
+  measurementId: string
+) {
+  if (!measurementId.trim()) {
+    return false;
+  }
+
+  return sendGoogleTagEvent(eventName, {
+    ...parameters,
+    send_to: measurementId.trim()
+  });
 }
 
-export function trackBuyNowClick(product: AnalyticsProduct) {
-  return trackProductEvent('buy_now_click', product);
+function trackProductEvent(
+  eventName: ProductEventName,
+  product: AnalyticsProduct,
+  measurementId: string
+) {
+  return sendGa4Event(eventName, buildProductEventParams(product), measurementId);
 }
 
-export function trackAddToCart(product: AnalyticsProduct) {
-  return trackProductEvent('add_to_cart', product);
+export function trackBuyNowClick(product: AnalyticsProduct, measurementId: string) {
+  return trackProductEvent('buy_now_click', product, measurementId);
 }
 
-export function trackBeginCheckout(product: AnalyticsProduct) {
-  return trackProductEvent('begin_checkout', product);
+export function trackAddToCart(product: AnalyticsProduct, measurementId: string) {
+  return trackProductEvent('add_to_cart', product, measurementId);
 }
 
-export function trackPurchase(product: AnalyticsProduct, purchase: PurchaseAnalyticsDetails) {
+export function trackBeginCheckout(product: AnalyticsProduct, measurementId: string) {
+  return trackProductEvent('begin_checkout', product, measurementId);
+}
+
+export function trackPurchase(
+  product: AnalyticsProduct,
+  purchase: PurchaseAnalyticsDetails,
+  measurementId: string
+) {
   if (typeof window === 'undefined' || !purchase.transactionId.trim()) {
     return false;
   }
@@ -144,7 +167,7 @@ export function trackPurchase(product: AnalyticsProduct, purchase: PurchaseAnaly
   const sent = sendGa4Event('purchase', {
     ...buildProductEventParams(product, purchase.value, purchase.currency),
     transaction_id: purchase.transactionId
-  });
+  }, measurementId);
 
   if (sent) {
     try {
@@ -189,7 +212,7 @@ export function trackGoogleAdsPurchase(
     // Google Ads also de-duplicates this conversion action by transaction_id.
   }
 
-  const sent = sendGa4Event('conversion', {
+  const sent = sendGoogleTagEvent('conversion', {
     send_to: conversionDestination.trim(),
     value: purchase.value,
     currency: purchase.currency.trim().toUpperCase(),

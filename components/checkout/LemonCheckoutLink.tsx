@@ -8,6 +8,7 @@ import {
 } from 'react';
 import CheckoutAccountConfirmationModal from '@/components/checkout/CheckoutAccountConfirmationModal';
 import { useLemonCheckout } from '@/components/checkout/LemonCheckoutProvider';
+import { GA4_MEASUREMENT_ID } from '@/lib/analytics/config';
 import { trackBeginCheckout, trackBuyNowClick } from '@/lib/analytics/ecommerce';
 import { getAnalyticsProductByName } from '@/lib/analytics/products';
 import {
@@ -60,7 +61,7 @@ export default function LemonCheckoutLink({
     }
 
     if (analyticsProduct) {
-      trackBuyNowClick(analyticsProduct);
+      trackBuyNowClick(analyticsProduct, GA4_MEASUREMENT_ID);
     }
 
     setIsCheckingAuth(true);
@@ -145,7 +146,7 @@ export default function LemonCheckoutLink({
 
       setConfirmationEmail(null);
       if (analyticsProduct) {
-        trackBeginCheckout(analyticsProduct);
+        trackBeginCheckout(analyticsProduct, GA4_MEASUREMENT_ID);
       }
       if (!openCheckout(secureCheckoutUrl, productName)) {
         window.location.assign(secureCheckoutUrl);

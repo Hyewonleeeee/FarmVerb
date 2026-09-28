@@ -10,6 +10,7 @@ import {
 } from 'react';
 import AuthNav from '@/components/auth/AuthNav';
 import LemonCheckoutLink from '@/components/checkout/LemonCheckoutLink';
+import { GA4_MEASUREMENT_ID } from '@/lib/analytics/config';
 import { trackAddToCart } from '@/lib/analytics/ecommerce';
 import { getAnalyticsProductByName } from '@/lib/analytics/products';
 import AudioPluginsMegaMenu from '@/components/farmverb/AudioPluginsMegaMenu';
@@ -2303,7 +2304,7 @@ export default function FarmVerbSite() {
   const addToCart = async (productName: string) => {
     const analyticsProduct = getAnalyticsProductByName(productName);
     if (analyticsProduct) {
-      trackAddToCart(analyticsProduct);
+      trackAddToCart(analyticsProduct, GA4_MEASUREMENT_ID);
     }
 
     let userId = cartUserId;
