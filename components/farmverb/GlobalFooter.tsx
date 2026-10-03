@@ -28,7 +28,7 @@ export default function GlobalFooter() {
 
           <section className="footer-column" aria-label="Support links">
             <h2>Support</h2>
-            <a href="mailto:support@farmverb.com">Support</a>
+            <Link href="/support">Support</Link>
             <Link href="/faq">FAQ</Link>
           </section>
 
