@@ -1,4 +1,5 @@
 import 'server-only';
+import { randomUUID } from 'node:crypto';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
@@ -11,7 +12,7 @@ import {
 import type { OfficialProduct } from '@/lib/products/catalog';
 
 const CLAIM_SELECT =
-  'token_hash, user_id, lemon_variant_id, expires_at, consumed_at, consumed_order_id';
+  'token_hash, user_id, lemon_variant_id, created_at, expires_at, consumed_at, consumed_order_id';
 
 export class AccountClaimStorageError extends Error {
   readonly code: string | null;
@@ -29,35 +30,40 @@ export async function createPurchaseAccountClaim(
 ) {
   const now = input.now ?? new Date();
   const token = createAccountClaimToken();
+  const claimId = randomUUID();
   const expiresAt = new Date(now.getTime() + ACCOUNT_CLAIM_TTL_MS).toISOString();
   const { error } = await supabase.from('purchase_account_claims').insert({
+    id: claimId,
     token_hash: hashAccountClaimToken(token),
     user_id: input.userId,
     product_slug: input.product.slug,
     lemon_variant_id: input.product.lemonVariantId,
-    expires_at: expiresAt
+    expires_at: expiresAt,
+    created_at: now.toISOString(),
+    analytics_recovery_enabled: true
   });
 
   if (error) {
     throw new AccountClaimStorageError('Could not create a secure checkout claim.', error.code);
   }
 
-  return { token, expiresAt };
+  return { token, expiresAt, claimId };
 }
 
 export async function consumePurchaseAccountClaim(
   supabase: SupabaseClient,
-  input: { token: string; orderId: string; variantId: string; now?: Date }
+  input: { token: string; orderId: string; variantId: string; now?: Date; occurredAt?: string }
 ) {
   return consumeAccountClaim(input, {
-    consumeAvailableClaim: async ({ tokenHash, orderId, variantId, consumedAt }) => {
+    consumeAvailableClaim: async ({ tokenHash, orderId, variantId, consumedAt, occurredAt, createdBefore }) => {
       const { data, error } = await supabase
         .from('purchase_account_claims')
         .update({ consumed_at: consumedAt, consumed_order_id: orderId })
         .eq('token_hash', tokenHash)
         .eq('lemon_variant_id', variantId)
         .is('consumed_at', null)
-        .gt('expires_at', consumedAt)
+        .lte('created_at', createdBefore)
+        .gt('expires_at', occurredAt)
         .select(CLAIM_SELECT)
         .maybeSingle();
 

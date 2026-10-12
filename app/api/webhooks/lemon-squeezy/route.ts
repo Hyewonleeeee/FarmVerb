@@ -1,21 +1,18 @@
+import { createHash } from 'node:crypto';
 import { NextResponse } from 'next/server';
-import {
-  AccountClaimStorageError,
-  consumePurchaseAccountClaim
-} from '@/lib/checkout/accountClaim.server';
+import { consumeAccountClaimHash, hashAccountClaimToken, isAccountClaimToken } from '@/lib/checkout/accountClaim';
 import { getProductSlugByVariantId } from '@/lib/payments/lemonProducts.server';
 import {
   getLemonAccountClaimToken,
   getLemonEventName,
+  hasLemonAccountClaim,
   normalizeLemonOrder,
   verifyLemonWebhookSignature
 } from '@/lib/payments/lemonWebhook.server';
 import { LemonApiError, lemonApiPatch, lemonApiRequest } from '@/lib/payments/lemonApi.server';
-import {
-  LemonRefundVerificationError,
-  processVerifiedRefund,
-  type VerifiedRefundKind
-} from '@/lib/payments/lemonRefund';
+import { LemonRefundVerificationError, processVerifiedRefund } from '@/lib/payments/lemonRefund';
+import { createPaymentRepository } from '@/lib/payments/paymentRepository';
+import { PaymentProcessingError, processPaymentEvent } from '@/lib/payments/paymentProcessing';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
@@ -25,243 +22,83 @@ function jsonError(status: number, error: string) {
   return NextResponse.json({ ok: false, error }, { status });
 }
 
-class PurchasePersistenceError extends Error {
-  constructor() {
-    super('Failed to save purchase.');
-    this.name = 'PurchasePersistenceError';
-  }
-}
-
-async function persistPurchase(
-  supabase: ReturnType<typeof createServerSupabaseClient>,
-  order: ReturnType<typeof normalizeLemonOrder>,
-  status: string,
-  productSlug: NonNullable<ReturnType<typeof getProductSlugByVariantId>>,
-  userId?: string
-) {
-  const now = new Date().toISOString();
-  const purchaseValues = {
-    lemon_order_id: order.lemonOrderId,
-    lemon_variant_id: order.lemonVariantId,
-    product_name: order.productName,
-    buyer_email: order.buyerEmail,
-    status,
-    currency: order.currency,
-    total_cents: order.totalCents,
-    test_mode: order.testMode,
-    purchased_at: order.purchasedAt,
-    updated_at: now,
-    product_slug: productSlug,
-    ...(userId ? { user_id: userId } : {})
-  };
-
-  const { data, error } = await supabase
-    .from('purchases')
-    .upsert(purchaseValues, { onConflict: 'lemon_order_id' })
-    .select('id, lemon_order_id, product_slug, status, test_mode, purchased_at')
-    .maybeSingle();
-
-  if (error) {
-    console.error('[Lemon Webhook] Failed to persist purchase.', {
-      lemonOrderId: order.lemonOrderId,
-      code: error.code
-    });
-    throw new PurchasePersistenceError();
-  }
-
-  return data;
-}
-
-function getRefundPurchaseStatus(kind: VerifiedRefundKind) {
-  return kind === 'full' ? 'refunded' : 'partial_refund';
-}
-
 export async function POST(request: Request) {
   const webhookSecret = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET;
   const configuredStoreId = process.env.LEMON_STORE_ID?.trim();
-  if (!webhookSecret || !configuredStoreId) {
-    console.error('[Lemon Webhook] Lemon webhook secret or store ID is not configured.');
-    return jsonError(500, 'Webhook is not configured.');
-  }
+  if (!webhookSecret || !configuredStoreId) return jsonError(500, 'Webhook is not configured.');
 
   const signature = request.headers.get('x-signature');
-  if (!signature) {
-    return jsonError(401, 'Missing webhook signature.');
-  }
-
+  if (!signature) return jsonError(401, 'Missing webhook signature.');
   const rawBody = await request.text();
   if (!verifyLemonWebhookSignature(rawBody, signature, webhookSecret)) {
     return jsonError(401, 'Invalid webhook signature.');
   }
 
   let payload: unknown;
-  try {
-    payload = JSON.parse(rawBody) as unknown;
-  } catch {
-    return jsonError(400, 'Invalid webhook JSON.');
-  }
-
-  const headerEventName = request.headers.get('x-event-name');
-  const payloadEventName = getLemonEventName(payload);
-  if (!headerEventName || headerEventName !== payloadEventName) {
-    return jsonError(400, 'Webhook event name mismatch.');
-  }
-
-  if (headerEventName !== 'order_created' && headerEventName !== 'order_refunded') {
+  try { payload = JSON.parse(rawBody) as unknown; } catch { return jsonError(400, 'Invalid webhook JSON.'); }
+  const eventName = request.headers.get('x-event-name');
+  if (!eventName || eventName !== getLemonEventName(payload)) return jsonError(400, 'Webhook event name mismatch.');
+  if (eventName !== 'order_created' && eventName !== 'order_refunded') {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
   let order: ReturnType<typeof normalizeLemonOrder>;
+  try { order = normalizeLemonOrder(payload); } catch { return jsonError(400, 'Invalid order payload.'); }
+  if (order.testMode || order.storeId !== configuredStoreId) {
+    return NextResponse.json({ ok: true, ignored: true, reason: order.testMode ? 'test_mode' : 'store_mismatch' });
+  }
+
+  let eventId: string | undefined;
   try {
-    order = normalizeLemonOrder(payload);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Invalid order payload.';
-    console.error('[Lemon Webhook] Rejected malformed order payload:', message);
-    return jsonError(400, message);
-  }
-
-  const productSlug = getProductSlugByVariantId(order.lemonVariantId);
-  if (
-    order.testMode
-    || order.storeId !== configuredStoreId
-    || !order.lemonVariantId
-    || !productSlug
-  ) {
-    console.warn('[Lemon Webhook] Ignored non-Live or unmapped purchase.', {
-      lemonOrderId: order.lemonOrderId,
-      lemonVariantId: order.lemonVariantId,
-      storeMatches: order.storeId === configuredStoreId,
-      testMode: order.testMode
-    });
-    return NextResponse.json({
-      ok: true,
-      ignored: true,
-      reason: order.testMode
-        ? 'test_mode'
-        : order.storeId !== configuredStoreId
-          ? 'store_mismatch'
-          : 'unmapped_variant'
-    });
-  }
-
-  let supabase: ReturnType<typeof createServerSupabaseClient>;
-  try {
-    supabase = createServerSupabaseClient();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Supabase server client is not configured.';
-    console.error('[Lemon Webhook] Supabase configuration error:', message);
-    return jsonError(500, 'Database is not configured.');
-  }
-
-  if (headerEventName === 'order_created') {
+    const repository = createPaymentRepository(createServerSupabaseClient(), consumeAccountClaimHash);
     const claimToken = getLemonAccountClaimToken(payload);
-    let claimedUserId: string | undefined;
-
-    if (claimToken) {
-      try {
-        const claim = await consumePurchaseAccountClaim(supabase, {
-          token: claimToken,
-          orderId: order.lemonOrderId,
-          variantId: order.lemonVariantId
-        });
-
-        if (claim.status === 'linked') {
-          claimedUserId = claim.userId;
-        } else {
-          console.warn('[Lemon Webhook] Account claim was not accepted.', {
-            lemonOrderId: order.lemonOrderId,
-            reason: claim.status
+    // Acknowledge only after durable capture, including orders needing review.
+    // Neither raw webhook payloads nor plaintext account claims are stored.
+    const event = await repository.storeEvent({
+      eventKey: createHash('sha256').update(rawBody).digest('hex'),
+      eventName,
+      order,
+      claimPresent: hasLemonAccountClaim(payload),
+      claimHash: claimToken && isAccountClaimToken(claimToken) ? hashAccountClaimToken(claimToken) : null,
+      source: 'webhook'
+    });
+    eventId = event.id;
+    const result = await processPaymentEvent(event, {
+      ...repository,
+      configuredStoreId,
+      getProductSlug: getProductSlugByVariantId,
+      processRefund: async (refundOrder, recordStatus) => {
+        try {
+          await processVerifiedRefund({
+            orderId: refundOrder.lemonOrderId,
+            expectedTestMode: false,
+            configuredStoreId
+          }, {
+            getOrder: (id) => lemonApiRequest(`/orders/${encodeURIComponent(id)}`),
+            recordVerifiedRefund: (kind) => recordStatus(kind === 'full' ? 'refunded' : 'partial_refund'),
+            listLicenseKeys: (id) => lemonApiRequest(`/license-keys?${new URLSearchParams({ 'filter[order_id]': id, 'page[size]': '100' })}`),
+            disableLicenseKey: (id) => lemonApiPatch(`/license-keys/${encodeURIComponent(id)}`, {
+              data: { type: 'license-keys', id, attributes: { disabled: true } }
+            })
           });
+        } catch (error) {
+          if (error instanceof LemonRefundVerificationError) throw new PaymentProcessingError(error.code);
+          if (error instanceof LemonApiError) throw new PaymentProcessingError(`LEMON_API_${error.status}`);
+          throw error;
         }
-      } catch (error) {
-        console.error('[Lemon Webhook] Account claim verification failed.', {
-          lemonOrderId: order.lemonOrderId,
-          code: error instanceof AccountClaimStorageError ? error.code : 'UNKNOWN'
-        });
-        return jsonError(500, 'Failed to verify purchase account claim.');
       }
-    }
-
-    try {
-      const data = await persistPurchase(
-        supabase,
-        order,
-        order.status,
-        productSlug,
-        claimedUserId
-      );
-      return NextResponse.json({ ok: true, purchase: data });
-    } catch {
-      return jsonError(500, 'Failed to save purchase.');
-    }
-  }
-
-  let purchase: Awaited<ReturnType<typeof persistPurchase>> | null = null;
-
-  try {
-    const result = await processVerifiedRefund(
-      {
-        orderId: order.lemonOrderId,
-        expectedTestMode: order.testMode,
-        configuredStoreId
-      },
-      {
-        getOrder: (orderId) => lemonApiRequest(`/orders/${encodeURIComponent(orderId)}`),
-        recordVerifiedRefund: async (kind) => {
-          purchase = await persistPurchase(
-            supabase,
-            order,
-            getRefundPurchaseStatus(kind),
-            productSlug
-          );
-        },
-        listLicenseKeys: (orderId) => {
-          const query = new URLSearchParams({
-            'filter[order_id]': orderId,
-            'page[size]': '100'
-          });
-          return lemonApiRequest(`/license-keys?${query.toString()}`);
-        },
-        disableLicenseKey: (licenseId) => lemonApiPatch(
-          `/license-keys/${encodeURIComponent(licenseId)}`,
-          {
-            data: {
-              type: 'license-keys',
-              id: licenseId,
-              attributes: { disabled: true }
-            }
-          }
-        )
-      }
-    );
-
-    return NextResponse.json({
-      ok: true,
-      purchase,
-      refund: result
     });
+    if (result.state === 'busy') return jsonError(503, 'This event is being processed. Retry shortly.');
+    if (result.state === 'quarantined') {
+      console.warn('[Lemon Webhook] Payment needs review.', { eventId, lemonOrderId: order.lemonOrderId, reason: result.reason });
+    }
+    return NextResponse.json({ ok: true, eventId, state: result.state, ...(result.reason ? { reason: result.reason } : {}) });
   } catch (error) {
-    const code = error instanceof LemonRefundVerificationError
-      ? error.code
-      : error instanceof LemonApiError
-        ? `LEMON_API_${error.status}`
-        : error instanceof PurchasePersistenceError
-          ? 'PURCHASE_PERSISTENCE_FAILED'
-          : 'REFUND_PROCESSING_FAILED';
-
-    console.error('[Lemon Webhook] Refund processing failed.', {
+    console.error('[Lemon Webhook] Payment processing failed.', {
+      eventId,
       lemonOrderId: order.lemonOrderId,
-      code
+      code: error instanceof PaymentProcessingError ? error.code : 'PAYMENT_STORAGE_FAILED'
     });
-
-    if (error instanceof LemonRefundVerificationError) {
-      return jsonError(409, 'Refund could not be verified with Lemon Squeezy.');
-    }
-
-    if (error instanceof PurchasePersistenceError) {
-      return jsonError(500, 'Failed to save refunded purchase.');
-    }
-
-    return jsonError(502, 'Refund license revocation could not be completed.');
+    return jsonError(500, 'Payment processing could not be completed.');
   }
 }

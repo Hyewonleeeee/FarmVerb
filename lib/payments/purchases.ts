@@ -64,6 +64,7 @@ export type PurchaseLicense = {
   activationLimit: number | null;
   instancesCount: number;
   instances: PurchaseLicenseInstance[];
+  instancesError: string | null;
   expiresAt: string | null;
 };
 

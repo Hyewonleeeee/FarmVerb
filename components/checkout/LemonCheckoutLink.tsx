@@ -20,6 +20,7 @@ import {
   getLemonCheckoutUrlByProductName
 } from '@/lib/checkout/lemonLinks';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+import { saveCheckoutSuccessMarker } from '@/lib/checkout/lemonOverlay';
 
 type LemonCheckoutLinkProps = {
   productName: string;
@@ -32,6 +33,7 @@ type LemonCheckoutLinkProps = {
 type CheckoutSessionResponse = {
   ok?: boolean;
   checkoutUrl?: string;
+  claimId?: string;
   error?: string;
 };
 
@@ -154,6 +156,13 @@ export default function LemonCheckoutLink({
       }
 
       setConfirmationEmail(null);
+      saveCheckoutSuccessMarker({
+        productName: analyticsProduct?.productName ?? productName,
+        openedAt: Date.now(),
+        orderId: null,
+        userId: session.user.id,
+        claimId: payload?.claimId
+      });
       if (analyticsProduct) {
         trackBeginCheckout(analyticsProduct, GA4_MEASUREMENT_ID);
       }

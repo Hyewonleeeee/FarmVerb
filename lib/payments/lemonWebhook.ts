@@ -17,6 +17,7 @@ type LemonOrderAttributes = {
   total?: unknown;
   status?: unknown;
   created_at?: unknown;
+  updated_at?: unknown;
   test_mode?: unknown;
   first_order_item?: LemonOrderItem | null;
 };
@@ -44,6 +45,7 @@ export type NormalizedLemonOrder = {
   totalCents: number;
   testMode: boolean;
   purchasedAt: string;
+  updatedAt: string;
 };
 
 export function verifyLemonWebhookSignature(rawBody: string, signature: string, secret: string) {
@@ -69,6 +71,11 @@ export function getLemonAccountClaimToken(payload: unknown) {
   return typeof value === 'string' ? value.trim() : null;
 }
 
+export function hasLemonAccountClaim(payload: unknown) {
+  const envelope = payload as LemonWebhookEnvelope;
+  return Object.prototype.hasOwnProperty.call(envelope?.meta?.custom_data ?? {}, ACCOUNT_CLAIM_CUSTOM_DATA_KEY);
+}
+
 export function normalizeLemonOrder(payload: unknown): NormalizedLemonOrder {
   const envelope = payload as LemonWebhookEnvelope;
   const data = envelope?.data;
@@ -92,6 +99,7 @@ export function normalizeLemonOrder(payload: unknown): NormalizedLemonOrder {
   const status = typeof attributes?.status === 'string' ? attributes.status.trim().toLowerCase() : '';
   const purchasedAt = typeof attributes?.created_at === 'string' ? attributes.created_at : '';
   const parsedPurchasedAt = Date.parse(purchasedAt);
+  const updatedAt = typeof attributes?.updated_at === 'string' ? attributes.updated_at : purchasedAt;
   const testModeValue =
     typeof attributes?.test_mode === 'boolean'
       ? attributes.test_mode
@@ -135,6 +143,10 @@ export function normalizeLemonOrder(payload: unknown): NormalizedLemonOrder {
     throw new Error('Missing or invalid Lemon Squeezy purchase date.');
   }
 
+  if (!Number.isFinite(Date.parse(updatedAt))) {
+    throw new Error('Invalid Lemon Squeezy order update date.');
+  }
+
   if (testModeValue === null) {
     throw new Error('Missing Lemon Squeezy test mode.');
   }
@@ -149,6 +161,7 @@ export function normalizeLemonOrder(payload: unknown): NormalizedLemonOrder {
     currency,
     totalCents,
     testMode: testModeValue,
-    purchasedAt: new Date(parsedPurchasedAt).toISOString()
+    purchasedAt: new Date(parsedPurchasedAt).toISOString(),
+    updatedAt: new Date(updatedAt).toISOString()
   };
 }

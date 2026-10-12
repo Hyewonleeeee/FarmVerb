@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --experimental-strip-types --test lib/products/catalog.test.mjs lib/analytics/ecommerce.test.mjs lib/checkout/lemonOverlay.test.mjs lib/checkout/accountClaim.test.mjs lib/payments/lemonWebhook.test.mjs lib/payments/lemonRefund.test.mjs",
+    "test": "node --experimental-strip-types --test lib/products/catalog.test.mjs lib/analytics/ecommerce.test.mjs lib/analytics/purchaseRecovery.test.mjs lib/checkout/lemonOverlay.test.mjs lib/checkout/accountClaim.test.mjs lib/payments/lemonWebhook.test.mjs lib/payments/lemonRefund.test.mjs lib/payments/lemonEntitlements.test.mjs lib/payments/paymentProcessing.test.mjs lib/payments/paymentWebhookRoute.test.mjs lib/cart/store.test.mjs app/api/account/purchases/route.test.mjs scripts/payment-recovery.test.mjs supabase/migrations/paymentRecovery.test.mjs",
     "test:refund": "node --experimental-strip-types --test lib/payments/lemonRefund.test.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "payments:recovery": "node --experimental-strip-types scripts/payment-recovery.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
@@ -18,6 +19,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.9",
     "@types/node": "^22.10.1",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",

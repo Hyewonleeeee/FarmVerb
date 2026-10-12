@@ -47,27 +47,28 @@ export async function GET(request: Request) {
     return jsonError(401, 'Invalid or expired session.');
   }
 
-  const verifiedEmail = user.email.trim().toLowerCase();
-  const now = new Date().toISOString();
+  // Claim-bearing checkouts belong to their initiating account. An invalid or
+  // expired claim must never silently fall back to the billing email.
+  // Existing linked purchases remain readable even before email confirmation.
+  if (user.email_confirmed_at) {
+    const { error: claimError } = await supabase
+      .from('purchases')
+      .update({ user_id: user.id, account_link_status: 'linked', updated_at: new Date().toISOString() })
+      .is('user_id', null)
+      .eq('account_link_status', 'email_allowed')
+      .eq('buyer_email', user.email.trim().toLowerCase())
+      .in('status', [...ENTITLED_PURCHASE_STATUSES])
+      .eq('test_mode', false)
+      .in('lemon_variant_id', [...OFFICIAL_LIVE_VARIANT_IDS]);
 
-  // Only an entitled Live purchase for the official catalog can be claimed.
-  // Historical Test Mode and unmapped product rows remain for audit purposes.
-  const { error: claimError } = await supabase
-    .from('purchases')
-    .update({ user_id: user.id, updated_at: now })
-    .is('user_id', null)
-    .eq('buyer_email', verifiedEmail)
-    .in('status', [...ENTITLED_PURCHASE_STATUSES])
-    .eq('test_mode', false)
-    .in('lemon_variant_id', [...OFFICIAL_LIVE_VARIANT_IDS]);
-
-  if (claimError) {
-    console.error('[Account Purchases] Failed to link purchases.', {
-      userId: user.id,
-      code: claimError.code,
-      message: claimError.message
-    });
-    return jsonError(500, 'Failed to link purchase history.');
+    if (claimError) {
+      console.error('[Account Purchases] Failed to link purchases.', {
+        userId: user.id,
+        code: claimError.code,
+        message: claimError.message
+      });
+      return jsonError(500, 'Failed to link purchase history.');
+    }
   }
 
   const { data, error } = await supabase

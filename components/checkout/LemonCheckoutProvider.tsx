@@ -10,13 +10,14 @@ import {
   type ReactNode
 } from 'react';
 import {
-  CHECKOUT_SUCCESS_STORAGE_KEY,
   getCheckoutSuccessOrderId,
   initializeLemonSqueezy,
-  serializeCheckoutSuccessMarker,
+  loadCheckoutSuccessMarker,
+  saveCheckoutSuccessMarker,
   tryOpenLemonCheckout,
   type LemonSqueezyBrowser,
-  type LemonSqueezyEvent
+  type LemonSqueezyEvent,
+  type CheckoutSuccessMarker
 } from '@/lib/checkout/lemonOverlay';
 import { getOfficialProductByName } from '@/lib/products/catalog';
 
@@ -41,7 +42,7 @@ export function useLemonCheckout() {
 }
 
 export default function LemonCheckoutProvider({ children }: { children: ReactNode }) {
-  const pendingCheckoutRef = useRef<{ productName: string; openedAt: number } | null>(null);
+  const pendingCheckoutRef = useRef<CheckoutSuccessMarker | null>(null);
   const checkoutSuccessHandledRef = useRef(false);
 
   const handleLemonEvent = useCallback((event: LemonSqueezyEvent) => {
@@ -51,25 +52,19 @@ export default function LemonCheckoutProvider({ children }: { children: ReactNod
 
     checkoutSuccessHandledRef.current = true;
     const pendingCheckout = pendingCheckoutRef.current;
+    const orderId = getCheckoutSuccessOrderId(event);
     if (pendingCheckout) {
-      try {
-        window.sessionStorage.setItem(
-          CHECKOUT_SUCCESS_STORAGE_KEY,
-          serializeCheckoutSuccessMarker({
-            ...pendingCheckout,
-            orderId: getCheckoutSuccessOrderId(event)
-          })
-        );
-      } catch {
-        // The confirmation page can still show its bounded fallback state without session storage.
-      }
+      saveCheckoutSuccessMarker({
+        ...pendingCheckout,
+        orderId
+      });
     }
 
     const lemonWindow = getLemonWindow();
     try {
       lemonWindow?.LemonSqueezy?.Url?.Close?.();
     } finally {
-      window.location.assign('/mypage?checkout=success');
+      window.location.assign(`/mypage?checkout=success${orderId ? `&order_id=${encodeURIComponent(orderId)}` : ''}`);
     }
   }, []);
 
@@ -84,13 +79,14 @@ export default function LemonCheckoutProvider({ children }: { children: ReactNod
   const openCheckout = useCallback((checkoutUrl: string, productName: string) => {
     checkoutSuccessHandledRef.current = false;
     pendingCheckoutRef.current = {
+      ...loadCheckoutSuccessMarker(),
       productName: getOfficialProductByName(productName)?.name ?? productName,
-      openedAt: Date.now()
+      openedAt: Date.now(),
+      orderId: null
     };
+    // Persist before trying Lemon.js: hosted checkout must retain the same intent.
+    saveCheckoutSuccessMarker(pendingCheckoutRef.current);
     const opened = tryOpenLemonCheckout(checkoutUrl, getLemonWindow());
-    if (!opened) {
-      pendingCheckoutRef.current = null;
-    }
     return opened;
   }, []);
 

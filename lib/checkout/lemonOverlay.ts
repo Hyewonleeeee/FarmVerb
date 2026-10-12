@@ -19,6 +19,8 @@ export type CheckoutSuccessMarker = {
   productName: string;
   openedAt: number;
   orderId: string | null;
+  userId?: string;
+  claimId?: string;
 };
 
 type ConfirmablePurchase = {
@@ -26,17 +28,15 @@ type ConfirmablePurchase = {
   product_name: string;
   purchased_at: string;
   status: string;
+  test_mode: boolean;
 };
 
 export const CHECKOUT_SUCCESS_STORAGE_KEY = 'farmverb.checkout-success.v1';
 export const CHECKOUT_CONFIRMATION_BACKOFF_MS = [750, 1250, 2000, 3000, 4500, 6500] as const;
 
 const CHECKOUT_SUCCESS_EVENT = 'Checkout.Success';
-const RECENT_PURCHASE_TOLERANCE_MS = 5 * 60 * 1000;
-
-function normalizeProductName(productName: string) {
-  return productName.trim().toLowerCase();
-}
+const CHECKOUT_RECOVERY_MAX_AGE_MS = 72 * 60 * 60 * 1000;
+const memoryMarkers = new WeakMap<Window, CheckoutSuccessMarker>();
 
 export function getCheckoutSuccessOrderId(event: LemonSqueezyEvent) {
   if (event.event !== CHECKOUT_SUCCESS_EVENT || !event.data || typeof event.data !== 'object') {
@@ -73,10 +73,66 @@ export function parseCheckoutSuccessMarker(value: string | null): CheckoutSucces
     return {
       productName: marker.productName.trim(),
       openedAt: marker.openedAt,
-      orderId: marker.orderId ?? null
+      orderId: marker.orderId ?? null,
+      ...(typeof marker.userId === 'string' ? { userId: marker.userId } : {}),
+      ...(typeof marker.claimId === 'string' ? { claimId: marker.claimId } : {})
     };
   } catch {
     return null;
+  }
+}
+
+export function saveCheckoutSuccessMarker(marker: CheckoutSuccessMarker) {
+  if (typeof window === 'undefined') return;
+  memoryMarkers.set(window, marker);
+  for (const storageName of ['localStorage', 'sessionStorage'] as const) {
+    try {
+      window[storageName].setItem(CHECKOUT_SUCCESS_STORAGE_KEY, serializeCheckoutSuccessMarker(marker));
+    } catch {
+      // Authenticated server claim recovery handles a reload with storage blocked.
+    }
+  }
+}
+
+export function loadCheckoutSuccessMarker(userId?: string): CheckoutSuccessMarker | null {
+  if (typeof window === 'undefined') return null;
+  const candidates = [memoryMarkers.get(window) ?? null];
+  for (const storageName of ['localStorage', 'sessionStorage'] as const) {
+    try {
+      candidates.push(parseCheckoutSuccessMarker(window[storageName].getItem(CHECKOUT_SUCCESS_STORAGE_KEY)));
+    } catch {
+      // One storage backend may be unavailable while another remains usable.
+    }
+  }
+  const stored = candidates.filter((marker): marker is CheckoutSuccessMarker => Boolean(marker))
+    .filter((marker) => (!userId || !marker.userId || marker.userId === userId)
+      && marker.openedAt <= Date.now() + 60_000
+      && Date.now() - marker.openedAt <= CHECKOUT_RECOVERY_MAX_AGE_MS)
+    .sort((left, right) => right.openedAt - left.openedAt)[0] ?? null;
+  // This ID is an untrusted correlation hint only. The account API must still
+  // return the same owned live order before it confirms anything.
+  const query = new URLSearchParams(window.location?.search ?? '');
+  const orderId = query.get('order_id')?.trim();
+  if (query.get('checkout') === 'success' && orderId) {
+    // A failed storage write may leave an older checkout behind. The return ID
+    // takes precedence without borrowing that older checkout's claim identity.
+    return stored?.orderId === orderId ? stored
+      : { productName: 'Checkout', openedAt: Date.now(), orderId, ...(userId ? { userId } : {}) };
+  }
+  return stored;
+}
+
+export function clearCheckoutSuccessMarker(orderId: string) {
+  if (typeof window === 'undefined') return;
+  const marker = loadCheckoutSuccessMarker();
+  if (marker?.orderId !== orderId) return;
+  memoryMarkers.delete(window);
+  for (const storageName of ['localStorage', 'sessionStorage'] as const) {
+    try {
+      window[storageName].removeItem(CHECKOUT_SUCCESS_STORAGE_KEY);
+    } catch {
+      // The server acknowledgement prevents re-emission if local cleanup fails.
+    }
   }
 }
 
@@ -89,18 +145,13 @@ export function getConfirmedCheckoutPurchase<TPurchase extends ConfirmablePurcha
   }
 
   return purchases.find((purchase) => {
-    if (purchase.status !== 'paid' && purchase.status !== 'partial_refund') {
+    if (purchase.test_mode !== false || (purchase.status !== 'paid' && purchase.status !== 'partial_refund')) {
       return false;
     }
 
-    if (marker.orderId) {
-      return purchase.lemon_order_id === marker.orderId;
-    }
-
-    const purchasedAt = Date.parse(purchase.purchased_at);
-    return normalizeProductName(purchase.product_name) === normalizeProductName(marker.productName)
-      && Number.isFinite(purchasedAt)
-      && purchasedAt >= marker.openedAt - RECENT_PURCHASE_TOLERANCE_MS;
+    // Product/time resemblance can select a previous purchase after cancellation.
+    // Only an order ID from the overlay or authenticated claim recovery correlates.
+    return Boolean(marker.orderId) && purchase.lemon_order_id === marker.orderId;
   }) ?? null;
 }
 

@@ -30,6 +30,10 @@ type CatalogProduct = {
 
 const CART_STORAGE_PREFIX = 'farmverb_cart_v1';
 const CART_UPDATED_EVENT = 'farmverb:cart-updated';
+// A blocked browser store must not prevent cart use in this tab. Keys retain
+// the account scope, and failed writes take precedence over stale saved data.
+const memoryCarts = new Map<string, CartItem[]>();
+const unsavedCartKeys = new Set<string>();
 
 function priceOf(productName: string, fallback = 0) {
   const pricing = getProductPricing(productName);
@@ -76,7 +80,15 @@ function getStorage() {
     return null;
   }
 
-  return window.localStorage;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function copyCart(items: CartItem[]) {
+  return items.map((item) => ({ ...item }));
 }
 
 function getCartStorageKey(userId: string) {
@@ -167,26 +179,49 @@ function emitCartUpdated() {
 }
 
 function writeCartItems(userId: string, nextItems: CartItem[]) {
-  const storage = getStorage();
   const storageKey = getCartStorageKey(userId);
-  if (!storage || !storageKey) {
+  if (typeof window === 'undefined' || !storageKey) {
     return nextItems;
   }
 
-  storage.setItem(storageKey, JSON.stringify(nextItems));
+  memoryCarts.set(storageKey, copyCart(nextItems));
+  unsavedCartKeys.add(storageKey);
+  try {
+    const storage = getStorage();
+    if (storage) {
+      storage.setItem(storageKey, JSON.stringify(nextItems));
+      unsavedCartKeys.delete(storageKey);
+    }
+  } catch {
+    // Keep the current cart in memory when persistence is blocked or full.
+  }
   emitCartUpdated();
   return nextItems;
 }
 
 export function getCartItems(userId: string): CartItem[] {
-  const storage = getStorage();
   const storageKey = getCartStorageKey(userId);
-  if (!storage || !storageKey) {
+  if (typeof window === 'undefined' || !storageKey) {
     return [];
   }
 
-  const raw = storage.getItem(storageKey);
+  const fallback = () => copyCart(memoryCarts.get(storageKey) ?? []);
+  if (unsavedCartKeys.has(storageKey)) {
+    return fallback();
+  }
+
+  let raw: string | null;
+  try {
+    const storage = getStorage();
+    if (!storage) {
+      return fallback();
+    }
+    raw = storage.getItem(storageKey);
+  } catch {
+    return fallback();
+  }
   if (!raw) {
+    memoryCarts.set(storageKey, []);
     return [];
   }
 
@@ -199,6 +234,7 @@ export function getCartItems(userId: string): CartItem[] {
     const normalized = parsed
       .map((item) => normalizeCartItem(item))
       .filter((item): item is CartItem => Boolean(item));
+    memoryCarts.set(storageKey, copyCart(normalized));
 
     const shouldRewrite = normalized.length !== parsed.length || normalized.some((item, index) => !isSameCartItem(item, parsed[index] ?? {}));
 
@@ -284,10 +320,19 @@ export function removePurchasedCartItems(userId: string, productSlugs: string[])
 }
 
 export function clearCartItems(userId: string): CartItem[] {
-  const storage = getStorage();
   const storageKey = getCartStorageKey(userId);
-  if (storage && storageKey) {
-    storage.removeItem(storageKey);
+  if (typeof window !== 'undefined' && storageKey) {
+    memoryCarts.set(storageKey, []);
+    unsavedCartKeys.add(storageKey);
+    try {
+      const storage = getStorage();
+      if (storage) {
+        storage.removeItem(storageKey);
+        unsavedCartKeys.delete(storageKey);
+      }
+    } catch {
+      // Do not restore the stale persisted cart after a failed clear.
+    }
     emitCartUpdated();
   }
 

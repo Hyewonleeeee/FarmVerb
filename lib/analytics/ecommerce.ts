@@ -55,6 +55,11 @@ const GOOGLE_ADS_PURCHASE_STORAGE_PREFIX = 'farmverb.google-ads.purchase.v1';
 const PENDING_GA4_PRODUCT_EVENT_KEY = 'farmverb.ga4.pending-product-event.v1';
 const PENDING_GA4_PRODUCT_EVENT_MAX_AGE_MS = 5 * 60 * 1000;
 const GOOGLE_ADS_PRODUCTION_HOSTS = new Set(['farmverb.com', 'www.farmverb.com']);
+// A queued command is not delivery. Only a Google tag callback permits a local
+// processed marker; an independent server acknowledgement can retain that state
+// when browser storage is unavailable. Neither callback proves network receipt.
+const PURCHASE_RETRY_AFTER_MS = 15_000;
+const purchaseAttempts = new WeakMap<Window, Map<string, { startedAt: number; processed: boolean }>>();
 
 function isProductEventName(value: unknown): value is ProductEventName {
   return value === 'buy_now_click' || value === 'add_to_cart' || value === 'begin_checkout';
@@ -235,35 +240,68 @@ export function trackBeginCheckout(product: AnalyticsProduct, measurementId: str
 export function trackPurchase(
   product: AnalyticsProduct,
   purchase: PurchaseAnalyticsDetails,
-  measurementId: string
+  measurementId: string,
+  onProcessed?: () => void
 ) {
-  if (typeof window === 'undefined' || !purchase.transactionId.trim()) {
+  if (typeof window === 'undefined' || !purchase.transactionId.trim() || !measurementId.trim()
+    || !Number.isFinite(purchase.value) || purchase.value < 0 || !/^[A-Za-z]{3}$/.test(purchase.currency.trim())) {
     return false;
   }
 
   const storageKey = `${PURCHASE_STORAGE_PREFIX}:${purchase.transactionId.trim()}`;
-  try {
-    if (window.localStorage.getItem(storageKey) === 'sent') {
-      return false;
-    }
-  } catch {
-    // Tracking can continue if storage is unavailable.
-  }
-
-  const sent = sendGa4Event('purchase', {
+  return trackPurchaseCommand(storageKey, 'purchase', {
     ...buildProductEventParams(product, purchase.value, purchase.currency),
-    transaction_id: purchase.transactionId
-  }, measurementId);
+    transaction_id: purchase.transactionId.trim(),
+    send_to: measurementId.trim()
+  }, onProcessed);
+}
 
-  if (sent) {
-    try {
-      window.localStorage.setItem(storageKey, 'sent');
-    } catch {
-      // The GA event was queued even if the de-duplication marker could not be stored.
-    }
+function trackPurchaseCommand(
+  storageKey: string,
+  eventName: 'purchase' | 'conversion',
+  parameters: Record<string, unknown>,
+  onProcessed?: () => void
+) {
+  let attempts = purchaseAttempts.get(window);
+  if (!attempts) {
+    attempts = new Map();
+    purchaseAttempts.set(window, attempts);
   }
-
-  return sent;
+  const previous = attempts.get(storageKey);
+  let stored: string | null = null;
+  try {
+    stored = window.localStorage.getItem(storageKey);
+  } catch {
+    // Server acknowledgements and per-document state still provide deduplication.
+  }
+  // Preserve legacy markers so old orders are not bulk re-emitted on upgrade.
+  if (stored === 'sent' || stored === 'processed' || previous?.processed) {
+    onProcessed?.();
+    return false;
+  }
+  if (previous && Date.now() - previous.startedAt < PURCHASE_RETRY_AFTER_MS) {
+    return false;
+  }
+  const attempt = { startedAt: Date.now(), processed: false };
+  attempts.set(storageKey, attempt);
+  try {
+    return sendGoogleTagEvent(eventName, {
+      ...parameters,
+      event_callback: () => {
+        attempt.processed = true;
+        attempts.set(storageKey, attempt);
+        try {
+          window.localStorage.setItem(storageKey, 'processed');
+        } catch {
+          // onProcessed persists the acknowledgement through an authenticated API.
+        }
+        onProcessed?.();
+      }
+    });
+  } catch {
+    attempts.delete(storageKey);
+    return false;
+  }
 }
 
 export function isGoogleAdsPurchaseEligible(purchase: GoogleAdsPurchaseDetails) {
@@ -277,7 +315,8 @@ export function isGoogleAdsPurchaseEligible(purchase: GoogleAdsPurchaseDetails) 
 
 export function trackGoogleAdsPurchase(
   purchase: GoogleAdsPurchaseDetails,
-  conversionDestination: string
+  conversionDestination: string,
+  onProcessed?: () => void
 ) {
   if (
     typeof window === 'undefined'
@@ -290,28 +329,10 @@ export function trackGoogleAdsPurchase(
 
   const transactionId = purchase.transactionId.trim();
   const storageKey = `${GOOGLE_ADS_PURCHASE_STORAGE_PREFIX}:${transactionId}`;
-  try {
-    if (window.localStorage.getItem(storageKey) === 'sent') {
-      return false;
-    }
-  } catch {
-    // Google Ads also de-duplicates this conversion action by transaction_id.
-  }
-
-  const sent = sendGoogleTagEvent('conversion', {
+  return trackPurchaseCommand(storageKey, 'conversion', {
     send_to: conversionDestination.trim(),
     value: purchase.value,
     currency: purchase.currency.trim().toUpperCase(),
     transaction_id: transactionId
-  });
-
-  if (sent) {
-    try {
-      window.localStorage.setItem(storageKey, 'sent');
-    } catch {
-      // The conversion was queued even if the local de-duplication marker could not be stored.
-    }
-  }
-
-  return sent;
+  }, onProcessed);
 }

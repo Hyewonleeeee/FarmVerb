@@ -69,6 +69,7 @@ export async function POST(request: Request) {
       {
         ok: true,
         checkoutUrl,
+        claimId: claim.claimId,
         expiresAt: claim.expiresAt
       },
       { headers: PRIVATE_NO_STORE_HEADERS }

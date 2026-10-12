@@ -336,8 +336,20 @@ export async function getPurchaseLicenses(purchase: OwnedPurchase): Promise<Purc
   }
 
   const [orderItems, instanceLists] = await Promise.all([
-    getOrderItems(purchase),
-    Promise.all(licenses.map((license) => getLicenseInstancesForKey(license.id)))
+    // Names are optional metadata; a failure must not hide verified license keys.
+    getOrderItems(purchase).catch(() => []),
+    Promise.all(licenses.map(async (license) => {
+      try {
+        return { instances: await getLicenseInstancesForKey(license.id), error: null };
+      } catch (error) {
+        return {
+          instances: [],
+          error: error instanceof EntitlementError
+            ? error.message
+            : 'Could not load license devices. Please try again.'
+        };
+      }
+    }))
   ]);
   const orderItemsById = new Map(orderItems.map((item) => [item.id, item]));
 
@@ -356,7 +368,8 @@ export async function getPurchaseLicenses(purchase: OwnedPurchase): Promise<Purc
       status: license.attributes.status ?? 'unknown',
       activationLimit: license.attributes.activation_limit ?? null,
       instancesCount: license.attributes.instances_count ?? 0,
-      instances: instanceLists[index],
+      instances: instanceLists[index].instances,
+      instancesError: instanceLists[index].error,
       expiresAt: license.attributes.expires_at ?? null
     };
   });

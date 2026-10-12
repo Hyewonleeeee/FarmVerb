@@ -6,9 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import AuthPageHeader from '@/components/auth/AuthPageHeader';
 import MyProductsAccordion from '@/components/account/MyProductsAccordion';
-import { trackGoogleAdsPurchase, trackPurchase } from '@/lib/analytics/ecommerce';
-import { GA4_MEASUREMENT_ID, GOOGLE_ADS_PURCHASE_SEND_TO } from '@/lib/analytics/config';
-import { getAnalyticsProductBySlug } from '@/lib/analytics/products';
+import { recoverPurchaseAnalytics } from '@/lib/analytics/purchaseRecovery.client';
 import { getPaymentCopy, type PaymentLocale } from '@/lib/i18n/payment';
 import {
   isEntitledPurchaseStatus,
@@ -20,14 +18,15 @@ import {
   type PurchaseDownloadUrlResponse,
   type PurchaseLicense,
   type PurchaseLicenseInstanceDeactivateResponse,
+  type PurchaseLicenseInstancesResponse,
   type PurchaseLicensesResponse,
 } from '@/lib/payments/purchases';
 import { getLemonMyOrdersUrl } from '@/lib/checkout/lemonLinks';
 import {
   CHECKOUT_CONFIRMATION_BACKOFF_MS,
-  CHECKOUT_SUCCESS_STORAGE_KEY,
   getConfirmedCheckoutPurchase,
-  parseCheckoutSuccessMarker
+  loadCheckoutSuccessMarker,
+  saveCheckoutSuccessMarker
 } from '@/lib/checkout/lemonOverlay';
 import { getCatalogProductBySlug, removePurchasedCartItems } from '@/lib/cart/store';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -185,6 +184,7 @@ export default function MyPage() {
   const [activeLemonDownloadId, setActiveLemonDownloadId] = useState<string | null>(null);
   const [copiedLicenseId, setCopiedLicenseId] = useState<string | null>(null);
   const [activeDeviceActionId, setActiveDeviceActionId] = useState<string | null>(null);
+  const [activeDeviceRetryId, setActiveDeviceRetryId] = useState<string | null>(null);
   const [deviceMessages, setDeviceMessages] = useState<Record<string, DeviceMessage>>({});
 
   const emailVerified = Boolean(user?.email_confirmed_at);
@@ -193,6 +193,10 @@ export default function MyPage() {
     const supabase = createBrowserSupabaseClient();
     let mounted = true;
     let checkoutPollTimeoutId: number | null = null;
+    let recoveryContext: { user: User; accessToken: string } | null = null;
+    let recoveryRunning = false;
+    let displayedOrderIds = new Set<string>();
+    let checkoutWasConfirmed = false;
 
     const loadProfile = async (currentUser: User) => {
       const { data, error } = await supabase
@@ -339,14 +343,18 @@ export default function MyPage() {
 
         const loadedPurchases = payload?.purchases ?? [];
         setPurchases(loadedPurchases);
-        removePurchasedCartItems(
-          currentUser.id,
-          loadedPurchases
-            .filter((purchase) =>
-              isEntitledPurchaseStatus(purchase.status) && Boolean(purchase.product_slug)
-            )
-            .map((purchase) => purchase.product_slug as string)
-        );
+        try {
+          removePurchasedCartItems(
+            currentUser.id,
+            loadedPurchases
+              .filter((purchase) =>
+                isEntitledPurchaseStatus(purchase.status) && Boolean(purchase.product_slug)
+              )
+              .map((purchase) => purchase.product_slug as string)
+          );
+        } catch {
+          // Browser cart cleanup must not change verified purchase results.
+        }
         setPurchasesMessage('');
         if (loadEntitlements) {
           void loadPurchaseEntitlements(loadedPurchases, accessToken);
@@ -374,47 +382,19 @@ export default function MyPage() {
       accessToken: string,
       initialPurchases: AccountPurchase[]
     ) => {
-      let marker: ReturnType<typeof parseCheckoutSuccessMarker> = null;
-      try {
-        marker = parseCheckoutSuccessMarker(
-          window.sessionStorage.getItem(CHECKOUT_SUCCESS_STORAGE_KEY)
-        );
-      } catch {
-        marker = null;
-      }
-
-      const finishConfirmation = (confirmedPurchase: AccountPurchase) => {
-        const analyticsProduct = confirmedPurchase.product_slug
-          ? getAnalyticsProductBySlug(confirmedPurchase.product_slug)
-          : null;
-        if (analyticsProduct) {
-          trackPurchase(analyticsProduct, {
-            transactionId: confirmedPurchase.lemon_order_id,
-            value: confirmedPurchase.total_cents / 100,
-            currency: confirmedPurchase.currency
-          }, GA4_MEASUREMENT_ID);
-        }
-
-        trackGoogleAdsPurchase({
-          transactionId: confirmedPurchase.lemon_order_id,
-          value: confirmedPurchase.total_cents / 100,
-          currency: confirmedPurchase.currency,
-          status: confirmedPurchase.status,
-          testMode: confirmedPurchase.test_mode
-        }, GOOGLE_ADS_PURCHASE_SEND_TO);
-
-        try {
-          window.sessionStorage.removeItem(CHECKOUT_SUCCESS_STORAGE_KEY);
-        } catch {
-          // Storage availability does not affect the verified purchase response.
-        }
+      if (checkoutWasConfirmed) return;
+      const finishConfirmation = () => {
+        // Product access is confirmed independently of analytics. Recovery keeps
+        // its marker/claim until Google tag callbacks have been acknowledged.
         window.history.replaceState(window.history.state, '', '/mypage');
         setCheckoutConfirmationStatus('idle');
+        checkoutWasConfirmed = true;
       };
 
+      let marker = loadCheckoutSuccessMarker(currentUser.id);
       const initialConfirmedPurchase = getConfirmedCheckoutPurchase(initialPurchases, marker);
       if (initialConfirmedPurchase) {
-        finishConfirmation(initialConfirmedPurchase);
+        finishConfirmation();
         return;
       }
 
@@ -428,24 +408,68 @@ export default function MyPage() {
           loadEntitlements: false,
           surfaceErrors: false
         });
+        await retryPurchaseRecovery();
+        if (!mounted || recoveryContext?.user.id !== currentUser.id) return;
+        if (checkoutWasConfirmed) {
+          finishConfirmation();
+          if (latestPurchases) void loadPurchaseEntitlements(latestPurchases, accessToken);
+          return;
+        }
+        marker = loadCheckoutSuccessMarker(currentUser.id);
         const confirmedPurchase = latestPurchases
           ? getConfirmedCheckoutPurchase(latestPurchases, marker)
           : null;
         if (confirmedPurchase && latestPurchases) {
-          finishConfirmation(confirmedPurchase);
+          displayedOrderIds = new Set(latestPurchases.map((purchase) => purchase.lemon_order_id));
+          finishConfirmation();
           void loadPurchaseEntitlements(latestPurchases, accessToken);
           return;
         }
       }
 
-      if (mounted) {
+      if (mounted && !checkoutWasConfirmed) {
         setCheckoutConfirmationStatus('delayed');
       }
     };
 
+    const retryPurchaseRecovery = async () => {
+      if (!mounted || !recoveryContext || recoveryRunning) return;
+      const context = recoveryContext;
+      const initialMarker = loadCheckoutSuccessMarker(context.user.id);
+      recoveryRunning = true;
+      try {
+        const conversions = await recoverPurchaseAnalytics(context.accessToken);
+        if (!mounted || recoveryContext?.user.id !== context.user.id) return;
+        const confirmed = conversions.find((conversion) => initialMarker?.claimId === conversion.claimId
+          || (initialMarker?.orderId && initialMarker.orderId === conversion.orderId));
+        if (confirmed) {
+          if (confirmed && initialMarker && loadCheckoutSuccessMarker(context.user.id)) {
+            saveCheckoutSuccessMarker({ ...initialMarker, orderId: confirmed.orderId });
+          }
+          checkoutWasConfirmed = true;
+          setCheckoutConfirmationStatus('idle');
+          window.history.replaceState(window.history.state, '', '/mypage');
+        }
+        // A late webhook can make the product available after the short success
+        // poll has ended. Refresh only when a newly recovered order appears.
+        if (conversions.some((conversion) => !displayedOrderIds.has(conversion.orderId))) {
+          const rows = await loadPurchases(context.user, context.accessToken, { surfaceErrors: false });
+          if (rows) displayedOrderIds = new Set(rows.map((purchase) => purchase.lemon_order_id));
+        }
+      } finally {
+        recoveryRunning = false;
+      }
+    };
+
     const loadDashboardData = async (currentUser: User, accessToken: string) => {
+      if (recoveryContext && recoveryContext.user.id !== currentUser.id) {
+        checkoutWasConfirmed = false;
+        checkoutConfirmationStartedRef.current = false;
+      }
+      recoveryContext = { user: currentUser, accessToken };
       const shouldConfirmCheckout = !checkoutConfirmationStartedRef.current
-        && new URLSearchParams(window.location.search).get('checkout') === 'success';
+        && (new URLSearchParams(window.location.search).get('checkout') === 'success'
+          || Boolean(loadCheckoutSuccessMarker(currentUser.id)?.orderId));
       if (shouldConfirmCheckout) {
         checkoutConfirmationStartedRef.current = true;
         setActiveTab('products');
@@ -456,10 +480,13 @@ export default function MyPage() {
         loadProfile(currentUser),
         loadPurchases(currentUser, accessToken)
       ]);
+      if (loadedPurchases) displayedOrderIds = new Set(loadedPurchases.map((purchase) => purchase.lemon_order_id));
 
       if (mounted) {
         setIsLoading(false);
       }
+
+      await retryPurchaseRecovery();
 
       if (shouldConfirmCheckout) {
         void confirmCheckoutPurchase(currentUser, accessToken, loadedPurchases ?? []);
@@ -485,11 +512,21 @@ export default function MyPage() {
     };
 
     void checkSession();
+    const retryWhenVisible = () => {
+      if (document.visibilityState !== 'hidden') void retryPurchaseRecovery();
+    };
+    const recoveryInterval = window.setInterval(retryWhenVisible, 30_000);
+    window.addEventListener('online', retryWhenVisible);
+    window.addEventListener('focus', retryWhenVisible);
+    window.addEventListener('farmverb-ga-ready', retryWhenVisible);
 
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
+        recoveryContext = null;
+        checkoutWasConfirmed = false;
+        checkoutConfirmationStartedRef.current = false;
         setUser(null);
         setProfile(null);
         setPurchases([]);
@@ -504,6 +541,11 @@ export default function MyPage() {
 
     return () => {
       mounted = false;
+      recoveryContext = null;
+      window.clearInterval(recoveryInterval);
+      window.removeEventListener('online', retryWhenVisible);
+      window.removeEventListener('focus', retryWhenVisible);
+      window.removeEventListener('farmverb-ga-ready', retryWhenVisible);
       if (checkoutPollTimeoutId !== null) {
         window.clearTimeout(checkoutPollTimeoutId);
       }
@@ -567,6 +609,66 @@ export default function MyPage() {
       }, 1400);
     } catch {
       setDownloadMessage(paymentCopy.licenses.copyFailed);
+    }
+  };
+
+  const handleRetryLicenseDevices = async (purchaseId: string, licenseId: string) => {
+    const retryId = `${purchaseId}:${licenseId}`;
+    setActiveDeviceRetryId(retryId);
+
+    const updateDevices = (instances: PurchaseLicense['instances'], error: string | null) => {
+      setPurchaseEntitlements((current) => {
+        const currentPurchase = current[purchaseId];
+        if (!currentPurchase) {
+          return current;
+        }
+
+        return {
+          ...current,
+          [purchaseId]: {
+            ...currentPurchase,
+            licenses: currentPurchase.licenses.map((license) => license.id === licenseId
+              ? {
+                  ...license,
+                  instances,
+                  instancesCount: error ? license.instancesCount : instances.length,
+                  instancesError: error
+                }
+              : license)
+          }
+        };
+      });
+    };
+
+    try {
+      const supabase = createBrowserSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        updateDevices([], paymentCopy.download.loginAgain);
+        return;
+      }
+
+      const response = await fetch(
+        `/api/account/purchases/${encodeURIComponent(purchaseId)}/licenses/${encodeURIComponent(licenseId)}/instances`,
+        {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          cache: 'no-store'
+        }
+      );
+      const payload = (await response.json().catch(() => null)) as
+        | PurchaseLicenseInstancesResponse
+        | AccountApiError
+        | null;
+      if (!response.ok || !payload || !('instances' in payload)) {
+        updateDevices([], (payload as AccountApiError | null)?.error ?? 'Could not load license devices.');
+        return;
+      }
+
+      updateDevices(payload.instances, null);
+    } catch {
+      updateDevices([], 'Could not connect to license services.');
+    } finally {
+      setActiveDeviceRetryId(null);
     }
   };
 
@@ -646,7 +748,7 @@ export default function MyPage() {
             ...currentPurchase,
             licenses: currentPurchase.licenses.map((license) =>
               license.id === licenseId
-                ? { ...license, instances: payload.instances, instancesCount: payload.instances.length }
+                ? { ...license, instances: payload.instances, instancesCount: payload.instances.length, instancesError: null }
                 : license
             )
           }
@@ -833,6 +935,7 @@ export default function MyPage() {
                             (total, license) => total + license.instances.length,
                             0
                           ) ?? 0;
+                          const hasDeviceError = entitlement?.licenses.some((license) => Boolean(license.instancesError));
                           const isBundle = purchase.product_slug === 'nebula-series'
                             || purchase.product_slug === 'organic-series'
                             || purchase.product_name.trim().toLowerCase().endsWith('bundle');
@@ -953,7 +1056,7 @@ export default function MyPage() {
                                   <MyProductsAccordion
                                     sectionId={`purchase-${purchase.id}-devices`}
                                     title="Manage Devices"
-                                    count={entitlement && !entitlement.loading && !entitlement.licenseError
+                                    count={entitlement && !entitlement.loading && !entitlement.licenseError && !hasDeviceError
                                       ? deviceCount
                                       : undefined}
                                   >
@@ -979,7 +1082,21 @@ export default function MyPage() {
                                                 <p>Devices associated with this license.</p>
                                               </div>
 
-                                              {license.instances.length > 0 ? (
+                                              {license.instancesError ? (
+                                                <div>
+                                                  <p className="mypage-entitlement-message is-error" role="status">
+                                                    {license.instancesError}
+                                                  </p>
+                                                  <button
+                                                    type="button"
+                                                    className="auth-submit auth-submit-secondary mypage-small-button"
+                                                    onClick={() => void handleRetryLicenseDevices(purchase.id, license.id)}
+                                                    disabled={activeDeviceRetryId !== null || activeDeviceActionId !== null}
+                                                  >
+                                                    {activeDeviceRetryId === deviceMessageId ? 'Retrying...' : 'Retry devices'}
+                                                  </button>
+                                                </div>
+                                              ) : license.instances.length > 0 ? (
                                                 <div className="mypage-device-list">
                                                   {license.instances.map((instance) => {
                                                     const actionId = `${purchase.id}:${license.id}:${instance.identifier}`;
