@@ -1,4 +1,6 @@
 -- New checkouts opt in explicitly. Existing/historical orders are never replayed.
+begin;
+
 alter table public.purchase_account_claims
   add column if not exists analytics_recovery_enabled boolean not null default false,
   add column if not exists ga4_processed_at timestamptz,
@@ -37,3 +39,4 @@ revoke all on function public.lease_purchase_analytics(uuid, uuid, uuid) from pu
 grant execute on function public.lease_purchase_analytics(uuid, uuid, uuid) to service_role;
 
 notify pgrst, 'reload schema';
+commit;

@@ -95,7 +95,7 @@ export async function runRecovery(options, dependencies) {
 
 export function createRecoveryDependencies(env = process.env) {
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
-  const secret = env.SUPABASE_SECRET_KEY ?? env.SUPABASE_SERVICE_ROLE_KEY;
+  const secret = env.SUPABASE_SECRET_KEY?.trim() || env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   const apiKey = env.LEMON_API_KEY;
   const storeId = env.LEMON_STORE_ID?.trim();
   if (!url || !secret) throw new Error('Supabase server credentials are required.');

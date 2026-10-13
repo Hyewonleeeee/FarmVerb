@@ -49,9 +49,8 @@ before(async () => {
     }
     await db.exec(readFileSync(new URL(file, directory), 'utf8'));
   }
-  // Supabase's pre-existing service-role grants, represented in this test DB.
-  await db.exec(`grant usage on schema public to anon, authenticated, service_role;
-    grant all on public.purchases, public.purchase_account_claims to service_role;`);
+  // Use only the privileges installed by the migrations. Injected grants here
+  // would hide missing service-role ACLs in a fresh or differently configured DB.
 });
 
 after(async () => { await db.close(); });
@@ -103,6 +102,10 @@ test('claim review cannot silently become email eligible; verified claim may fil
   const first = await save(order('claim-review'), 'paid', null, 'claim_review');
   assert.equal(first.user_id, null);
   assert.equal((await save(order('claim-review'), 'paid', null, 'email_allowed')).account_link_status, 'claim_review');
+  await db.query(`insert into public.purchase_account_claims
+    (token_hash,user_id,product_slug,lemon_variant_id,expires_at,consumed_at,consumed_order_id)
+    values (encode(gen_random_bytes(32),'hex'),$1,'boseong-green-tea','2147845',
+      now()+interval '1 day',now(),'claim-review')`, [owner]);
   const linked = await save(order('claim-review'), 'paid', owner, 'linked');
   assert.equal(linked.user_id, owner);
   assert.equal(linked.account_link_status, 'linked');

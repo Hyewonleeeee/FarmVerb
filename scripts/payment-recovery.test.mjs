@@ -62,6 +62,36 @@ test('status dependencies do not require Lemon credentials and perform no networ
   assert.doesNotThrow(() => createRecoveryDependencies({ NEXT_PUBLIC_SUPABASE_URL: 'https://example.invalid', SUPABASE_SERVICE_ROLE_KEY: 'local-test-only-key' }));
 });
 
+test('recovery Supabase falls back for blank primary keys and prefers a nonblank primary key', async (t) => {
+  const requests = [];
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    requests.push({ url: String(url), headers: new Headers(options.headers) });
+    return new Response('[]', { status: 200, headers: { 'Content-Type': 'application/json' } });
+  });
+  for (const primary of [undefined, '', ' \t\n', '  synthetic-primary-key  ']) {
+    const dependencies = createRecoveryDependencies({
+      NEXT_PUBLIC_SUPABASE_URL: 'https://example.invalid',
+      SUPABASE_SECRET_KEY: primary,
+      SUPABASE_SERVICE_ROLE_KEY: '  synthetic-legacy-key  '
+    });
+    await dependencies.listEvents({});
+    const request = requests.at(-1);
+    assert.equal(new URL(request.url).hostname, 'example.invalid');
+    const expected = primary?.trim() ? 'synthetic-primary-key' : 'synthetic-legacy-key';
+    assert.equal(request.headers.get('apikey'), expected);
+    assert.equal(request.headers.get('authorization'), `Bearer ${expected}`);
+  }
+  assert.equal(requests.length, 4);
+});
+
+test('recovery Supabase fails before requests when both keys are missing or blank', () => {
+  for (const keys of [{}, { SUPABASE_SECRET_KEY: '', SUPABASE_SERVICE_ROLE_KEY: ' \n' }]) {
+    assert.throws(() => createRecoveryDependencies({
+      NEXT_PUBLIC_SUPABASE_URL: 'https://example.invalid', ...keys
+    }), /Supabase server credentials are required/);
+  }
+});
+
 test('conflicting signature-verified claim hashes require review instead of choosing an owner', async () => {
   const { writes, deps } = makeDeps({ compareOrder: async () => ({ purchase: null, events: [event, { ...event, claim_hash: 'b'.repeat(64) }] }) });
   await runRecovery(parseRecoveryArgs(['reconcile', '--order-id', '123', '--apply']), deps);

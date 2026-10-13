@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --experimental-strip-types --test lib/products/catalog.test.mjs lib/analytics/ecommerce.test.mjs lib/analytics/purchaseRecovery.test.mjs lib/checkout/lemonOverlay.test.mjs lib/checkout/accountClaim.test.mjs lib/payments/lemonWebhook.test.mjs lib/payments/lemonRefund.test.mjs lib/payments/lemonEntitlements.test.mjs lib/payments/paymentProcessing.test.mjs lib/payments/paymentWebhookRoute.test.mjs lib/cart/store.test.mjs app/api/account/purchases/route.test.mjs scripts/payment-recovery.test.mjs supabase/migrations/paymentRecovery.test.mjs",
+    "test": "node --experimental-strip-types --test lib/products/catalog.test.mjs lib/analytics/ecommerce.test.mjs lib/analytics/purchaseRecovery.test.mjs lib/checkout/lemonOverlay.test.mjs lib/checkout/accountClaim.test.mjs lib/payments/lemonWebhook.test.mjs lib/payments/lemonRefund.test.mjs lib/payments/lemonEntitlements.test.mjs lib/payments/paymentProcessing.test.mjs lib/payments/paymentWebhookRoute.test.mjs lib/cart/store.test.mjs app/api/account/purchases/route.test.mjs lib/supabase/server.test.mjs scripts/payment-recovery.test.mjs supabase/migrations/paymentRecovery.test.mjs supabase/migrations/paymentCompatibility.test.mjs",
     "test:refund": "node --experimental-strip-types --test lib/payments/lemonRefund.test.mjs",
     "typecheck": "tsc --noEmit",
     "payments:recovery": "node --experimental-strip-types scripts/payment-recovery.mjs"
