@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import GoogleAnalyticsPageViews from '@/components/analytics/GoogleAnalyticsPageViews';
+import SignupConversionRecovery from '@/components/analytics/SignupConversionRecovery';
 import LemonCheckoutProvider from '@/components/checkout/LemonCheckoutProvider';
 import { GA4_MEASUREMENT_ID, GOOGLE_ADS_ID } from '@/lib/analytics/config';
 import './globals.css';
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body className="font-vars">
         <LemonCheckoutProvider>{children}</LemonCheckoutProvider>
         <GoogleAnalyticsPageViews measurementId={GA4_MEASUREMENT_ID} />
+        <SignupConversionRecovery />
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA4_MEASUREMENT_ID}`}
           strategy="afterInteractive"

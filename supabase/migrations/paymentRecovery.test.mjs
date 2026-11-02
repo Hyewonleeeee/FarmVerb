@@ -32,8 +32,14 @@ before(async () => {
     create role authenticated;
     create role service_role bypassrls;
     create schema auth;
-    create table auth.users (id uuid primary key);
-    insert into auth.users values ('${owner}'), ('${other}');
+    create table auth.users (
+      id uuid primary key,
+      created_at timestamptz not null default now(),
+      email_confirmed_at timestamptz,
+      raw_app_meta_data jsonb not null default '{}'::jsonb
+    );
+    insert into auth.users (id, email_confirmed_at)
+      values ('${owner}', now()), ('${other}', now());
   `);
   const directory = new URL('./', import.meta.url);
   const files = readdirSync(directory).filter(file => file.endsWith('.sql')).sort();

@@ -38,8 +38,14 @@ async function database({ upgraded = false, asService = true } = {}) {
   const db = new PGlite({ extensions: { pgcrypto } });
   await db.exec(`
     create role anon; create role authenticated; create role service_role bypassrls;
-    create schema auth; create table auth.users (id uuid primary key);
-    insert into auth.users values ('${owner}'), ('${billingUser}');
+    create schema auth; create table auth.users (
+      id uuid primary key,
+      created_at timestamptz not null default now(),
+      email_confirmed_at timestamptz,
+      raw_app_meta_data jsonb not null default '{}'::jsonb
+    );
+    insert into auth.users (id, email_confirmed_at)
+      values ('${owner}', now()), ('${billingUser}', now());
     grant usage on schema public to anon, authenticated, service_role;
   `);
   for (const file of baselineFiles) await db.exec(migrationSql(file));
@@ -351,7 +357,7 @@ test('restrictive RLS still denies browser reads/writes if historical permissive
 test('account deletion still performs FK SET NULL and leaves purchases safely unclaimable', async () => {
   const deletedUser = '10000000-0000-4000-8000-000000000003';
   await upgraded.exec('reset role');
-  try { await upgraded.query('insert into auth.users values($1)', [deletedUser]); }
+  try { await upgraded.query('insert into auth.users (id, email_confirmed_at) values($1, now())', [deletedUser]); }
   finally { await upgraded.exec('set role service_role'); }
   await save(upgraded, order('deleted-owner'), 'paid', deletedUser, 'linked');
   await upgraded.exec('reset role');
