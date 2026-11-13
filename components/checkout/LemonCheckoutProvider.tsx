@@ -41,7 +41,13 @@ export function useLemonCheckout() {
   return useContext(LemonCheckoutContext);
 }
 
-export default function LemonCheckoutProvider({ children }: { children: ReactNode }) {
+export default function LemonCheckoutProvider({
+  children,
+  enabled = true
+}: {
+  children: ReactNode;
+  enabled?: boolean;
+}) {
   const pendingCheckoutRef = useRef<CheckoutSuccessMarker | null>(null);
   const checkoutSuccessHandledRef = useRef(false);
 
@@ -73,10 +79,16 @@ export default function LemonCheckoutProvider({ children }: { children: ReactNod
   }, [handleLemonEvent]);
 
   useEffect(() => {
-    initialize();
-  }, [initialize]);
+    if (enabled) {
+      initialize();
+    }
+  }, [enabled, initialize]);
 
   const openCheckout = useCallback((checkoutUrl: string, productName: string) => {
+    if (!enabled) {
+      return false;
+    }
+
     checkoutSuccessHandledRef.current = false;
     pendingCheckoutRef.current = {
       ...loadCheckoutSuccessMarker(),
@@ -88,18 +100,20 @@ export default function LemonCheckoutProvider({ children }: { children: ReactNod
     saveCheckoutSuccessMarker(pendingCheckoutRef.current);
     const opened = tryOpenLemonCheckout(checkoutUrl, getLemonWindow());
     return opened;
-  }, []);
+  }, [enabled]);
 
   return (
     <LemonCheckoutContext.Provider value={{ openCheckout }}>
       {children}
-      <Script
-        id="farmverb-lemon-squeezy"
-        src={LEMON_SCRIPT_URL}
-        strategy="afterInteractive"
-        onLoad={initialize}
-        onReady={initialize}
-      />
+      {enabled ? (
+        <Script
+          id="farmverb-lemon-squeezy"
+          src={LEMON_SCRIPT_URL}
+          strategy="afterInteractive"
+          onLoad={initialize}
+          onReady={initialize}
+        />
+      ) : null}
     </LemonCheckoutContext.Provider>
   );
 }

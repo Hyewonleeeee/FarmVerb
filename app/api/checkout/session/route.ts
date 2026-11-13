@@ -8,6 +8,7 @@ import {
 } from '@/lib/checkout/accountClaim.server';
 import { getOfficialProductByName } from '@/lib/products/catalog';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { isBlackFriday2026PreviewEnvironment } from '@/lib/campaigns/blackFriday2026';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,10 @@ function getBearerToken(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (isBlackFriday2026PreviewEnvironment()) {
+    return jsonError(403, 'Checkout is disabled in this design preview.');
+  }
+
   const accessToken = getBearerToken(request);
   if (!accessToken) {
     return jsonError(401, 'Authentication required.');

@@ -6,6 +6,7 @@ import {
   useId,
   useState
 } from 'react';
+import { useBlackFridayPreview } from '@/components/campaigns/BlackFridayPreviewProvider';
 import CheckoutAccountConfirmationModal from '@/components/checkout/CheckoutAccountConfirmationModal';
 import { useLemonCheckout } from '@/components/checkout/LemonCheckoutProvider';
 import { GA4_MEASUREMENT_ID } from '@/lib/analytics/config';
@@ -47,6 +48,7 @@ export default function LemonCheckoutLink({
   ariaLabel
 }: LemonCheckoutLinkProps) {
   const { openCheckout } = useLemonCheckout();
+  const { enabled: blackFridayPreview } = useBlackFridayPreview();
   const modalId = useId();
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
   const [isPreparingCheckout, setIsPreparingCheckout] = useState(false);
@@ -175,6 +177,21 @@ export default function LemonCheckoutLink({
       setIsPreparingCheckout(false);
     }
   };
+
+  if (blackFridayPreview) {
+    return (
+      <button
+        type="button"
+        className={className}
+        disabled
+        title="Black Friday design preview — checkout disabled"
+        aria-label={ariaLabel ?? `${productName} checkout disabled in preview`}
+        data-black-friday-checkout-disabled="true"
+      >
+        {label}
+      </button>
+    );
+  }
 
   if (!checkoutUrl) {
     return (
