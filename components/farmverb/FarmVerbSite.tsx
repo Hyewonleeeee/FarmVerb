@@ -15,6 +15,7 @@ import {
   BlackFridaySaleSection
 } from '@/components/campaigns/BlackFridayCampaign';
 import { useBlackFridayPreview } from '@/components/campaigns/BlackFridayPreviewProvider';
+import { getCampaignPriceByProductName } from '@/lib/campaigns/blackFridayPricing';
 import BlackFridayPurchasePanel, { BlackFridayPrice } from '@/components/campaigns/BlackFridayPurchasePanel';
 import LemonCheckoutLink from '@/components/checkout/LemonCheckoutLink';
 import { GA4_MEASUREMENT_ID } from '@/lib/analytics/config';
@@ -206,8 +207,8 @@ function ProductPrice({
   productName: string;
   className?: string;
 }) {
-  const { enabled: blackFridayPreview } = useBlackFridayPreview();
-  if (blackFridayPreview) {
+  const { saleActive, campaignEnabled, phase } = useBlackFridayPreview();
+  if (saleActive) {
     return <BlackFridayPrice productName={productName} compact />;
   }
 
@@ -216,7 +217,9 @@ function ProductPrice({
     return null;
   }
 
-  const mainPrice = getMainProductPrice(pricing);
+  const campaignPrice = campaignEnabled ? getCampaignPriceByProductName(productName, phase) : null;
+  const mainPrice = campaignPrice?.price ?? getMainProductPrice(pricing);
+  const showComparison = !(campaignEnabled && phase === 'after');
   const regularPrice = pricing.regularPrice;
   const limitedSalePrice = getLimitedSalePrice(pricing);
 
@@ -230,14 +233,14 @@ function ProductPrice({
           {formatUsdPrice(mainPrice)} <span className="product-price-currency">USD</span>
         </strong>
       </div>
-      <div className="product-price-meta">
+      {showComparison ? <div className="product-price-meta">
         {regularPrice > mainPrice ? (
           <span className="product-price-regular">Regular Price {formatUsdPrice(regularPrice)}</span>
         ) : null}
         {limitedSalePrice ? (
           <span className="product-price-limited">Limited Promo {formatUsdPrice(limitedSalePrice)} USD</span>
         ) : null}
-      </div>
+      </div> : null}
     </div>
   );
 }
@@ -1556,7 +1559,8 @@ function ExploreMoreProductsSection({
   onAddToCart: (productName: string) => void;
   hasCheckoutUrl: (productName: string) => boolean;
 }) {
-  const { enabled: blackFridayPreview } = useBlackFridayPreview();
+  const { enabled: blackFridayPreview, campaignEnabled, clockReady } = useBlackFridayPreview();
+  const cartUnavailable = blackFridayPreview || (campaignEnabled && !clockReady);
 
   if (cards.length === 0) {
     return null;
@@ -1603,7 +1607,7 @@ function ExploreMoreProductsSection({
                     <button
                       type="button"
                       className="plugin-action plugin-action-cart"
-                      disabled={blackFridayPreview}
+                      disabled={cartUnavailable}
                       title={blackFridayPreview ? 'Black Friday design preview — cart disabled' : undefined}
                       onClick={() => onAddToCart(card.productName)}
                     >
@@ -1632,7 +1636,8 @@ function ProductCommercialSections({
   onAddToCart: (productName: string) => void;
   hasCheckoutUrl: (productName: string) => boolean;
 }) {
-  const { enabled: blackFridayPreview } = useBlackFridayPreview();
+  const { enabled: blackFridayPreview, saleActive, campaignEnabled, phase, clockReady } = useBlackFridayPreview();
+  const cartUnavailable = blackFridayPreview || (campaignEnabled && !clockReady);
   const checkoutReady = hasCheckoutUrl(details.productName);
   const primaryManual = manuals[0] ?? null;
   const youtubeVideoId = getProductYoutubeVideoId(details.productName);
@@ -1656,8 +1661,8 @@ function ProductCommercialSections({
           <p className="product-story-subhead">{details.subhead}</p>
           <p className="product-story-body">{details.body}</p>
           <div className="product-story-commerce">
-            {blackFridayPreview ? (
-              <BlackFridayPurchasePanel productName={details.productName} />
+            {saleActive ? (
+              <BlackFridayPurchasePanel productName={details.productName} onAddToCart={onAddToCart} />
             ) : (
               <>
                 <ProductPrice productName={details.productName} className="product-story-price" />
@@ -1666,7 +1671,7 @@ function ProductCommercialSections({
                     <button
                       type="button"
                       className="plugin-action plugin-action-cart"
-                      disabled={blackFridayPreview}
+                      disabled={cartUnavailable}
                       title={blackFridayPreview ? 'Black Friday design preview — cart disabled' : undefined}
                       onClick={() => onAddToCart(details.productName)}
                     >
@@ -2016,7 +2021,12 @@ function BundleContentsSection({
 }
 
 export default function FarmVerbSite() {
-  const { enabled: blackFridayPreview } = useBlackFridayPreview();
+  const { enabled: blackFridayPreview, saleActive, campaignEnabled, phase, clockReady } = useBlackFridayPreview();
+  const cartUnavailable = blackFridayPreview || (campaignEnabled && !clockReady);
+  const siteRootRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    siteRootRef.current?.classList.toggle('bf-preview-root', saleActive);
+  }, [saleActive]);
   const [currentRoute, setCurrentRoute] = useState<RouteKey>('home');
   const [activePluginSection, setActivePluginSection] = useState<PluginSectionKey>(DEFAULT_PLUGIN_SECTION);
   const cartPreviewRef = useRef<HTMLDivElement | null>(null);
@@ -2168,7 +2178,8 @@ export default function FarmVerbSite() {
   }, [activePluginSection, selectedPluginProduct]);
 
   const glitchPackPricing = getProductPricing('Glitch Drum Pack Vol.1');
-  const glitchPackPrice = glitchPackPricing ? getMainProductPrice(glitchPackPricing) : 49;
+  const glitchCampaignPrice = campaignEnabled ? getCampaignPriceByProductName('Glitch Drum Pack Vol.1', phase) : null;
+  const glitchPackPrice = glitchCampaignPrice?.price ?? (glitchPackPricing ? getMainProductPrice(glitchPackPricing) : 49);
   const glitchPackRegularPrice = glitchPackPricing?.regularPrice ?? 99;
   const glitchPackYoutubeVideoId = getProductYoutubeVideoId('Glitch Drum Pack Vol.1');
 
@@ -2230,8 +2241,8 @@ export default function FarmVerbSite() {
         <div className="plugin-feature-copy">
           <h3>{selectedPluginProduct.name}</h3>
           <p>{selectedPluginProduct.description}</p>
-          {blackFridayPreview ? (
-            <BlackFridayPurchasePanel productName={selectedPluginProduct.name} />
+          {saleActive ? (
+            <BlackFridayPurchasePanel productName={selectedPluginProduct.name} onAddToCart={addToCart} />
           ) : (
             <>
               <ProductPrice productName={selectedPluginProduct.name} />
@@ -2239,7 +2250,7 @@ export default function FarmVerbSite() {
                 <button
                   type="button"
                   className="plugin-action plugin-action-cart"
-                  disabled={blackFridayPreview}
+                  disabled={cartUnavailable}
                   title={blackFridayPreview ? 'Black Friday design preview — cart disabled' : undefined}
                   onClick={() => void addToCart(selectedPluginProduct.name)}
                 >
@@ -2305,7 +2316,7 @@ export default function FarmVerbSite() {
               <button
                 type="button"
                 className="plugin-action plugin-action-cart"
-                disabled={blackFridayPreview}
+                disabled={cartUnavailable}
                 title={blackFridayPreview ? 'Black Friday design preview — cart disabled' : undefined}
                 onClick={() => void addToCart(product.name)}
               >
@@ -2344,11 +2355,11 @@ export default function FarmVerbSite() {
   };
 
   const addToCart = async (productName: string) => {
-    if (blackFridayPreview) {
+    if (cartUnavailable) {
       return;
     }
 
-    const analyticsProduct = getAnalyticsProductByName(productName);
+    const analyticsProduct = getAnalyticsProductByName(productName, campaignEnabled ? phase : undefined);
 
     let userId = cartUserId;
 
@@ -2444,9 +2455,10 @@ export default function FarmVerbSite() {
 
   return (
     <div
-      className={`farmverb-root ${
-        blackFridayPreview ? 'bf-preview-root' : ''
-      }`.trim()}
+      ref={siteRootRef}
+      className="farmverb-root"
+      data-campaign-phase={campaignEnabled ? phase : 'disabled'}
+      data-price-ready={clockReady}
     >
       <BlackFridayNoticeBar />
       <div className="grain-layer" aria-hidden="true" />
@@ -2581,7 +2593,7 @@ export default function FarmVerbSite() {
           </div>
 
           <div className="page-scroll page-shell site-container home-scroll">
-            {blackFridayPreview ? (
+            {saleActive ? (
               <BlackFridayHero />
             ) : (
               <div className="home-stage parallax-node" data-depth="16">
@@ -2594,7 +2606,7 @@ export default function FarmVerbSite() {
               </div>
             )}
 
-            {blackFridayPreview ? <BlackFridaySaleSection /> : null}
+            {saleActive ? <BlackFridaySaleSection /> : null}
 
             <section className="home-story" aria-label="FarmVerb studio visuals">
               <article className="home-story-feature">
@@ -2668,7 +2680,7 @@ export default function FarmVerbSite() {
                         <button
                           type="button"
                           className="section-action-btn section-action-cart"
-                          disabled={blackFridayPreview}
+                          disabled={cartUnavailable}
                           title={blackFridayPreview ? 'Black Friday design preview — cart disabled' : undefined}
                           onClick={() => void addToCart(card.productName)}
                         >
@@ -2751,8 +2763,8 @@ export default function FarmVerbSite() {
                       production.
                     </p>
 
-                  {blackFridayPreview ? (
-                    <BlackFridayPurchasePanel productName="Glitch Drum Pack Vol.1" />
+                  {saleActive ? (
+                    <BlackFridayPurchasePanel productName="Glitch Drum Pack Vol.1" onAddToCart={addToCart} />
                   ) : (
                     <>
                       <div className="sample-price-rail" aria-label="Glitch Drum Pack Vol. I pricing">
@@ -2760,17 +2772,17 @@ export default function FarmVerbSite() {
                           <span className="sample-price-value">{formatUsdPrice(glitchPackPrice)}</span>
                           <span className="sample-price-unit">USD</span>
                         </div>
-                        <div className="sample-price-meta">
+                        {!(campaignEnabled && phase === 'after') ? <div className="sample-price-meta">
                           <span className="sample-price-regular">Regular price {formatUsdPrice(glitchPackRegularPrice)}</span>
                           <span className="sample-price-pill">Intro offer</span>
-                        </div>
+                        </div> : null}
                       </div>
 
                       <div className="section-actions sample-hero-actions">
                         <button
                           type="button"
                           className="section-action-btn section-action-cart"
-                          disabled={blackFridayPreview}
+                          disabled={cartUnavailable}
                           title={blackFridayPreview ? 'Black Friday design preview — cart disabled' : undefined}
                           onClick={() => void addToCart('Glitch Drum Pack Vol.1')}
                         >

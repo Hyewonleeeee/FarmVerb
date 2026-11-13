@@ -19,6 +19,8 @@ import {
   type CartItem
 } from '@/lib/cart/store';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
+import { useBlackFridayPreview } from '@/components/campaigns/BlackFridayPreviewProvider';
+import { repriceCampaignCart } from '@/lib/campaigns/blackFridayPricing';
 
 const CART_LOGIN_REDIRECT = '/login?redirect=%2Fcart';
 
@@ -40,10 +42,14 @@ const formatCurrency = (amount: number, currency: string, locale: PaymentLocale)
 };
 
 export default function CartPage() {
+  const { campaignEnabled, phase } = useBlackFridayPreview();
   const paymentLocale: PaymentLocale = 'en';
   const paymentCopy = getPaymentCopy(paymentLocale);
 
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [storedCartItems, setCartItems] = useState<CartItem[]>([]);
+  const cartItems = useMemo(() => campaignEnabled
+    ? repriceCampaignCart(storedCartItems, phase) : storedCartItems,
+  [storedCartItems, campaignEnabled, phase]);
   const [cartMessage, setCartMessage] = useState('');
   const [cartUserId, setCartUserId] = useState<string | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);

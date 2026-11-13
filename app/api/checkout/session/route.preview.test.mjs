@@ -14,6 +14,10 @@ test('Black Friday preview blocks checkout before auth or account-claim access',
       }
     },
     mocks: {
+      '@/lib/checkout/lemonCheckout.server': {
+        verifyLemonProductPrice: async () => { throw new Error('Preview must not access Lemon.'); },
+        createVerifiedLemonCheckout: async () => { throw new Error('Preview must not create checkout.'); }
+      },
       'next/server': {
         NextResponse: {
           json: (body, init = {}) => Response.json(body, init)

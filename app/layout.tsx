@@ -46,7 +46,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-vars">
-        <BlackFridayPreviewProvider enabled={BLACK_FRIDAY_PREVIEW}>
+        <BlackFridayPreviewProvider
+          enabled={BLACK_FRIDAY_PREVIEW}
+          campaignEnabled={BLACK_FRIDAY_PREVIEW || process.env.BLACK_FRIDAY_2026_ENABLED === 'true'}
+        >
           <LemonCheckoutProvider enabled={!BLACK_FRIDAY_PREVIEW}>{children}</LemonCheckoutProvider>
           {!BLACK_FRIDAY_PREVIEW ? (
             <>

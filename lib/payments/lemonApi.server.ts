@@ -34,7 +34,7 @@ function normalizeApiPath(path: string) {
 
 async function lemonMainApiRequest<T>(
   path: string,
-  options: { method: 'GET' | 'PATCH'; body?: unknown }
+  options: { method: 'GET' | 'PATCH' | 'POST'; body?: unknown }
 ): Promise<T> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), LEMON_API_TIMEOUT_MS);
@@ -94,6 +94,10 @@ export async function lemonApiRequest<T>(path: string): Promise<T> {
 
 export async function lemonApiPatch<T>(path: string, body: unknown): Promise<T> {
   return lemonMainApiRequest<T>(path, { method: 'PATCH', body });
+}
+
+export async function lemonApiPost<T>(path: string, body: unknown): Promise<T> {
+  return lemonMainApiRequest<T>(path, { method: 'POST', body });
 }
 
 export async function lemonLicenseApiRequest<T>(

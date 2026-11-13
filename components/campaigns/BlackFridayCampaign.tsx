@@ -4,17 +4,15 @@ import Link from 'next/link';
 import { useBlackFridayPreview } from '@/components/campaigns/BlackFridayPreviewProvider';
 import {
   BLACK_FRIDAY_2026,
-  getBlackFriday2026FeaturedOffers,
-  getBlackFriday2026DiscountPercent
+  getBlackFriday2026FeaturedOffers
 } from '@/lib/campaigns/blackFriday2026';
-import { formatUsdPrice, getMainProductPrice, getProductPricing } from '@/lib/pricing/products';
+import { formatUsdPrice } from '@/lib/pricing/products';
+import { getCampaignPriceBySlug } from '@/lib/campaigns/blackFridayPricing';
 import { PRODUCT_PUBLIC_PATHS, type ProductPublicRouteKey } from '@/lib/ui/farmVerbRoutes';
 
 const FEATURED_OFFERS = getBlackFriday2026FeaturedOffers();
-const MAX_DISCOUNT = Math.max(...FEATURED_OFFERS.map(({ product, previewPrice }) => {
-  const pricing = getProductPricing(product.pricingName);
-  return getBlackFriday2026DiscountPercent(pricing ? getMainProductPrice(pricing) : product.fallbackPrice, previewPrice);
-}));
+const MAX_DISCOUNT = Math.max(...FEATURED_OFFERS.map(({ product }) =>
+  getCampaignPriceBySlug(product.slug, 'active')?.discountPercent ?? 0));
 
 const PRODUCT_ROUTE_BY_SLUG: Record<string, string> = PRODUCT_PUBLIC_PATHS;
 
@@ -37,20 +35,16 @@ const HERO_PRODUCTS = [
 ] as const;
 
 export function BlackFridayNoticeBar() {
-  const { enabled } = useBlackFridayPreview();
-  if (!enabled) {
+  const { saleActive } = useBlackFridayPreview();
+  if (!saleActive) {
     return null;
   }
 
   return (
-    <aside className="bf-notice-bar" aria-label="Black Friday preview notice">
+    <aside className="bf-notice-bar" aria-label="Black Friday promotion">
       <span className="bf-notice-mark">FARMVERB</span>
       <span className="bf-notice-event">Black Friday 2026</span>
       <span className="bf-notice-date">{BLACK_FRIDAY_2026.displayDates}</span>
-      <span className="bf-notice-preview">
-        <span className="bf-notice-preview-desktop">Preview pricing · Checkout disabled</span>
-        <span className="bf-notice-preview-mobile">Preview · Checkout off</span>
-      </span>
     </aside>
   );
 }
@@ -124,9 +118,10 @@ export function BlackFridaySaleSection() {
 
       <div className="bf-sale-grid">
         {FEATURED_OFFERS.map(({ product, previewPrice }, index) => {
-          const pricing = getProductPricing(product.pricingName);
-          const currentPrice = pricing ? getMainProductPrice(pricing) : product.fallbackPrice;
-          const discount = getBlackFriday2026DiscountPercent(currentPrice, previewPrice);
+          const offer = getCampaignPriceBySlug(product.slug, 'active');
+          if (!offer || offer.compareAt === null) return null;
+          const currentPrice = offer.compareAt;
+          const discount = offer.discountPercent;
           const href = PRODUCT_ROUTE_BY_SLUG[product.slug as ProductPublicRouteKey] ?? '/';
 
           return (
@@ -139,7 +134,7 @@ export function BlackFridaySaleSection() {
               <div className="bf-sale-card-copy">
                 <p>{product.productSeries ?? product.productCategory}</p>
                 <h3>{product.name}</h3>
-                <div className="bf-sale-card-price" aria-label={`${product.name} preview pricing`}>
+                <div className="bf-sale-card-price" aria-label={`${product.name} Black Friday pricing`}>
                   <strong>{formatUsdPrice(previewPrice)}</strong>
                   <del aria-label={`Current price ${formatUsdPrice(currentPrice)}`}>{formatUsdPrice(currentPrice)}</del>
                   <small>Black Friday · USD</small>

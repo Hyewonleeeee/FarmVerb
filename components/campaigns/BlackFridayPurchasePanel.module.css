@@ -138,8 +138,13 @@
   font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
-  cursor: not-allowed;
+  cursor: pointer;
   opacity: 1;
+}
+
+.buyButton:disabled,
+.cartButton:disabled {
+  cursor: not-allowed;
 }
 
 .buyButton {

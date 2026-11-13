@@ -4,6 +4,8 @@ import {
   getOfficialProductBySlug,
   type OfficialProductSlug
 } from '../products/catalog';
+import { BLACK_FRIDAY_2026_PRICES } from './blackFridayPricing';
+export { BLACK_FRIDAY_2026_PRICES } from './blackFridayPricing';
 
 export const BLACK_FRIDAY_2026 = {
   name: 'Black Friday 2026',
@@ -13,20 +15,6 @@ export const BLACK_FRIDAY_2026 = {
   previewNotice: 'Preview pricing only — checkout disabled',
   branch: 'codex/black-friday-2026'
 } as const;
-
-export const BLACK_FRIDAY_2026_PRICES = {
-  'nebula-crush': 19,
-  'nebula-drift': 25,
-  'nebula-drums': 25,
-  'nebula-rift': 29,
-  'nebula-space': 29,
-  'nebula-series': 89,
-  'jeju-citrus-air': 15,
-  'boseong-green-tea': 15,
-  'uiseong-garlic': 15,
-  'organic-series': 35,
-  'glitch-drum-pack-vol-1': 25
-} as const satisfies Record<OfficialProductSlug, number>;
 
 export const BLACK_FRIDAY_2026_FEATURED_SLUGS = [
   'nebula-series',

@@ -1,29 +1,25 @@
 'use client';
 
 import { useBlackFridayPreview } from './BlackFridayPreviewProvider';
-import {
-  BLACK_FRIDAY_2026,
-  getBlackFriday2026DiscountPercent,
-  getBlackFriday2026PriceBySlug
-} from '@/lib/campaigns/blackFriday2026';
+import { BLACK_FRIDAY_2026 } from '@/lib/campaigns/blackFriday2026';
+import { getCampaignPriceBySlug } from '@/lib/campaigns/blackFridayPricing';
+import LemonCheckoutLink from '@/components/checkout/LemonCheckoutLink';
+import PurchasePolicyNotice from '@/components/farmverb/PurchasePolicyNotice';
 import { getOfficialProductByName } from '@/lib/products/catalog';
-import { formatUsdPrice, getMainProductPrice, getProductPricing } from '@/lib/pricing/products';
+import { formatUsdPrice } from '@/lib/pricing/products';
 import styles from './BlackFridayPurchasePanel.module.css';
 
 function getPreviewOffer(productName: string) {
   const product = getOfficialProductByName(productName);
   if (!product) return null;
 
-  const pricing = getProductPricing(product.pricingName);
-  const price = getBlackFriday2026PriceBySlug(product.slug);
-  if (!pricing || price === null) return null;
-
-  const currentPrice = getMainProductPrice(pricing);
+  const pricing = getCampaignPriceBySlug(product.slug, 'active');
+  if (!pricing || pricing.compareAt === null) return null;
   return {
     product,
-    price,
-    currentPrice,
-    discount: getBlackFriday2026DiscountPercent(currentPrice, price)
+    price: pricing.price,
+    currentPrice: pricing.compareAt,
+    discount: pricing.discountPercent
   };
 }
 
@@ -34,8 +30,8 @@ export function BlackFridayPrice({
   productName: string;
   compact?: boolean;
 }) {
-  const { enabled } = useBlackFridayPreview();
-  const offer = enabled ? getPreviewOffer(productName) : null;
+  const { saleActive } = useBlackFridayPreview();
+  const offer = saleActive ? getPreviewOffer(productName) : null;
   if (!offer) return null;
 
   return (
@@ -58,9 +54,12 @@ export function BlackFridayPrice({
   );
 }
 
-export default function BlackFridayPurchasePanel({ productName }: { productName: string }) {
-  const { enabled } = useBlackFridayPreview();
-  const offer = enabled ? getPreviewOffer(productName) : null;
+export default function BlackFridayPurchasePanel({ productName, onAddToCart }: {
+  productName: string;
+  onAddToCart: (productName: string) => void;
+}) {
+  const { previewMode, saleActive, clockReady } = useBlackFridayPreview();
+  const offer = saleActive ? getPreviewOffer(productName) : null;
   if (!offer) return null;
 
   const tone = offer.product.productSeries === 'Organic Series'
@@ -84,12 +83,14 @@ export default function BlackFridayPurchasePanel({ productName }: { productName:
     >
       <BlackFridayPrice productName={productName} />
       <div className={styles.actions}>
-        <button type="button" className={styles.buyButton} disabled>Buy Now</button>
-        <button type="button" className={styles.cartButton} disabled>Add to Cart</button>
+        <LemonCheckoutLink productName={productName} className={styles.buyButton}>Buy Now</LemonCheckoutLink>
+        <button type="button" className={styles.cartButton} disabled={previewMode || !clockReady}
+          onClick={() => onAddToCart(productName)}>Add to Cart</button>
       </div>
       <span className={styles.deadline}>
         Offer ends <time dateTime={BLACK_FRIDAY_2026.endsOn}>{endDate}</time>
       </span>
+      {!previewMode ? <PurchasePolicyNotice /> : null}
     </div>
   );
 }

@@ -6207,8 +6207,7 @@ a.auth-submit {
   }
 }
 
-/* Black Friday 2026 design preview
-   The campaign is namespaced and only mounted by the preview environment gate. */
+/* Black Friday 2026: mounted only while the server-authoritative sale is active. */
 .bf-notice-bar {
   --bf-notice-height: 38px;
   position: fixed;
@@ -6216,7 +6215,7 @@ a.auth-submit {
   z-index: 80;
   min-height: calc(var(--bf-notice-height) + env(safe-area-inset-top));
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: clamp(0.8rem, 2vw, 2rem);
   padding: calc(0.55rem + env(safe-area-inset-top)) max(1rem, env(safe-area-inset-left)) 0.5rem max(1rem, env(safe-area-inset-right));
@@ -6244,11 +6243,13 @@ a.auth-submit {
 
 .bf-notice-mark {
   letter-spacing: 0.28em;
+  color: #ff0000;
 }
 
 .bf-notice-event {
   justify-self: center;
   font-size: 0.68rem;
+  color: #ff0000;
 }
 
 .bf-notice-date {
@@ -6976,9 +6977,7 @@ a.auth-submit {
     justify-self: start;
   }
 
-  .bf-notice-mark,
-  .bf-notice-date,
-  .bf-notice-preview-desktop {
+  .bf-notice-mark {
     display: none;
   }
 
@@ -7130,7 +7129,6 @@ a.auth-submit {
 .bf-preview-root { --bf-accent: #c4bbdf; }
 .bf-hero h1 { color: var(--bf-paper); }
 .bf-hero h1 .bf-hero-friday { color: #d3cbe9; }
-.bf-notice-event,
 .bf-preview-root .bf-hero-eyebrow,
 .bf-preview-root .bf-hero-discount,
 .bf-preview-root .bf-sale-heading .section-overline { color: var(--bf-accent, #c4bbdf); }
