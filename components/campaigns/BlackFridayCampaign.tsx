@@ -5,12 +5,16 @@ import { useBlackFridayPreview } from '@/components/campaigns/BlackFridayPreview
 import {
   BLACK_FRIDAY_2026,
   getBlackFriday2026FeaturedOffers,
-  type BlackFridayPreviewVariant
+  getBlackFriday2026DiscountPercent
 } from '@/lib/campaigns/blackFriday2026';
 import { formatUsdPrice, getMainProductPrice, getProductPricing } from '@/lib/pricing/products';
 import { PRODUCT_PUBLIC_PATHS, type ProductPublicRouteKey } from '@/lib/ui/farmVerbRoutes';
 
 const FEATURED_OFFERS = getBlackFriday2026FeaturedOffers();
+const MAX_DISCOUNT = Math.max(...FEATURED_OFFERS.map(({ product, previewPrice }) => {
+  const pricing = getProductPricing(product.pricingName);
+  return getBlackFriday2026DiscountPercent(pricing ? getMainProductPrice(pricing) : product.fallbackPrice, previewPrice);
+}));
 
 const PRODUCT_ROUTE_BY_SLUG: Record<string, string> = PRODUCT_PUBLIC_PATHS;
 
@@ -33,75 +37,41 @@ const HERO_PRODUCTS = [
 ] as const;
 
 export function BlackFridayNoticeBar() {
-  const { enabled, variant } = useBlackFridayPreview();
+  const { enabled } = useBlackFridayPreview();
   if (!enabled) {
     return null;
   }
 
   return (
-    <aside className={`bf-notice-bar bf-notice-bar-${variant}`} aria-label="Black Friday preview notice">
+    <aside className="bf-notice-bar" aria-label="Black Friday preview notice">
       <span className="bf-notice-mark">FARMVERB</span>
       <span className="bf-notice-event">Black Friday 2026</span>
       <span className="bf-notice-date">{BLACK_FRIDAY_2026.displayDates}</span>
       <span className="bf-notice-preview">
-        <span className="bf-notice-preview-desktop">Design preview · Checkout disabled</span>
-        <span className="bf-notice-preview-mobile">Preview only</span>
+        <span className="bf-notice-preview-desktop">Preview pricing · Checkout disabled</span>
+        <span className="bf-notice-preview-mobile">Preview · Checkout off</span>
       </span>
     </aside>
   );
 }
 
-export function BlackFridayVariantSwitcher() {
-  const { enabled, variant, setVariant } = useBlackFridayPreview();
-  if (!enabled) {
-    return null;
-  }
-
-  const variants: Array<{ id: BlackFridayPreviewVariant; label: string; name: string }> = [
-    { id: 'editorial', label: 'A', name: 'Dark Editorial' },
-    { id: 'product', label: 'B', name: 'Product Focus' }
-  ];
-
-  return (
-    <aside className="bf-variant-switcher" aria-label="Black Friday design variants">
-      <span className="bf-variant-switcher-label">Preview direction</span>
-      <div className="bf-variant-switcher-options">
-        {variants.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className={variant === item.id ? 'is-active' : ''}
-            aria-pressed={variant === item.id}
-            onClick={() => setVariant(item.id)}
-          >
-            <span>{item.label}</span>
-            {item.name}
-          </button>
-        ))}
-      </div>
-    </aside>
-  );
-}
-
 export function BlackFridayHero() {
-  const { variant } = useBlackFridayPreview();
-
   return (
-    <section className={`bf-hero bf-hero-variant-${variant}`} aria-labelledby="black-friday-heading">
+    <section className="bf-hero" aria-labelledby="black-friday-heading">
       <div className="bf-hero-grid">
         <div className="bf-hero-copy">
           <p className="bf-hero-eyebrow">FarmVerb presents</p>
           <h1 id="black-friday-heading">
             <span>Black</span>
-            <span>Friday</span>
+            <span className="bf-hero-friday">Friday</span>
             <span className="bf-hero-year">2026</span>
           </h1>
           <p className="bf-hero-intro">
-            A focused selection of FarmVerb instruments, effects, and sound tools — prepared for a limited seasonal event.
+            Explore Black Friday offers across Nebula, Organic, and Glitch Drum Pack.
           </p>
           <div className="bf-hero-meta">
             <span>{BLACK_FRIDAY_2026.displayDates}</span>
-            <span>Preview pricing</span>
+            <span className="bf-hero-discount">Up to {MAX_DISCOUNT}% off</span>
           </div>
           <a href="#black-friday-sale" className="bf-hero-cta">
             Explore the sale
@@ -115,20 +85,24 @@ export function BlackFridayHero() {
               key={product.name}
               className={`bf-hero-product bf-hero-product-${index + 1} bf-tone-${product.tone}`}
             >
+              {index === 0 ? <figcaption>
+                <span>{String(index + 1).padStart(2, '0')}</span>
+                {product.name}
+              </figcaption> : null}
               <div className="bf-hero-product-frame">
                 <img src={product.image} alt={`${product.name} product artwork`} />
               </div>
-              <figcaption>
+              {index > 0 ? <figcaption>
                 <span>{String(index + 1).padStart(2, '0')}</span>
                 {product.name}
-              </figcaption>
+              </figcaption> : null}
             </figure>
           ))}
         </div>
       </div>
-      <div className="bf-hero-footnote" aria-label="Preview status">
-        <span>Campaign study {variant === 'editorial' ? 'A — Dark Editorial' : 'B — Product Focus'}</span>
-        <span>All product imagery is original FarmVerb artwork</span>
+      <div className="bf-hero-footnote">
+        <span>Instruments · Effects · Samples</span>
+        <span>Made for your next idea.</span>
       </div>
     </section>
   );
@@ -144,7 +118,7 @@ export function BlackFridaySaleSection() {
         </div>
         <div className="bf-sale-heading-note">
           <span>{BLACK_FRIDAY_2026.displayDates}</span>
-          <p>Prices shown here are for campaign design review only. Checkout is disabled in this Preview.</p>
+          <p>Creative effects, organic textures, and distinctive percussion. Find your next sound.</p>
         </div>
       </header>
 
@@ -152,21 +126,23 @@ export function BlackFridaySaleSection() {
         {FEATURED_OFFERS.map(({ product, previewPrice }, index) => {
           const pricing = getProductPricing(product.pricingName);
           const currentPrice = pricing ? getMainProductPrice(pricing) : product.fallbackPrice;
+          const discount = getBlackFriday2026DiscountPercent(currentPrice, previewPrice);
           const href = PRODUCT_ROUTE_BY_SLUG[product.slug as ProductPublicRouteKey] ?? '/';
 
           return (
             <article key={product.slug} className={`bf-sale-card bf-sale-card-${index + 1}`}>
               <div className="bf-sale-card-index">{String(index + 1).padStart(2, '0')}</div>
+              <span className="bf-discount">{discount}% off</span>
               <figure className="bf-sale-card-media">
-                <img src={product.image} alt={`${product.name} product artwork`} />
+                <img src={product.image} alt={`${product.name} product artwork`} loading="lazy" decoding="async" />
               </figure>
               <div className="bf-sale-card-copy">
                 <p>{product.productSeries ?? product.productCategory}</p>
                 <h3>{product.name}</h3>
                 <div className="bf-sale-card-price" aria-label={`${product.name} preview pricing`}>
                   <strong>{formatUsdPrice(previewPrice)}</strong>
-                  <span>{formatUsdPrice(currentPrice)}</span>
-                  <small>Preview price · USD</small>
+                  <del aria-label={`Current price ${formatUsdPrice(currentPrice)}`}>{formatUsdPrice(currentPrice)}</del>
+                  <small>Black Friday · USD</small>
                 </div>
                 <Link href={href}>View product <span aria-hidden="true">↗</span></Link>
               </div>

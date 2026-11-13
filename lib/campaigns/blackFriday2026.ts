@@ -14,15 +14,19 @@ export const BLACK_FRIDAY_2026 = {
   branch: 'codex/black-friday-2026'
 } as const;
 
-export type BlackFridayPreviewVariant = 'editorial' | 'product';
-
 export const BLACK_FRIDAY_2026_PRICES = {
+  'nebula-crush': 19,
+  'nebula-drift': 25,
+  'nebula-drums': 25,
+  'nebula-rift': 29,
   'nebula-space': 29,
+  'nebula-series': 89,
+  'jeju-citrus-air': 15,
+  'boseong-green-tea': 15,
   'uiseong-garlic': 15,
-  'glitch-drum-pack-vol-1': 23,
-  'nebula-series': 99,
-  'organic-series': 35
-} as const satisfies Partial<Record<OfficialProductSlug, number>>;
+  'organic-series': 35,
+  'glitch-drum-pack-vol-1': 25
+} as const satisfies Record<OfficialProductSlug, number>;
 
 export const BLACK_FRIDAY_2026_FEATURED_SLUGS = [
   'nebula-series',
@@ -36,6 +40,20 @@ export type BlackFriday2026Offer = {
   product: (typeof OFFICIAL_PRODUCT_CATALOG)[number];
   previewPrice: number;
 };
+
+export function getBlackFriday2026DiscountPercent(currentPrice: number, previewPrice: number): number {
+  if (
+    !Number.isFinite(currentPrice) ||
+    !Number.isFinite(previewPrice) ||
+    currentPrice <= 0 ||
+    previewPrice < 0 ||
+    previewPrice >= currentPrice
+  ) {
+    return 0;
+  }
+
+  return Math.floor(100 * (currentPrice - previewPrice) / currentPrice);
+}
 
 export function getBlackFriday2026PriceBySlug(slug: string | null | undefined): number | null {
   const product = getOfficialProductBySlug(slug);
@@ -56,12 +74,6 @@ export function getBlackFriday2026FeaturedOffers(): BlackFriday2026Offer[] {
     const previewPrice = getBlackFriday2026PriceBySlug(slug);
     return product && previewPrice !== null ? [{ product, previewPrice }] : [];
   });
-}
-
-export function parseBlackFridayPreviewVariant(
-  value: string | null | undefined
-): BlackFridayPreviewVariant | null {
-  return value === 'editorial' || value === 'product' ? value : null;
 }
 
 export function isBlackFriday2026PreviewEnvironment(

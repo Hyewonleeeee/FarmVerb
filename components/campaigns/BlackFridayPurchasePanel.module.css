@@ -1,0 +1,197 @@
+.purchasePanel {
+  display: grid;
+  gap: 1.2rem;
+  width: min(100%, 25rem);
+  min-width: 0;
+  margin-top: 0.2rem;
+  color: var(--bf-purchase-ink);
+}
+
+.nebula {
+  --bf-purchase-ink: #f0ede6;
+  --bf-purchase-muted: #a5a1ad;
+  --bf-purchase-accent: #b2a8ce;
+  --bf-purchase-button-bg: #ddd7e9;
+  --bf-purchase-button-ink: #24212e;
+  --bf-purchase-button-border: rgba(184, 174, 207, 0.36);
+}
+
+.organic {
+  --bf-purchase-ink: #29432a;
+  --bf-purchase-muted: #627457;
+  --bf-purchase-accent: #526c49;
+  --bf-purchase-button-bg: #344d32;
+  --bf-purchase-button-ink: #f4f3e7;
+  --bf-purchase-button-border: rgba(52, 77, 50, 0.35);
+}
+
+.glitch {
+  --bf-purchase-ink: #252720;
+  --bf-purchase-muted: #66675c;
+  --bf-purchase-accent: #36665d;
+  --bf-purchase-button-bg: #293e38;
+  --bf-purchase-button-ink: #f4f0e7;
+  --bf-purchase-button-border: rgba(41, 62, 56, 0.35);
+}
+
+.priceBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  min-width: 0;
+  color: var(--bf-purchase-ink, inherit);
+}
+
+.currentPrice {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.amount {
+  color: inherit;
+  font-size: clamp(2.8rem, 4vw, 3.25rem);
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: -0.055em;
+  font-variant-numeric: tabular-nums;
+}
+
+.currency {
+  color: var(--bf-purchase-muted, inherit);
+  font-size: 0.65rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.06em;
+}
+
+.comparison {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  white-space: nowrap;
+  font-size: 0.81rem;
+  line-height: 1.4;
+}
+
+.purchasePanel .priceBlock {
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+}
+
+.purchasePanel .amount {
+  font-size: clamp(3.08rem, 4.4vw, 3.575rem);
+}
+
+.purchasePanel .currency {
+  font-size: 0.75rem;
+}
+
+.purchasePanel .comparison {
+  gap: 0.8rem;
+  font-size: 1.375rem;
+}
+
+.purchasePanel .previousPrice {
+  opacity: 1;
+}
+
+.purchasePanel .discount {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.previousPrice {
+  color: var(--bf-purchase-muted, inherit);
+  opacity: 0.75;
+  text-decoration-thickness: 1px;
+}
+
+.discount {
+  color: var(--bf-purchase-accent, inherit);
+  font-size: 0.74rem;
+  font-weight: 500;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.buyButton,
+.cartButton {
+  min-width: 0;
+  min-height: 46px;
+  padding: 0.8rem 0.65rem;
+  border: 1px solid var(--bf-purchase-button-border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.buyButton {
+  color: var(--bf-purchase-button-ink);
+  background: var(--bf-purchase-button-bg);
+}
+
+.cartButton {
+  color: var(--bf-purchase-ink);
+  background: transparent;
+}
+
+.deadline {
+  color: var(--bf-purchase-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.compact {
+  margin-top: auto;
+  padding-top: 0.6rem;
+  gap: 0.3rem;
+}
+
+.compact .amount {
+  font-size: clamp(1.6rem, 2.5vw, 2rem);
+  letter-spacing: -0.045em;
+}
+
+.compact .currency {
+  font-size: 0.55rem;
+  opacity: 0.6;
+}
+
+.compact .comparison {
+  gap: 0.6rem;
+  font-size: 0.72rem;
+}
+
+.compact .discount {
+  font-size: 0.66rem;
+  opacity: 0.72;
+}
+
+@media (max-width: 640px) {
+  .purchasePanel {
+    width: 100%;
+    gap: 1rem;
+  }
+
+  .compact {
+    margin-top: 0.2rem;
+    padding-top: 0;
+  }
+}
