@@ -6615,7 +6615,6 @@ a.auth-submit {
 }
 
 .bf-sale-heading h2 {
-  max-width: 12ch;
   margin: 0.4rem 0 0;
   color: var(--bf-paper);
   font-size: clamp(2.5rem, 5.5vw, 5.8rem);
@@ -7069,7 +7068,7 @@ a.auth-submit {
   }
 
   .bf-sale-heading h2 {
-    font-size: clamp(2.55rem, 12vw, 4rem);
+    font-size: clamp(2rem, 8.5vw, 3.4rem);
   }
 
   .bf-sale-grid {

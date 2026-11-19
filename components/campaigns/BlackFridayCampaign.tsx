@@ -108,7 +108,7 @@ export function BlackFridaySaleSection() {
       <header className="bf-sale-heading">
         <div>
           <p className="section-overline">Black Friday selection</p>
-          <h2 id="black-friday-sale-heading">Five tools. One focused window.</h2>
+          <h2 id="black-friday-sale-heading">Black Friday Picks</h2>
         </div>
         <div className="bf-sale-heading-note">
           <span>{BLACK_FRIDAY_2026.displayDates}</span>
