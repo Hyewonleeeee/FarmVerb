@@ -3,7 +3,7 @@ import test from 'node:test';
 import { createSourceLoader } from '../../../../lib/test/loadSourceModule.mjs';
 
 const activeTime = Date.parse('2026-11-21T05:00:00Z');
-const endTime = Date.parse('2026-12-02T05:00:00Z');
+const endTime = Date.parse('2026-12-01T15:00:00Z');
 
 function fixture(options = {}) {
   let now = options.now ?? activeTime;
@@ -170,7 +170,7 @@ test('after the campaign the approved new regular price is verified, never the o
 });
 
 test('before the start uses the approved pre-sale price and rejects crossing into the sale during verification', async () => {
-  const startTime = Date.parse('2026-11-20T05:00:00Z');
+  const startTime = Date.parse('2026-11-19T15:00:00Z');
   const body = { productName: 'Nebula Drift', expectedPriceCents: 4900, expectedPhase: 'before' };
   const accepted = fixture({ now: startTime - 120_000 });
   const result = await accepted.post(body);

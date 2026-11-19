@@ -2,10 +2,10 @@ import { isBlackFriday2026PreviewEnvironment } from './blackFriday2026';
 
 export type CampaignPhase = 'before' | 'active' | 'after';
 
-// America/New_York is UTC-05:00 for both boundaries. The exclusive end includes
-// the whole December 1 23:59 minute, without depending on a visitor's timezone.
-export const BLACK_FRIDAY_STARTS_AT = '2026-11-20T05:00:00.000Z';
-export const BLACK_FRIDAY_END_EXCLUSIVE = '2026-12-02T05:00:00.000Z';
+// Asia/Seoul is UTC+09:00: November 20 00:00 through December 2 00:00 KST.
+// The exclusive end includes all of December 1, independent of visitor timezone.
+export const BLACK_FRIDAY_STARTS_AT = '2026-11-19T15:00:00.000Z';
+export const BLACK_FRIDAY_END_EXCLUSIVE = '2026-12-01T15:00:00.000Z';
 export const BLACK_FRIDAY_START_MS = Date.parse(BLACK_FRIDAY_STARTS_AT);
 export const BLACK_FRIDAY_END_MS = Date.parse(BLACK_FRIDAY_END_EXCLUSIVE);
 export const CAMPAIGN_CLOCK_MAX_AGE_MS = 60_000;

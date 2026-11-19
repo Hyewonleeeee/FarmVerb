@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createSourceLoader } from '../../../../lib/test/loadSourceModule.mjs';
 
-const start = Date.parse('2026-11-20T05:00:00Z');
-const end = Date.parse('2026-12-02T05:00:00Z');
+const start = Date.parse('2026-11-19T15:00:00Z');
+const end = Date.parse('2026-12-01T15:00:00Z');
 function fixture(env, wallTime = start) {
   let mono = 100;
   class ServerDate extends Date { static now() { return wallTime; } }
@@ -47,7 +47,7 @@ test('Preview uses actual server time by default and accepts only the three desi
 });
 
 test('local server clock fixture advances monotonically only in development Preview', async () => {
-  const env = { NODE_ENV: 'development', NEXT_PUBLIC_BLACK_FRIDAY_PREVIEW: 'true', BLACK_FRIDAY_PREVIEW_CLOCK_START: '2026-11-20T04:59:59Z' };
+  const env = { NODE_ENV: 'development', NEXT_PUBLIC_BLACK_FRIDAY_PREVIEW: 'true', BLACK_FRIDAY_PREVIEW_CLOCK_START: '2026-11-19T14:59:59Z' };
   const f = fixture(env, end);
   const first = await (await f.get()).json();
   assert.equal(first.serverNowMs, start - 1_000); assert.equal(first.phase, 'before');

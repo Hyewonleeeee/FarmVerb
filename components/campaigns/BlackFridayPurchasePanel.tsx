@@ -2,6 +2,7 @@
 
 import { useBlackFridayPreview } from './BlackFridayPreviewProvider';
 import { BLACK_FRIDAY_2026 } from '@/lib/campaigns/blackFriday2026';
+import { BLACK_FRIDAY_END_MS } from '@/lib/campaigns/blackFridayClock';
 import { getCampaignPriceBySlug } from '@/lib/campaigns/blackFridayPricing';
 import LemonCheckoutLink from '@/components/checkout/LemonCheckoutLink';
 import PurchasePolicyNotice from '@/components/farmverb/PurchasePolicyNotice';
@@ -67,12 +68,16 @@ export default function BlackFridayPurchasePanel({ productName, onAddToCart }: {
     : offer.product.productCategory === 'Sample Pack'
       ? styles.glitch
       : styles.nebula;
+  const lastOfferInstant = new Date(BLACK_FRIDAY_END_MS - 1);
   const endDate = new Intl.DateTimeFormat('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
-    timeZone: 'UTC'
-  }).format(new Date(`${BLACK_FRIDAY_2026.endsOn}T00:00:00Z`));
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: BLACK_FRIDAY_2026.timeZone
+  }).format(lastOfferInstant);
 
   return (
     <div
@@ -88,7 +93,9 @@ export default function BlackFridayPurchasePanel({ productName, onAddToCart }: {
           onClick={() => onAddToCart(productName)}>Add to Cart</button>
       </div>
       <span className={styles.deadline}>
-        Offer ends <time dateTime={BLACK_FRIDAY_2026.endsOn}>{endDate}</time>
+        Offer ends <time dateTime={lastOfferInstant.toISOString()}>{endDate}</time>
+        <br />
+        {BLACK_FRIDAY_2026.timeZoneLabel}
       </span>
       {!previewMode ? <PurchasePolicyNotice /> : null}
     </div>

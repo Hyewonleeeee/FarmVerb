@@ -1,6 +1,6 @@
-# Black Friday 2026: Preview implementation and activation runbook
+# Black Friday 2026: Production operations runbook
 
-This change is local to `codex/black-friday-2026`. It does not authorize a Production deploy, a database migration, or any change to Lemon Squeezy products, variants, prices, or discounts. The owner approved the table below for Preview implementation on November 13, 2026.
+The owner approved the price table for Preview implementation on November 13, 2026. Live build `8d28223` was deployed on November 18. On November 19, the owner approved changing both campaign boundaries to midnight in Korea, as specified below. That schedule update requires a new deployment; it does not require a database migration. Historical implementation and test notes below describe the November 13 work.
 
 ## Approved prices and existing Live mapping
 
@@ -24,10 +24,10 @@ These mappings are verified against the repository catalog, not a current authen
 
 ## Time and environment modes
 
-- Timezone: `America/New_York` (EST at both boundaries).
-- Inclusive start: `2026-11-20T05:00:00.000Z` = Nov 20 00:00 EST = Nov 20 14:00 KST.
-- Exclusive end: `2026-12-02T05:00:00.000Z` = Dec 2 00:00 EST = Dec 2 14:00 KST.
-- The whole day of December 1 in New York is included.
+- Timezone: `Asia/Seoul` (KST, UTC+09:00).
+- Inclusive start: `2026-11-19T15:00:00.000Z` = Nov 20 00:00 KST.
+- Exclusive end: `2026-12-01T15:00:00.000Z` = Dec 2 00:00 KST.
+- The whole day of December 1 in Korea is included.
 - `BLACK_FRIDAY_2026_ENABLED=true` is the server-only Live activation flag. It is **off by default**. Do not enable it in Production until the remaining merchant/API checks and owner deployment approval are complete.
 - Existing Preview detection enables a design sandbox independently of that Live flag. Preview always blocks checkout before authentication, claim creation, or Lemon access; omits GA/Ads and the Lemon overlay; and emits noindex metadata/headers. Removing the visible Preview notice does not remove these guards.
 - Production ignores Preview forcing even if `?bf=active` is supplied. Live sale activation never turns on Preview mode.
@@ -65,16 +65,18 @@ Before enabling the Live flag, obtain these concrete results:
 5. Complete a Test payment and verify signed webhook, purchase/claim ownership, account display and license issuance. Use separate Test mappings/keys/DB; do not relax Production Live-only ownership rules. Lemon Test Mode does not permit normal file downloads, so actual downloadable file availability remains a separate merchant check.
 6. Verify published Preview build noindex and absent GA/Ads/Lemon scripts. Verify the candidate Live build retains the existing analytics and overlay configuration with Preview forcing disabled. Do not use Production customer accounts for Preview testing.
 
-## Manual launch and end sequence (not executed)
+## Manual launch and end sequence (price changes pending)
 
 1. Review the implementation and test evidence; complete the merchant contract checks above; obtain separate Production deployment approval.
 2. Confirm Vercel Production Branch/domain automation, current SHA, a compatible rollback deployment, and the intended environment settings. Deploy the reviewed candidate without accidental domain promotion, verify Ready and SHA, then use the approved production promotion process. This change needs **no DB migration**.
-3. Before Nov 20 14:00 KST, the verified Live candidate should show the original design and current prices. Check the dynamic status API returns `phase: before`, `previewMode: false`, `campaignEnabled: true`, and the exact UTC boundaries. Do not modify variants or licensing.
-4. At **Nov 20 14:00 KST**, the owner changes the base prices of the existing 11 Lemon variants to the Black Friday column. The website changes automatically at the boundary. Products not yet updated remain blocked at checkout with a price-update message; already updated products can pass validation. There is no atomic cross-system switch and no claim that manual updates are instantaneous.
-5. At **Dec 2 14:00 KST**, the owner changes those same 11 variants to the **After** column. The website returns to its original design with the new regular prices. Any variant still on its BF price remains safely blocked. Keep the Live flag enabled.
+3. Before Nov 20 00:00 KST, the verified Live candidate should show the original design and current prices. Check the dynamic status API returns `phase: before`, `previewMode: false`, `campaignEnabled: true`, and the exact UTC boundaries. Do not modify variants or licensing.
+4. At **Nov 20 00:00 KST**, the owner changes the base prices of the existing 11 Lemon variants to the Black Friday column. The website changes automatically at the boundary. Products not yet updated remain blocked at checkout with a price-update message; already updated products can pass validation. There is no atomic cross-system switch and no claim that manual updates are instantaneous.
+5. At **Dec 2 00:00 KST**, the owner changes those same 11 variants to the **After** column. The website returns to its original design with the new regular prices. Any variant still on its BF price remains safely blocked. Keep the Live flag enabled.
 6. At each transition, verify status, displayed/detail/cart price agreement, and each variant's base price. Monitor checkout validation warnings and existing webhook/recovery operations. Do not silently bypass a mismatch to restore conversion.
 
 No scheduled human action is required for the website design itself after the reviewed Live flag is deployed. The two sets of Lemon base-price updates are manual. There is no discount-code setup.
+
+After deploying the schedule update, ask users with already-open tabs to refresh the browser. The previous build expects the old UTC boundaries and rejects a snapshot containing the new boundaries; polling alone does not update that tab's JavaScript. Reload before checking the countdown or starting checkout.
 
 ## Monitoring and recovery
 
@@ -122,7 +124,7 @@ NEXT_PUBLIC_BLACK_FRIDAY_PREVIEW=true npm run dev -- --hostname 127.0.0.1 --port
 
 Open `http://127.0.0.1:3100/?bf=active`, `/nebula?bf=active`, or `/?bf=after`. A Preview production build should use the existing Vercel Preview branch gate.
 
-For real open-tab boundary checks, restart the local dev server with `BLACK_FRIDAY_PREVIEW_CLOCK_START=2026-11-20T04:59:20.000Z` (start) or `2026-12-02T04:59:20.000Z` (end). The first status request starts a monotonic simulated server clock. Open a URL with **no `bf` override** and observe it across the next 40 seconds without source edits/reload. This development fixture is ignored by production builds and Live mode. Remove it after testing.
+For real open-tab boundary checks, restart the local dev server with `BLACK_FRIDAY_PREVIEW_CLOCK_START=2026-11-19T14:59:20.000Z` (40 seconds before the start) or `2026-12-01T14:59:20.000Z` (40 seconds before the end). The first status request starts a monotonic simulated server clock. Open a URL with **no `bf` override** and observe it across the next 40 seconds without source edits/reload. This development fixture is ignored by production builds and Live mode. Remove it after testing.
 
 Automated coverage includes the approved 11-product table, boundary milliseconds, stale/malformed clocks, Preview gates, cart repricing, checkout mismatches/timeout/phase races, claim preservation, client unmount/mode races, and the existing purchase/refund/license/analytics/SQL regressions. These tests use synthetic fixtures and do not count as a real merchant payment test. Local authenticated cart GUI verification additionally requires a running isolated Supabase Auth instance; it was not available in the current environment.
 

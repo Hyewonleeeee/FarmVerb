@@ -11,7 +11,9 @@ export const BLACK_FRIDAY_2026 = {
   name: 'Black Friday 2026',
   startsOn: '2026-11-20',
   endsOn: '2026-12-01',
-  displayDates: 'NOV 20 — DEC 01',
+  timeZone: 'Asia/Seoul',
+  timeZoneLabel: 'Korea Standard Time (UTC+9)',
+  displayDates: 'NOV 20 — DEC 01 · KST',
   previewNotice: 'Preview pricing only — checkout disabled',
   branch: 'codex/black-friday-2026'
 } as const;
