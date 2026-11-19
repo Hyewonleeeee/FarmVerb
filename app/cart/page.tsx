@@ -42,7 +42,8 @@ const formatCurrency = (amount: number, currency: string, locale: PaymentLocale)
 };
 
 export default function CartPage() {
-  const { campaignEnabled, phase } = useBlackFridayPreview();
+  const { campaignEnabled, phase, clockReady } = useBlackFridayPreview();
+  const pricePending = campaignEnabled && !clockReady;
   const paymentLocale: PaymentLocale = 'en';
   const paymentCopy = getPaymentCopy(paymentLocale);
 
@@ -234,7 +235,9 @@ export default function CartPage() {
                           {!checkoutUrl ? <p className="cart-page-checkout-note">Checkout link coming soon</p> : null}
                         </div>
 
-                        <div className="cart-page-item-price">{formatCurrency(item.price, item.currency, paymentLocale)}</div>
+                        <div className="cart-page-item-price">
+                          {pricePending ? 'Checking price…' : formatCurrency(item.price, item.currency, paymentLocale)}
+                        </div>
 
                         <button
                           type="button"
@@ -257,7 +260,7 @@ export default function CartPage() {
                 </div>
                 <div className="cart-page-summary-row cart-page-total-row">
                   <span>{paymentCopy.cart.total}</span>
-                  <strong>{formatCurrency(summary.subtotal, summary.currency, paymentLocale)}</strong>
+                  <strong>{pricePending ? 'Checking price…' : formatCurrency(summary.subtotal, summary.currency, paymentLocale)}</strong>
                 </div>
                 <p className="cart-page-inline-message">
                   Each product opens its own Lemon Squeezy checkout when configured.
