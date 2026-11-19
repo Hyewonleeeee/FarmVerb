@@ -6615,7 +6615,7 @@ a.auth-submit {
 }
 
 .bf-sale-heading h2 {
-  margin: 0.4rem 0 0;
+  margin: 1rem 0 0;
   color: var(--bf-paper);
   font-size: clamp(2.5rem, 5.5vw, 5.8rem);
   line-height: 0.86;
